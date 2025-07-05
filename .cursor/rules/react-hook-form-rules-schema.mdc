@@ -1,0 +1,911 @@
+---
+description: React Hook Form Guidelines and Formatting, Zod integration for implementing forms in the client-side
+globs:
+alwaysApply: false
+---
+
+# React Hook Form Guidelines
+
+## Core Principles
+
+- ALWAYS use React Hook Form for any form implementation in the application
+- ALWAYS check if Zod schemas exist before proceeding - refer to zod-schema-validation rule if they do
+- ASK user if they want to use Zod validation if no existing schemas are found
+- ALWAYS use `useForm` hook as the main entry point for form functionality
+- ALWAYS use `handleSubmit` wrapper for form submission to ensure validation
+- LEVERAGE isolated re-renders for better performance - React Hook Form minimizes unnecessary re-renders
+- ALWAYS use `register` function to connect inputs to the form state
+
+## Why React Hook Form?
+
+React Hook Form provides superior performance through isolated component re-renders, meaning only the components that need to update will re-render. This results in better user experience and app performance compared to traditional controlled components that re-render the entire form on every input change.
+
+## Basic Setup Patterns
+
+### Core Hook Usage
+
+**Why**: `useForm` provides all necessary form functionality including registration, validation, state management, and submission handling.
+
+```typescript
+import { useForm, SubmitHandler } from 'react-hook-form';
+
+// ✅ GOOD: Proper useForm destructuring with TypeScript
+interface FormData {
+  username: string;
+  email: string;
+}
+
+const MyForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isValid },
+    watch,
+    reset,
+    setValue,
+    getValues
+  } = useForm<FormData>();
+
+  const onSubmit: SubmitHandler<FormData> = (data) => {
+    console.log(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form inputs */}
+    </form>
+  );
+};
+
+// ❌ BAD: Not using useForm for form management
+const BadForm = () => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+
+  return (
+    <form onSubmit={(e) => { /* manual handling */ }}>
+      <input value={username} onChange={(e) => setUsername(e.target.value)} />
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+    </form>
+  );
+};
+```
+
+### Form Submission Pattern
+
+**Why**: `handleSubmit` ensures validation runs before submission and provides validated data to your submit handler.
+
+```typescript
+// ✅ GOOD: Always wrap onSubmit with handleSubmit
+const onSubmit: SubmitHandler<FormData> = async (data) => {
+  try {
+    await submitForm(data); // data is validated and properly typed
+  } catch (error) {
+    console.error('Submission failed:', error);
+  }
+};
+
+return (
+  <form onSubmit={handleSubmit(onSubmit)}>
+    {/* inputs */}
+  </form>
+);
+
+// ❌ BAD: Direct form submission without handleSubmit
+return (
+  <form onSubmit={onSubmit}> {/* No validation, no type safety */}
+    {/* inputs */}
+  </form>
+);
+```
+
+## Zod Integration
+
+### With Existing Zod Schemas
+
+**Why**: If Zod schemas already exist, leverage them for consistent validation across client and server. Refer to zod-schema-validation rule for comprehensive Zod instructions.
+
+```typescript
+import { zodResolver } from '@hookform/resolvers/zod';
+import { UserSchema } from './schemas'; // Existing schema
+
+type UserFormData = z.infer<typeof UserSchema>;
+
+const UserForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<UserFormData>({
+    resolver: zodResolver(UserSchema), // Connect existing Zod schema
+  });
+
+  const onSubmit: SubmitHandler<UserFormData> = (data) => {
+    // data is validated by Zod and properly typed
+    console.log(data);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('name')} />
+      {errors.name && <span>{errors.name.message}</span>}
+
+      <input {...register('email')} />
+      {errors.email && <span>{errors.email.message}</span>}
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+### When No Zod Schema Exists
+
+**Why**: Always ask the user if they want Zod validation when no existing schemas are found. This ensures consistent validation approach across the application.
+
+```typescript
+// If user chooses Zod validation
+const FormSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.string().email('Invalid email format'),
+});
+
+type FormData = z.infer<typeof FormSchema>;
+
+const FormWithZod = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+  });
+  // ... rest of component
+};
+
+// If user chooses built-in validation
+const FormWithBuiltIn = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input
+        {...register('username', {
+          required: 'Username is required',
+          minLength: { value: 3, message: 'Username must be at least 3 characters' }
+        })}
+      />
+      {errors.username && <span>{errors.username.message}</span>}
+    </form>
+  );
+};
+```
+
+## Form State Management
+
+### Accessing Form State
+
+**Why**: React Hook Form provides comprehensive form state through `formState` for loading indicators, validation states, and user feedback.
+
+```typescript
+const MyForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: {
+      errors,           // Validation errors
+      isSubmitting,     // Submission in progress
+      isValid,          // Form validation state
+      isDirty,          // Form has been modified
+      isSubmitted,      // Form has been submitted
+      touchedFields,    // Fields that have been interacted with
+      dirtyFields       // Fields that have been modified
+    }
+  } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('username')} />
+      {errors.username && <span>{errors.username.message}</span>}
+
+      <button
+        type="submit"
+        disabled={isSubmitting || !isValid}
+      >
+        {isSubmitting ? 'Submitting...' : 'Submit'}
+      </button>
+
+      {isDirty && (
+        <button type="button" onClick={() => reset()}>
+          Reset Changes
+        </button>
+      )}
+    </form>
+  );
+};
+```
+
+### Watching Field Values
+
+**Why**: `watch` allows you to react to field changes for conditional rendering or real-time validation feedback.
+
+```typescript
+const MyForm = () => {
+  const { register, handleSubmit, watch } = useForm<FormData>();
+
+  // Watch specific field
+  const watchUsername = watch('username');
+
+  // Watch multiple fields
+  const watchedFields = watch(['username', 'email']);
+
+  // Watch all fields
+  const watchAllFields = watch();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('username')} />
+      {watchUsername && <p>Username: {watchUsername}</p>}
+
+      <input {...register('email')} />
+
+      {/* Conditional field based on watched value */}
+      {watchUsername?.length > 5 && (
+        <input {...register('nickname')} placeholder="Optional nickname" />
+      )}
+    </form>
+  );
+};
+```
+
+## Input Registration
+
+### Basic Input Registration
+
+**Why**: `register` connects form inputs to React Hook Form's internal state management and validation system.
+
+```typescript
+// ✅ GOOD: Proper input registration
+<input {...register('fieldName')} />
+
+// ✅ GOOD: Registration with validation
+<input
+  {...register('email', {
+    required: 'Email is required',
+    pattern: {
+      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      message: 'Invalid email address'
+    }
+  })}
+/>
+
+// ❌ BAD: Not registering inputs
+<input name="fieldName" /> {/* Not connected to form state */}
+```
+
+### Advanced Input Types
+
+**Why**: Different input types require specific handling for proper data collection and validation.
+
+```typescript
+const MyForm = () => {
+  const { register, handleSubmit } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Text input */}
+      <input {...register('name')} />
+
+      {/* Number input with coercion */}
+      <input
+        type="number"
+        {...register('age', { valueAsNumber: true })}
+      />
+
+      {/* Checkbox */}
+      <input
+        type="checkbox"
+        {...register('agreeToTerms')}
+      />
+
+      {/* Radio buttons */}
+      <input
+        type="radio"
+        value="option1"
+        {...register('choice')}
+      />
+      <input
+        type="radio"
+        value="option2"
+        {...register('choice')}
+      />
+
+      {/* Select dropdown */}
+      <select {...register('country')}>
+        <option value="">Select...</option>
+        <option value="us">United States</option>
+        <option value="ca">Canada</option>
+      </select>
+
+      {/* Textarea */}
+      <textarea {...register('message')} />
+    </form>
+  );
+};
+```
+
+## Error Handling
+
+### Displaying Validation Errors
+
+**Why**: Proper error display provides immediate feedback to users and improves form usability.
+
+```typescript
+const MyForm = () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input
+          {...register('username', { required: 'Username is required' })}
+          aria-invalid={errors.username ? 'true' : 'false'}
+        />
+        {errors.username && (
+          <span role="alert" className="error">
+            {errors.username.message}
+          </span>
+        )}
+      </div>
+
+      <div>
+        <input
+          {...register('email', {
+            required: 'Email is required',
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: 'Invalid email address'
+            }
+          })}
+          aria-invalid={errors.email ? 'true' : 'false'}
+        />
+        {errors.email && (
+          <span role="alert" className="error">
+            {errors.email.message}
+          </span>
+        )}
+      </div>
+    </form>
+  );
+};
+```
+
+## Form Reset and Default Values
+
+### Setting Default Values
+
+**Why**: Default values improve user experience and can be used for edit forms or pre-filled data.
+
+```typescript
+const MyForm = ({ initialData }: { initialData?: Partial<FormData> }) => {
+  const { register, handleSubmit, reset } = useForm<FormData>({
+    defaultValues: {
+      username: initialData?.username || '',
+      email: initialData?.email || '',
+      age: initialData?.age || 18,
+    }
+  });
+
+  // Reset form to default values
+  const handleReset = () => {
+    reset();
+  };
+
+  // Reset with new values
+  const handleResetWithNewData = (newData: Partial<FormData>) => {
+    reset(newData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('username')} />
+      <input {...register('email')} />
+      <input type="number" {...register('age', { valueAsNumber: true })} />
+
+      <button type="submit">Submit</button>
+      <button type="button" onClick={handleReset}>Reset</button>
+    </form>
+  );
+};
+```
+
+## Server-Side Error Handling
+
+### Using setError() for Server Validation
+
+**Why**: Client-side validation can pass but server-side validation may fail due to business logic, database constraints, or security checks. Use `setError()` to display server errors in the form interface.
+
+```typescript
+const UserForm = () => {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting }
+  } = useForm<UserFormData>({
+    resolver: zodResolver(UserSchema),
+  });
+
+  const onSubmit: SubmitHandler<UserFormData> = async (data) => {
+    // Clear previous server errors
+    clearErrors();
+
+    try {
+      const result = await createUser(data);
+
+      if (!result.success && result.errors) {
+        // Handle Zod validation errors from server
+        Object.entries(result.errors).forEach(([field, messages]) => {
+          if (messages && messages.length > 0) {
+            setError(field as keyof UserFormData, {
+              type: 'server',
+              message: messages[0] // Use first error message
+            });
+          }
+        });
+        return;
+      }
+
+      // Handle success
+      toast.success('User created successfully');
+      reset(); // Reset form after successful submission
+
+    } catch (error) {
+      // Handle network or unexpected errors
+      setError('root', {
+        type: 'server',
+        message: 'Something went wrong. Please try again.'
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input {...register('name')} />
+        {errors.name && <span className="error">{errors.name.message}</span>}
+      </div>
+
+      <div>
+        <input {...register('email')} />
+        {errors.email && <span className="error">{errors.email.message}</span>}
+      </div>
+
+      {/* Display root-level errors */}
+      {errors.root && (
+        <div className="error" role="alert">
+          {errors.root.message}
+        </div>
+      )}
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Creating...' : 'Create User'}
+      </button>
+    </form>
+  );
+};
+```
+
+### Handling Multiple Error Types
+
+**Why**: Different error sources (validation, business logic, network) require different handling strategies for optimal user experience.
+
+```typescript
+const AdvancedForm = () => {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting }
+  } = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+  });
+
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    // Clear previous server errors
+    clearErrors();
+
+    try {
+      const result = await submitForm(data);
+
+      if (!result.success) {
+        // Handle different error types
+        if (result.errors) {
+          // Field-specific errors from Zod validation
+          Object.entries(result.errors).forEach(([field, messages]) => {
+            if (field === 'root') {
+              setError('root', {
+                type: 'server',
+                message: Array.isArray(messages) ? messages[0] : messages
+              });
+            } else if (messages && messages.length > 0) {
+              setError(field as keyof FormData, {
+                type: 'server',
+                message: messages[0]
+              });
+            }
+          });
+        }
+
+        if (result.message) {
+          // General error message
+          setError('root', {
+            type: 'server',
+            message: result.message
+          });
+        }
+
+        return;
+      }
+
+      // Success handling
+      toast.success('Form submitted successfully');
+      reset();
+
+    } catch (error) {
+      setError('root', {
+        type: 'network',
+        message: 'Network error. Please check your connection and try again.'
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input {...register('username')} />
+        {errors.username && (
+          <span className={`error ${errors.username.type === 'server' ? 'server-error' : ''}`}>
+            {errors.username.message}
+          </span>
+        )}
+      </div>
+
+      {/* Global error display */}
+      {errors.root && (
+        <div className={`error global-error ${errors.root.type}`} role="alert">
+          {errors.root.message}
+        </div>
+      )}
+
+      <button type="submit" disabled={isSubmitting}>
+        Submit
+      </button>
+    </form>
+  );
+};
+```
+
+### Built-in Validation Rules
+
+**Why**: React Hook Form aligns with HTML standards and provides comprehensive validation rules for client-side validation before server submission.
+
+```typescript
+const ValidatedForm = () => {
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Required validation */}
+      <input
+        {...register('firstName', { required: 'First name is required' })}
+        aria-invalid={errors.firstName ? 'true' : 'false'}
+      />
+      {errors.firstName?.type === 'required' && (
+        <p role="alert">First name is required</p>
+      )}
+
+      {/* Pattern validation */}
+      <input
+        {...register('lastName', {
+          pattern: {
+            value: /^[A-Za-z]+$/i,
+            message: 'Last name can only contain letters'
+          }
+        })}
+      />
+      {errors.lastName && <p role="alert">{errors.lastName.message}</p>}
+
+      {/* Min/Max validation */}
+      <input
+        type="number"
+        {...register('age', {
+          min: { value: 18, message: 'Must be at least 18' },
+          max: { value: 99, message: 'Must be less than 100' }
+        })}
+      />
+      {errors.age && <p role="alert">{errors.age.message}</p>}
+
+      {/* Length validation */}
+      <input
+        {...register('username', {
+          minLength: { value: 3, message: 'Username must be at least 3 characters' },
+          maxLength: { value: 20, message: 'Username cannot exceed 20 characters' }
+        })}
+      />
+      {errors.username && <p role="alert">{errors.username.message}</p>}
+
+      {/* Custom validation */}
+      <input
+        {...register('password', {
+          validate: value =>
+            value.includes('@') || 'Password must contain @ symbol'
+        })}
+      />
+      {errors.password && <p role="alert">{errors.password.message}</p>}
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+## Server Actions Integration
+
+### Enhanced Server Actions with Error Handling
+
+**Why**: Combine React Hook Form's client-side validation with robust server-side error handling for production-ready forms.
+
+```typescript
+// Enhanced server action with comprehensive error handling
+async function createUser(data: UserFormData) {
+  'use server';
+
+  try {
+    // Server-side validation
+    const result = UserSchema.safeParse(data);
+    if (!result.success) {
+      return {
+        success: false,
+        errors: result.error.flatten().fieldErrors
+      };
+    }
+
+    // Business logic validation
+    const existingUser = await findUserByEmail(result.data.email);
+    if (existingUser) {
+      return {
+        success: false,
+        errors: {
+          email: ['This email is already registered']
+        }
+      };
+    }
+
+    // Additional server-side checks
+    if (result.data.username.toLowerCase().includes('admin')) {
+      return {
+        success: false,
+        errors: {
+          username: ['Username cannot contain "admin"']
+        }
+      };
+    }
+
+    // Create user
+    const user = await saveUser(result.data);
+    revalidatePath('/users'); // Update cached data
+
+    return { success: true, user };
+
+  } catch (error) {
+    console.error('Create user error:', error);
+    return {
+      success: false,
+      errors: {
+        root: ['An unexpected error occurred. Please try again.']
+      }
+    };
+  }
+}
+
+// Client component with complete error handling
+const UserForm = () => {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm<UserFormData>({
+    resolver: zodResolver(UserSchema),
+  });
+
+  const onSubmit: SubmitHandler<UserFormData> = async (data) => {
+    const result = await createUser(data);
+
+    if (result.success) {
+      toast.success('User created successfully');
+      reset();
+    } else if (result.errors) {
+      // Apply server errors to form using setError()
+      Object.entries(result.errors).forEach(([field, messages]) => {
+        if (messages && messages.length > 0) {
+          setError(field as keyof UserFormData, {
+            type: 'server',
+            message: messages[0]
+          });
+        }
+      });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div>
+        <input {...register('username')} placeholder="Username" />
+        {errors.username && <span className="error">{errors.username.message}</span>}
+      </div>
+
+      <div>
+        <input {...register('email')} placeholder="Email" />
+        {errors.email && <span className="error">{errors.email.message}</span>}
+      </div>
+
+      {errors.root && (
+        <div className="error global-error" role="alert">
+          {errors.root.message}
+        </div>
+      )}
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Creating...' : 'Create User'}
+      </button>
+    </form>
+  );
+};
+```
+
+### React Hook Form Component Integration
+
+**Why**: React Hook Form provides a `<Form />` component for easier service integration and automatic form data handling with built-in success/error callbacks.
+
+```typescript
+import { Form } from 'react-hook-form';
+
+const ServiceIntegratedForm = () => {
+  const { register, control } = useForm<FormData>();
+
+  return (
+    <Form
+      action="/api/save" // Automatically sends POST request with FormData
+      // encType="application/json" // Optional: send as JSON instead of FormData
+      onSuccess={() => {
+        toast.success('Form submitted successfully!');
+      }}
+      onError={(error) => {
+        toast.error('Submission failed. Please try again.');
+        console.error('Form submission error:', error);
+      }}
+      control={control}
+    >
+      <input {...register('firstName', { required: 'First name is required' })} />
+      <input {...register('lastName', { required: 'Last name is required' })} />
+      <input {...register('email', { required: 'Email is required' })} />
+
+      <button type="submit">Submit</button>
+    </Form>
+  );
+};
+
+// ✅ GOOD: Using Form component for simple API integration
+// ❌ BAD: Manual form submission when Form component could handle it
+```
+
+## Performance Best Practices
+
+### Optimizing Re-renders
+
+**Why**: React Hook Form's architecture minimizes re-renders, but following these patterns ensures optimal performance.
+
+```typescript
+// ✅ GOOD: Minimal re-renders with proper usage
+const OptimizedForm = () => {
+  const { register, handleSubmit, watch } = useForm<FormData>();
+
+  // Only watch specific fields when needed
+  const watchUsername = watch('username');
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('username')} />
+      <input {...register('email')} />
+
+      {/* Conditional rendering based on watched field */}
+      {watchUsername?.length > 3 && (
+        <input {...register('displayName')} />
+      )}
+    </form>
+  );
+};
+
+// ❌ BAD: Watching all fields when only one is needed
+const UnoptimizedForm = () => {
+  const { register, handleSubmit, watch } = useForm<FormData>();
+
+  const allValues = watch(); // Causes re-render on every field change
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('username')} />
+      <input {...register('email')} />
+      {allValues.username?.length > 3 && (
+        <input {...register('displayName')} />
+      )}
+    </form>
+  );
+};
+```
+
+## Common Patterns
+
+### Dynamic Form Fields
+
+**Why**: Handle dynamic form scenarios like adding/removing fields while maintaining form state.
+
+```typescript
+const DynamicForm = () => {
+  const { register, handleSubmit, watch, setValue, unregister } = useForm<{
+    items: Array<{ name: string; quantity: number; }>
+  }>({
+    defaultValues: {
+      items: [{ name: '', quantity: 1 }]
+    }
+  });
+
+  const watchedFields = watch('items');
+
+  const addItem = () => {
+    const newItems = [...watchedFields, { name: '', quantity: 1 }];
+    setValue('items', newItems);
+  };
+
+  const removeItem = (index: number) => {
+    const newItems = watchedFields.filter((_, i) => i !== index);
+    setValue('items', newItems);
+    unregister(`items.${index}`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {watchedFields.map((item, index) => (
+        <div key={index}>
+          <input {...register(`items.${index}.name` as const)} />
+          <input
+            type="number"
+            {...register(`items.${index}.quantity` as const, { valueAsNumber: true })}
+          />
+          <button type="button" onClick={() => removeItem(index)}>
+            Remove
+          </button>
+        </div>
+      ))}
+
+      <button type="button" onClick={addItem}>Add Item</button>
+      <button type="submit">Submit</button>
+    </form>
+  );
+};
+```
+
+## Decision Flow
+
+1. **Check for existing Zod schemas** - If they exist, use `zodResolver` and refer to zod-schema-validation rule
+2. **If no Zod schemas exist** - Ask user if they want to use Zod validation
+3. **Always use `useForm` hook** - Never implement forms without React Hook Form
+4. **Always use `handleSubmit`** - Wrap your submit handler for validation
+5. **Register all inputs** - Use `register` function for all form inputs
+6. **Handle errors properly** - Display validation errors with proper accessibility
+7. **Leverage form state** - Use `formState` for loading states and user feedback

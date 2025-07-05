@@ -8,7 +8,10 @@
  * @module
  */
 
+import type * as datasets from "../datasets.js";
 import type * as http from "../http.js";
+import type * as models from "../models.js";
+import type * as projects from "../projects.js";
 import type * as users from "../users.js";
 
 import type {
@@ -26,7 +29,10 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  datasets: typeof datasets;
   http: typeof http;
+  models: typeof models;
+  projects: typeof projects;
   users: typeof users;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
