@@ -5,6 +5,8 @@ export default function Home() {
     <>
       <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
         <div className="font-bold text-xl">Radal Web</div>
+        <div className="font-bold text-xl">Radal Web</div>
+        <div className="font-bold text-xl">Radal Web</div>
         <div className="flex gap-4">
           <Link href="/sign-in" className="text-sm hover:underline">
             Sign In
