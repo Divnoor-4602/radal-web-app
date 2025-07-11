@@ -251,3 +251,23 @@
     background-position: 100% 50%;
   }
 }
+
+/* Custom Project Dashboard Icon Drop Shadow */
+.project-dashboard-icon-drop-shadow {
+  filter: drop-shadow(0px 1px 4.5px rgba(0, 0, 0, 0.25));
+}
+
+/* Custom Project Dashboard Icon Inner Shadow */
+.project-dashboard-icon-inner-shadow {
+  box-shadow: inset 1px 2px 4px 0px rgba(255, 255, 255, 0.15);
+}
+
+/* Custom Button Drop Shadow */
+.custom-button-drop-shadow {
+  filter: drop-shadow(0px 1px 4px hsla(231, 96%, 38%, 0.5));
+}
+
+/* Custom Button Inner Shadow */
+.custom-button-inner-shadow {
+  box-shadow: inset 1px 2px 4px 0px hsla(0, 0%, 100%, 0.25);
+}
