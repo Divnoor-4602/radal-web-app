@@ -186,7 +186,7 @@
 
   /* Custom Border Colors */
   --border-default: #4d4d4d;
-  --border-highlight: #b3b3b3;
+  --border-highlight: #808080;
 
   /* Custom Status Colors */
   --success: #173622;
@@ -270,4 +270,24 @@
 /* Custom Button Inner Shadow */
 .custom-button-inner-shadow {
   box-shadow: inset 1px 2px 4px 0px hsla(0, 0%, 100%, 0.25);
+}
+
+/* Custom Border - Highlight Top, Default Others */
+.border-highlight-top {
+  border-width: 1px;
+  border-style: solid;
+  border-top-color: var(--border-highlight);
+  border-left-color: var(--border-default);
+  border-right-color: var(--border-default);
+  border-bottom-color: var(--border-default);
+}
+
+/* Custom Pills Inner Shadow */
+.custom-pills-inner-shadow {
+  box-shadow: inset 0px 1px 4.5px hsla(0, 95%, 89%, 0.25);
+}
+
+/* Custom Project Card Drop Shadow */
+.custom-project-card-drop-shadow {
+  filter: drop-shadow(0px 1px 6px hsla(0, 0%, 0%, 0.25));
 }

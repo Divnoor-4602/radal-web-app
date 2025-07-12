@@ -1,51 +1,17 @@
 import CustomButton from "@/components/shared/CustomButton";
 import MaxWidthWrapper from "@/components/shared/MaxWidthWrapper";
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
-import { Folders, Plus } from "lucide-react";
-
+import FoldersCustomIcon from "@/components/project-dashboard/FoldersCustomIcon";
+import ProjectCard from "@/components/project-dashboard/ProjectCard";
+import Topbar from "@/components/project-dashboard/Topbar";
+import { Plus } from "lucide-react";
 import React from "react";
-
-const FoldersCustomIcon = () => {
-  return (
-    <>
-      <div className="flex items-center justify-center size-12 bg-bg-300 border rounded-[10px] border-bg-200 project-dashboard-icon-drop-shadow project-dashboard-icon-inner-shadow">
-        <Folders className="size-5 text-text-primary" />
-      </div>
-    </>
-  );
-};
 
 const DashboardPage = () => {
   return (
     <main className="bg-bg-200 min-h-screen">
       <MaxWidthWrapper className="p-5 border-b border-border-default">
         {/* Topbar */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Avatar className="size-10">
-              <AvatarImage
-                src="https://github.com/shadcn.png"
-                className="rounded-full"
-              />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <p className="text-xl font-semibold text-text-primary tracking-[-0.04em]">
-                Good Morning, Div 👋
-              </p>
-              <p className="text-xs text-text-muted">
-                Wednesday, July 10th 2024
-              </p>
-            </div>
-          </div>
-          <Avatar className="size-10">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              className="rounded-full"
-            />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-        </div>
+        <Topbar />
       </MaxWidthWrapper>
       {/* project cards */}
       <MaxWidthWrapper className="px-5 py-8">
@@ -61,6 +27,52 @@ const DashboardPage = () => {
           <CustomButton icon={<Plus className="size-4" />} className="gap-1.5">
             Create Project
           </CustomButton>
+        </div>
+
+        {/* Project card grid */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(380px,1fr))] gap-x-7 gap-y-10 mt-16">
+          <ProjectCard
+            cardTitle="Acme Support"
+            date="3 days ago"
+            pillType="info"
+            pillText="Training"
+            progressValue={50}
+          />
+          <ProjectCard
+            cardTitle="Marketing Campaign"
+            date="5 days ago"
+            pillType="success"
+            pillText="Ready"
+            progressValue={85}
+          />
+          <ProjectCard
+            cardTitle="Bug Fixes"
+            date="1 week ago"
+            pillType="error"
+            pillText="Error"
+            progressValue={45}
+          />
+          <ProjectCard
+            cardTitle="Website Redesign"
+            date="2 days ago"
+            pillType="info"
+            pillText="Training"
+            progressValue={60}
+          />
+          <ProjectCard
+            cardTitle="Database Migration"
+            date="4 days ago"
+            pillType="success"
+            pillText="Ready"
+            progressValue={100}
+          />
+          <ProjectCard
+            cardTitle="API Integration"
+            date="1 day ago"
+            pillType="error"
+            pillText="Error"
+            progressValue={25}
+          />
         </div>
       </MaxWidthWrapper>
     </main>
