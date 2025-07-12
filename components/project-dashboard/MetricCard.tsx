@@ -9,6 +9,8 @@ interface MetricCardProps {
   contentDescription: string;
   pillText: string;
   pillType: "success" | "error" | "info";
+  pillIcon?: React.ReactElement;
+  contentValueClassName?: string;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -18,6 +20,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
   contentDescription,
   pillText,
   pillType,
+  pillIcon,
+  contentValueClassName,
 }) => {
   return (
     <div className="pt-5 pb-2 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[380px] rounded-2xl border-highlight-top custom-project-card-drop-shadow px-4 to-[120%] from-[-15%]">
@@ -29,16 +33,21 @@ const MetricCard: React.FC<MetricCardProps> = ({
         </h2>
       </div>
       {/* Card content */}
-      <div className="flex items-end justify-between mt-4">
-        <div className="flex items-end gap-1">
-          <div className="text-text-primary text-[40px] font-bold tracking-tighter">
+      <div className="flex items-baseline justify-between mt-4">
+        <div className="flex items-baseline gap-1">
+          <div
+            className={
+              contentValueClassName ||
+              "text-text-primary text-[40px] font-bold tracking-tighter"
+            }
+          >
             {contentValue}
           </div>
-          <div className="text-text-muted text-sm font-regular tracking-tight mb-[9px]">
+          <div className="text-text-muted text-sm font-regular tracking-tight">
             {contentDescription}
           </div>
         </div>
-        <CustomPills text={pillText} type={pillType} className="mb-[9px]" />
+        <CustomPills text={pillText} type={pillType} icon={pillIcon} />
       </div>
     </div>
   );

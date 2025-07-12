@@ -7,13 +7,31 @@ type TCustomButton = {
   className?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
+  variant?: "primary" | "secondary";
 };
 
-const CustomButton = ({ text, className, icon, onClick }: TCustomButton) => {
+const CustomButton = ({
+  text,
+  className,
+  icon,
+  onClick,
+  variant = "primary",
+}: TCustomButton) => {
+  const getVariantStyles = () => {
+    switch (variant) {
+      case "secondary":
+        return "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow";
+      case "primary":
+      default:
+        return "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow";
+    }
+  };
+
   return (
     <Button
       className={cn(
-        "rounded-[10px] bg-primary text-white px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer custom-button-drop-shadow custom-button-inner-shadow",
+        "rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100",
+        getVariantStyles(),
         className,
       )}
       onClick={onClick}

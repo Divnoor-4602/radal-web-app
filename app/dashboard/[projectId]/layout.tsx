@@ -21,7 +21,7 @@ const ProjectLayout = ({ children }: { children: React.ReactNode }) => {
       style={{ "--sidebar-width": "300px" } as React.CSSProperties}
     >
       <ProjectSidebar />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col">
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator
@@ -42,7 +42,7 @@ const ProjectLayout = ({ children }: { children: React.ReactNode }) => {
             </BreadcrumbList>
           </Breadcrumb>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="p-6 flex-1 min-h-0">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

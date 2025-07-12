@@ -1,11 +1,12 @@
 import CustomButton from "@/components/shared/CustomButton";
 import MetricCard from "@/components/project-dashboard/MetricCard";
-import { Plus, Brain, Database, Users } from "lucide-react";
+import DatasetUploadMetricCard from "@/components/project-dashboard/DatasetUploadMetricCard";
+import { Plus, Brain, File, Sparkles } from "lucide-react";
 import React from "react";
 
 const ProjectPage = () => {
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div className="mt-7">
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold tracking-tighter">
@@ -29,7 +30,7 @@ const ProjectPage = () => {
           pillType="success"
         />
         <MetricCard
-          icon={<Database />}
+          icon={<File />}
           title="Total Datasets"
           contentValue="5"
           contentDescription="datasets"
@@ -37,17 +38,18 @@ const ProjectPage = () => {
           pillType="info"
         />
         <MetricCard
-          icon={<Users />}
-          title="Team Members"
-          contentValue="3"
-          contentDescription="members"
-          pillText="Online"
-          pillType="success"
+          icon={<Sparkles />}
+          title="Currently Training"
+          contentValue="Acme Support"
+          contentValueClassName="text-text-primary text-[30px] font-bold tracking-tighter mt-2.5"
+          contentDescription="tokenising"
+          pillText="Training"
+          pillType="info"
         />
       </div>
-      {/* Dashboard Card */}
-      <div></div>
-    </>
+      {/* Dataset Uploaded Stat Card */}
+      <DatasetUploadMetricCard />
+    </div>
   );
 };
 

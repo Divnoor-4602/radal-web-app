@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
+import React from "react";
 
 type CustomPillsProps = {
   text: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactElement;
   className?: string;
   type?: "success" | "error" | "info";
 };
@@ -34,7 +35,11 @@ const CustomPills = ({
         className,
       )}
     >
-      {icon}
+      {icon && (
+        <div className="size-8 flex items-center justify-center [&>svg]:size-8">
+          {icon}
+        </div>
+      )}
       {text}
     </div>
   );
