@@ -41,7 +41,7 @@ const ProjectPage = () => {
           icon={<Sparkles />}
           title="Currently Training"
           contentValue="Acme Support"
-          contentValueClassName="text-text-primary text-[30px] font-bold tracking-tighter mt-2.5"
+          contentValueClassName="text-text-primary text-[30px] font-bold tracking-tighter mt-3 mb-[3px]"
           contentDescription="tokenising"
           pillText="Training"
           pillType="info"
