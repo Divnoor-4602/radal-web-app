@@ -1,8 +1,8 @@
 import CustomButton from "@/components/shared/CustomButton";
 import MaxWidthWrapper from "@/components/shared/MaxWidthWrapper";
-import FoldersCustomIcon from "@/components/project-dashboard/FoldersCustomIcon";
-import ProjectCard from "@/components/project-dashboard/ProjectCard";
-import Topbar from "@/components/project-dashboard/Topbar";
+import FoldersCustomIcon from "@/components/app-dashboard/FoldersCustomIcon";
+import ProjectCard from "@/components/app-dashboard/ProjectCard";
+import Topbar from "@/components/app-dashboard/Topbar";
 import { Plus } from "lucide-react";
 import React from "react";
 
@@ -24,9 +24,11 @@ const DashboardPage = () => {
             </h1>
           </div>
           {/* Add project button */}
-          <CustomButton icon={<Plus className="size-4" />} className="gap-1.5">
-            Create Project
-          </CustomButton>
+          <CustomButton
+            icon={<Plus className="size-4" />}
+            className="gap-1.5"
+            text="Create Project"
+          />
         </div>
 
         {/* Project card grid */}

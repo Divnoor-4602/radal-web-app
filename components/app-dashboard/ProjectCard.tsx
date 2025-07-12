@@ -19,7 +19,7 @@ const ProjectCard = ({
   progressValue,
 }: ProjectCardProps) => {
   return (
-    <div className="py-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[380px] rounded-2xl border-highlight-top custom-project-card-drop-shadow">
+    <div className="py-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[380px] rounded-2xl border-highlight-top custom-project-card-drop-shadow to-[120%] from-[-15%]">
       {/* project header */}
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-3">

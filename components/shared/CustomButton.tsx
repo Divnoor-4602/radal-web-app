@@ -3,18 +3,13 @@ import React from "react";
 import { Button } from "../ui/button";
 
 type TCustomButton = {
-  children: React.ReactNode;
+  text: string;
   className?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
 };
 
-const CustomButton = ({
-  children,
-  className,
-  icon,
-  onClick,
-}: TCustomButton) => {
+const CustomButton = ({ text, className, icon, onClick }: TCustomButton) => {
   return (
     <Button
       className={cn(
@@ -24,7 +19,7 @@ const CustomButton = ({
       onClick={onClick}
     >
       {icon}
-      {children}
+      {text}
     </Button>
   );
 };
