@@ -17,6 +17,16 @@ const ProjectPage = () => {
             className="gap-1.5"
             text="Create Model"
           />
+          <CustomButton
+            icon={<Plus className="size-4" />}
+            className="gap-1.5"
+            text="Create Model"
+          />
+          <CustomButton
+            icon={<Plus className="size-4" />}
+            className="gap-1.5"
+            text="Create Model"
+          />
         </div>
       </div>
       {/* Metric cards */}
