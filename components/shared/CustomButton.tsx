@@ -7,7 +7,7 @@ type TCustomButton = {
   className?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "tertiary";
 };
 
 const CustomButton = ({
@@ -21,6 +21,8 @@ const CustomButton = ({
     switch (variant) {
       case "secondary":
         return "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow";
+      case "tertiary":
+        return "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow";
       case "primary":
       default:
         return "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow";

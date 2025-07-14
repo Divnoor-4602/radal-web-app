@@ -4,11 +4,13 @@ import ProjectTopbar from "@/components/project-dashboard/ProjectTopbar";
 import { Brain, File, Sparkles } from "lucide-react";
 import React from "react";
 
-const ProjectPage = ({ params }: { params: { projectId: string } }) => {
+const ProjectPage = async ({ params }: { params: { projectId: string } }) => {
+  const { projectId } = await params;
+
   return (
     <div className="flex flex-col h-full">
       {/* Project Topbar */}
-      <ProjectTopbar projectId={params.projectId} />
+      <ProjectTopbar projectId={projectId} />
       {/* Metric cards */}
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <MetricCard
