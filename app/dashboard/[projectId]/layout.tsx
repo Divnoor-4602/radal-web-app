@@ -1,51 +1,22 @@
-import {
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-} from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+"use client";
+
+import { usePathname } from "next/navigation";
 import React from "react";
-import ProjectSidebar from "@/components/project-dashboard/ProjectSidebar";
+import ProjectDashboardLayout from "@/components/project-dashboard/ProjectDashboardLayout";
+import CanvasDashboardLayout from "@/components/models/canvas-dashboard/CanvasDashboardLayout";
 
 const ProjectLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <SidebarProvider
-      style={{ "--sidebar-width": "300px" } as React.CSSProperties}
-    >
-      <ProjectSidebar />
-      <SidebarInset className="flex flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4 bg-border-default"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#" className="text-text-inactive">
-                  Building Your Application
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </header>
-        <main className="p-6 flex-1 min-h-0">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
+  const pathname = usePathname();
+
+  // Check if we're on the canvas page
+  const isCanvasPage = pathname.includes("/models/new/canvas");
+
+  // Conditionally render layouts
+  if (isCanvasPage) {
+    return <CanvasDashboardLayout>{children}</CanvasDashboardLayout>;
+  }
+
+  return <ProjectDashboardLayout>{children}</ProjectDashboardLayout>;
 };
 
 export default ProjectLayout;

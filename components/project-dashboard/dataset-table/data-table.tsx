@@ -42,7 +42,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <Table className="border-separate border-spacing-y-4">
+    <Table className="border-separate border-spacing-y-4 border-spacing-x-0">
       <TableHeader className="border-0">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow
@@ -71,12 +71,12 @@ export function DataTable<TData, TValue>({
             <TableRow
               key={row.id}
               data-state={row.getIsSelected() && "selected"}
-              className={`border-0 bg-[#221C1C] px-2 py-3 ${index === 0 ? "pt-20" : ""}`}
+              className={`border-0 bg-[#221C1C] hover:bg-[#221C1C]/90 px-2 py-3 custom-table-row-inner-shadow rounded-xl ${index === 0 ? "pt-20" : ""}`}
             >
               {row.getVisibleCells().map((cell, cellIndex) => (
                 <TableCell
                   key={cell.id}
-                  className={`bg-[#221C1C] custom-table-row-inner-shadow ${cellIndex === 0 ? "rounded-l-xl" : ""} ${cellIndex === row.getVisibleCells().length - 1 ? "rounded-r-xl" : ""}`}
+                  className={`bg-transparent ${cellIndex === 0 ? "rounded-l-xl" : ""} ${cellIndex === row.getVisibleCells().length - 1 ? "rounded-r-xl" : ""}`}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>

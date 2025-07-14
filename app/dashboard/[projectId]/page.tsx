@@ -1,24 +1,14 @@
-import CustomButton from "@/components/shared/CustomButton";
 import MetricCard from "@/components/project-dashboard/MetricCard";
 import DatasetUploadMetricCard from "@/components/project-dashboard/DatasetUploadMetricCard";
-import { Plus, Brain, File, Sparkles } from "lucide-react";
+import ProjectTopbar from "@/components/project-dashboard/ProjectTopbar";
+import { Brain, File, Sparkles } from "lucide-react";
 import React from "react";
 
-const ProjectPage = () => {
+const ProjectPage = ({ params }: { params: { projectId: string } }) => {
   return (
     <div className="flex flex-col h-full">
-      <div className="mt-7">
-        <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-bold tracking-tighter">
-            Good Evening, Div 👋
-          </h1>
-          <CustomButton
-            icon={<Plus className="size-4" />}
-            className="gap-1.5"
-            text="Create Model"
-          />
-        </div>
-      </div>
+      {/* Project Topbar */}
+      <ProjectTopbar projectId={params.projectId} />
       {/* Metric cards */}
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <MetricCard
