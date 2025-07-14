@@ -37,7 +37,7 @@ const ProjectCard = ({
               </p>
             </div>
           </div>
-          <CustomPills text={pillText} type={pillType} />
+          <CustomPills variant={pillType}>{pillText}</CustomPills>
         </div>
         {/* project content */}
         <div className="flex items-center px-4 mt-5">

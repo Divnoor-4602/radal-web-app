@@ -137,6 +137,10 @@
   --info: #fef3c6;
   --info-foreground: #1e1e1e;
   --info-border: #eab308;
+
+  /* Custom Image Effects */
+  --image-muted-brightness: 0.6;
+  --image-muted-contrast: 0.8;
 }
 
 /* Dark Mode */
@@ -201,6 +205,10 @@
   --info: #3d371f;
   --info-foreground: #f2f2f2;
   --info-border: #a18b36;
+
+  /* Custom Image Effects */
+  --image-muted-brightness: 0.4;
+  --image-muted-contrast: 0.7;
 }
 
 @layer base {
@@ -326,4 +334,11 @@
 /* Custom Table Row Inner Shadow */
 .custom-table-row-inner-shadow {
   box-shadow: inset 0px 1px 4px 0px hsla(0, 0%, 0%, 0.15);
+}
+
+/* Custom Image Muted Effect */
+.image-muted {
+  filter: brightness(var(--image-muted-brightness))
+    contrast(var(--image-muted-contrast));
+  transition: filter 0.2s ease;
 }

@@ -51,7 +51,9 @@ const MetricCard: React.FC<MetricCardProps> = ({
               {contentDescription}
             </div>
           </div>
-          <CustomPills text={pillText} type={pillType} icon={pillIcon} />
+          <CustomPills variant={pillType} icon={pillIcon}>
+            {pillText}
+          </CustomPills>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { LucideIcon } from "lucide-react";
 export interface PreviewNodeProps {
   icon: LucideIcon;
   title: string;
-  description: string;
+
   nodeType: string;
   className?: string;
 }
@@ -13,7 +13,7 @@ export interface PreviewNodeProps {
 export const PreviewNode: React.FC<PreviewNodeProps> = ({
   icon: Icon,
   title,
-  description,
+
   nodeType,
   className = "",
 }) => {
@@ -37,10 +37,6 @@ export const PreviewNode: React.FC<PreviewNodeProps> = ({
         </div>
         {/* Drag handle */}
         <GripVertical className="size-5 text-text-inactive" />
-      </div>
-      {/* Card description */}
-      <div className="text-text-muted text-xs font-regular tracking-tight mt-3">
-        {description}
       </div>
     </div>
   );
