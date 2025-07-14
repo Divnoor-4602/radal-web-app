@@ -60,7 +60,7 @@ const CanvasDashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <SidebarInset className="flex flex-col bg-white">
         <CanvasTopbarWithActions />
         {/* canvas */}
-        <main className="p-4 flex-1 min-h-0 bg-bg-100">{children}</main>
+        <main className="flex-1 min-h-0 bg-bg-100">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

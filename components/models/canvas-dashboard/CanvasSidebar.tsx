@@ -43,18 +43,21 @@ const CanvasSidebar = () => {
             icon={Database}
             title="Upload Dataset"
             description="Upload your CSV to be used for tuning the model. Make sure it has two columns: prompt and response."
+            nodeType="dataset"
           />
           {/* Model selection preview node */}
           <PreviewNode
             icon={BrainCog}
             title="Model Selection"
             description="Pick a base model and quantization level. This will be the starting point for your fine-tunes."
+            nodeType="model"
           />
           {/* Training configuration preview node */}
           <PreviewNode
             icon={Sparkles}
             title="Training Configuration"
             description="Train with our default settings and download the model. Nothing to tweak, you're good to go!"
+            nodeType="training"
           />
         </div>
       </SidebarContent>

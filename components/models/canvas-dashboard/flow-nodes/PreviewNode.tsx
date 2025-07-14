@@ -6,6 +6,7 @@ export interface PreviewNodeProps {
   icon: LucideIcon;
   title: string;
   description: string;
+  nodeType: string;
   className?: string;
 }
 
@@ -13,11 +14,18 @@ export const PreviewNode: React.FC<PreviewNodeProps> = ({
   icon: Icon,
   title,
   description,
+  nodeType,
   className = "",
 }) => {
+  const onDragStart = (event: React.DragEvent) => {
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.effectAllowed = "move";
+  };
   return (
     <div
-      className={`pt-4 pb-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full rounded-2xl border border-border-default custom-project-card-drop-shadow px-5 to-[110%] from-[-15%] ${className}`}
+      draggable
+      onDragStart={onDragStart}
+      className={`pt-4 pb-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full rounded-2xl border border-border-default custom-project-card-drop-shadow px-5 to-[110%] from-[-15%] cursor-grab active:cursor-grabbing ${className}`}
     >
       {/* card header */}
       <div className="flex items-center justify-between">

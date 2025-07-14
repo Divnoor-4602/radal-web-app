@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "nodes": {
+    "d1": {
+      "id": "d1",
+      "type": "Dataset",
+      "props": {
+        "uris": [
+          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh71y6f5qb7x4pbg34cdmzt5497kn7bj/projects/jd70grbw4ra3e8n695k0sttqn57kpbr1/datasets/WOM22V0_03eCqQanxofmd/original.csv"
+        ]
+      }
+    },
+    "b1": {
+      "id": "b1",
+      "type": "BaseModel",
+      "props": {
+        "model_id": "microsoft/phi-2"
+      }
+    },
+    "t1": {
+      "id": "t1",
+      "type": "Train",
+      "props": {
+        "epochs": 3,
+        "batch_size": 4,
+        "train_quant": "int8",
+        "download_quant": "int4"
+      }
+    }
+  },
+  "edges": [
+    {
+      "from": "d1",
+      "to": "b1"
+    },
+    {
+      "from": "b1",
+      "to": "t1"
+    }
+  ],
+  "meta": {
+    "created_by": "jh71y6f5qb7x4pbg34cdmzt5497kn7bj",
+    "created_at": "2025-07-14T07:48:31.457Z",
+    "clerk_id": "user_2zqD7x8BTXrBxsLDXxa0hnURsG3",
+    "jwt_token": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yelFkRkhIVWFURVRLYUJoSVFXbU1hYWJsZzQiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE3NTI0NzkzNjYsImZ2YSI6WzQ4NiwtMV0sImlhdCI6MTc1MjQ3OTMwNiwiaXNzIjoiaHR0cHM6Ly92YXN0LWtpZC0zNC5jbGVyay5hY2NvdW50cy5kZXYiLCJuYmYiOjE3NTI0NzkyOTYsInNpZCI6InNlc3NfMnpxRUc0OGVvNU9qUW5JZHltb2VMTENER1o0Iiwic3ViIjoidXNlcl8yenFEN3g4QlRYckJ4c0xEWHhhMGhuVVJzRzMiLCJ2IjoyfQ.Uo5aHUhmXt5wvATaNBJSnqVdiEuX8wb4iux4BzO9yYTNjv5-TrzXkxqIdNnCK2lxQZNAqJW8owkwTlyMbDa00GlaaQjySZwsEktS9c_P-xr0UAi1tC9Mf_1ue1GsKVGOBnpnOPYDM-2vrOBtC8jnmKeaLJSslk6LR_s7uus-zZhd--dcuuH81O09qT9pM1PNdPz5KzYDlC5pRfqfc_k3lks7z9ji_ZlelO6jhhjB66sBka4_dbX1M_N9YXibdjguwqrqY0KYkrmZQVM3M2L0kXgvHl7XdFmEzJqBqQdBpapovx3wQ1C3CoQXhwc0iLdNACf9UA7ayrXonsy67JmpjA"
+  }
+}

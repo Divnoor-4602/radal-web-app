@@ -42,7 +42,16 @@ export interface ModelNodeData extends Record<string, unknown> {
   isTrained?: boolean;
 }
 
-export type FlowNodeData = DatasetNodeData | ModelNodeData;
+export interface TrainingNodeData extends Record<string, unknown> {
+  title: string;
+  description: string;
+  epochs?: number;
+  learningRate?: number;
+  batchSize?: number;
+  isTrained?: boolean;
+}
+
+export type FlowNodeData = DatasetNodeData | ModelNodeData | TrainingNodeData;
 
 export interface ProjectGraphNode {
   id: string;
@@ -106,17 +115,39 @@ const useFlowStore = create<FlowState>((set, get) => ({
 
     if (type === "dataset") {
       data = {
-        title: "Dataset",
-        description: "Upload your training data",
+        title: "Upload Dataset",
+        description: "Upload your CSV to be used for tuning the model",
         files: [],
+        datasetId: `dataset_${Date.now()}`,
+        stats: {
+          rows: 0,
+          columns: 0,
+          headers: [],
+        },
+        preprocessing: {
+          originalColumns: 0,
+          finalColumns: 0,
+          removedColumns: 0,
+          removedIndexColumns: false,
+          totalRows: 0,
+        },
+        isTrained: false,
       } as DatasetNodeData;
     } else if (type === "model") {
       data = {
-        title: "Base Model",
-        description: "Select your base model for training",
+        title: "Model Selection",
+        description: "Pick a base model and quantization level",
         modelId: "phi-2",
         quant: "int4",
       } as ModelNodeData;
+    } else if (type === "training") {
+      data = {
+        title: "Training Configuration",
+        description: "Configure training parameters",
+        epochs: 3,
+        learningRate: 0.001,
+        batchSize: 4,
+      } as TrainingNodeData;
     } else {
       return;
     }
@@ -131,7 +162,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
     const newNodes = [...currentNodes, newNode];
     let newEdges = [...currentEdges];
 
-    // Auto-connect dataset to model when model is added
+    // Auto-connect nodes in sequence: dataset -> model -> training
     if (type === "model") {
       const datasetNode = currentNodes.find((node) => node.type === "dataset");
       if (datasetNode) {
@@ -141,6 +172,18 @@ const useFlowStore = create<FlowState>((set, get) => ({
           target: id,
           animated: true,
           style: { stroke: "#3b82f6", strokeWidth: 2 },
+        };
+        newEdges = [...newEdges, edge];
+      }
+    } else if (type === "training") {
+      const modelNode = currentNodes.find((node) => node.type === "model");
+      if (modelNode) {
+        const edge: Edge = {
+          id: nanoid(),
+          source: modelNode.id,
+          target: id,
+          animated: true,
+          style: { stroke: "#10b981", strokeWidth: 2 },
         };
         newEdges = [...newEdges, edge];
       }
