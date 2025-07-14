@@ -1,6 +1,7 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
@@ -57,6 +58,26 @@ const CanvasSidebar = () => {
           />
         </div>
       </SidebarContent>
+      {/* Sidebar footer */}
+      <SidebarFooter>
+        <div className="flex gap-3 items-center mt-9">
+          <Avatar className="size-10">
+            <AvatarImage
+              src="https://github.com/shadcn.png"
+              className="rounded-full"
+            />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <p className="text-text-primary text-base font-medium tracking-tight">
+              Div
+            </p>
+            <p className="text-text-inactive text-sm tracking-tight">
+              div@gmail.com
+            </p>
+          </div>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 };
