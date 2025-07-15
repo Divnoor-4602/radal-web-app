@@ -5,9 +5,16 @@ import { motion } from "motion/react";
 
 interface AnimatedImagesProps {
   isHovered: boolean;
+  isDragActive: boolean;
 }
 
-export const AnimatedImages: FC<AnimatedImagesProps> = ({ isHovered }) => {
+export const AnimatedImages: FC<AnimatedImagesProps> = ({
+  isHovered,
+  isDragActive,
+}) => {
+  // Trigger animations when either hovering or dragging
+  const doAnimate = isHovered || isDragActive;
+
   return (
     <motion.div className="w-16 h-16 relative flex items-center justify-center">
       {/* Green CSV - stays in center */}
@@ -17,9 +24,9 @@ export const AnimatedImages: FC<AnimatedImagesProps> = ({ isHovered }) => {
         className="size-10 absolute"
         initial={{ scale: 1, rotate: 0, x: 0 }}
         animate={{
-          x: isHovered ? -15 : 0,
-          scale: isHovered ? 1.05 : 1,
-          rotate: isHovered ? -10 : 0,
+          x: doAnimate ? -15 : 0,
+          scale: doAnimate ? 1.05 : 1,
+          rotate: doAnimate ? -10 : 0,
           zIndex: 3,
         }}
         transition={{ duration: 0.3 }}
@@ -32,10 +39,10 @@ export const AnimatedImages: FC<AnimatedImagesProps> = ({ isHovered }) => {
         className="size-10 absolute"
         initial={{ x: 0, y: 0, rotate: 0, scale: 1 }}
         animate={{
-          x: isHovered ? -5 : 0,
-          y: isHovered ? -5 : 0,
-          rotate: isHovered ? 2 : 0,
-          scale: isHovered ? 1.05 : 1,
+          x: doAnimate ? -5 : 0,
+          y: doAnimate ? -5 : 0,
+          rotate: doAnimate ? 2 : 0,
+          scale: doAnimate ? 1.05 : 1,
           zIndex: 2,
         }}
         transition={{ duration: 0.3 }}
@@ -48,10 +55,10 @@ export const AnimatedImages: FC<AnimatedImagesProps> = ({ isHovered }) => {
         className="size-10 absolute"
         initial={{ x: 0, y: 0, rotate: 0, scale: 1 }}
         animate={{
-          x: isHovered ? 5 : 0,
-          y: isHovered ? -3 : 0,
-          rotate: isHovered ? 12 : 0,
-          scale: isHovered ? 1.05 : 1,
+          x: doAnimate ? 5 : 0,
+          y: doAnimate ? -3 : 0,
+          rotate: doAnimate ? 12 : 0,
+          scale: doAnimate ? 1.05 : 1,
           zIndex: 1,
         }}
         transition={{ duration: 0.3 }}

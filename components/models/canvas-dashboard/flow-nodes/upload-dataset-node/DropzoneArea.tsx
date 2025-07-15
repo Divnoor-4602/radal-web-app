@@ -67,13 +67,15 @@ export const DropzoneArea: FC<DropzoneAreaProps> = ({ onFilesUploaded }) => {
     maxFiles: 1,
   });
 
+  // Check if should show active state (hover or drag)
+  const isActive = isHovered || isDragActive;
+
   return (
     <div
       {...getRootProps()}
       className={`
-        border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors min-h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default
-        ${isDragActive ? "border-blue-400 bg-blue-50/5" : ""}
-        ${isHovered ? "bg-[#241E1E] border-border-highlight" : ""}
+        border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 min-h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default
+        ${isActive ? "bg-[#241E1E] border-border-highlight" : ""}
         ${error ? "border-red-500" : ""}
         ${isValidating ? "border-yellow-400 bg-yellow-50/5" : ""}
       `}
@@ -83,23 +85,28 @@ export const DropzoneArea: FC<DropzoneAreaProps> = ({ onFilesUploaded }) => {
       <input {...getInputProps()} />
       <div className="flex flex-col items-center gap-2">
         <div>
-          <AnimatedImages isHovered={isHovered} />
+          <AnimatedImages isHovered={isHovered} isDragActive={isDragActive} />
         </div>
         <div className="">
           {isValidating ? (
             <p className="text-blue-400 text-xs font-medium">
               Validating file...
             </p>
-          ) : isDragActive ? (
-            <p className="text-blue-400 text-xs font-medium">
-              Drop the file here...
-            </p>
-          ) : (
+          ) : isActive ? (
             <div className="flex flex-col gap-1">
-              <p className="text-text-inactive text-xs tracking-tight font-medium">
+              <p className="text-text-highlight text-xs tracking-tight font-medium transition-colors duration-200">
                 Drag & drop your CSV file here
               </p>
-              <p className="text-text-muted text-[10px] tracking-tight font-medium">
+              <p className="text-text-muted text-[10px] tracking-tight font-medium transition-colors duration-200">
+                Must have exactly 2 columns
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <p className="text-text-inactive text-xs tracking-tight font-medium transition-colors duration-200">
+                Drag & drop your CSV file here
+              </p>
+              <p className="text-text-muted text-[10px] tracking-tight font-medium transition-colors duration-200">
                 Must have exactly 2 columns
               </p>
             </div>
