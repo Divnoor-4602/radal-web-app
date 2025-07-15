@@ -4,6 +4,8 @@ import { TrainingNodeData } from "@/lib/stores/flowStore";
 interface TrainingConfigurationNodeProps {
   id: string;
   data: TrainingNodeData;
+  selected?: boolean;
+  dragging?: boolean;
 }
 
 export const TrainingConfigurationNode: React.FC<
@@ -11,9 +13,15 @@ export const TrainingConfigurationNode: React.FC<
 > = ({
   // id, // TODO: Use id when needed
   data,
+  selected,
+  dragging,
 }) => {
   return (
-    <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-purple-300 min-w-[200px]">
+    <div
+      className={`px-4 py-2 shadow-md rounded-md bg-white border-2 min-w-[200px] ${
+        selected ? "border-border-highlight" : "border-purple-300"
+      } ${dragging ? "opacity-70" : ""}`}
+    >
       <div className="flex">
         <div className="rounded-full w-12 h-12 flex justify-center items-center bg-purple-500">
           ⚙️

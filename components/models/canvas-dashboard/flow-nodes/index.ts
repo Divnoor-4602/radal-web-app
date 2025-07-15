@@ -4,7 +4,7 @@ export type { PreviewNodeProps } from "./PreviewNode";
 export {
   UploadDatasetNode,
   default as UploadDatasetNodeDefault,
-} from "./UploadDatasetNode";
+} from "./upload-dataset-node/UploadDatasetNode";
 export {
   SelectModelNode,
   default as SelectModelNodeDefault,

@@ -20,19 +20,25 @@ import CustomPills from "@/components/shared/CustomPills";
 interface SelectModelNodeProps {
   id: string;
   data: ModelNodeData;
+  selected?: boolean;
+  dragging?: boolean;
 }
 
-export const SelectModelNode: React.FC<SelectModelNodeProps> = (
-  {
-    // id, // TODO: Use id when needed
-    // data, // TODO: Use data when needed
-  },
-) => {
+export const SelectModelNode: React.FC<SelectModelNodeProps> = ({
+  // id, // TODO: Use id when needed
+  // data, // TODO: Use data when needed
+  selected,
+  dragging,
+}) => {
   return (
     <>
       <div className="relative">
         {/* Main card */}
-        <div className="relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full max-w-[400px] rounded-2xl border border-border-default custom-project-card-drop-shadow to-[120%] from-[-15%]">
+        <div
+          className={`relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full max-w-[400px] rounded-2xl border custom-project-card-drop-shadow to-[120%] from-[-15%] ${
+            selected ? "border-border-highlight" : "border-border-default"
+          } ${dragging ? "opacity-70" : ""}`}
+        >
           {/* Card header */}
           <div className="px-5">
             <div className="flex items-center gap-3">
