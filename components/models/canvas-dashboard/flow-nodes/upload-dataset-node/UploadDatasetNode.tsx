@@ -1,6 +1,8 @@
-import React, { FC } from "react";
+"use client";
+
+import React, { FC, useState } from "react";
 import { DatasetNodeData } from "@/lib/stores/flowStore";
-import { Database, Info } from "lucide-react";
+import { Database, Info, File } from "lucide-react";
 import CustomPills from "@/components/shared/CustomPills";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,22 +12,21 @@ import {
 } from "@/components/ui/tooltip";
 import { DropzoneArea } from "./DropzoneArea";
 
-interface UploadDatasetNodeProps {
+type TUploadDatasetNodeProps = Readonly<{
   id: string;
   data: DatasetNodeData;
   selected?: boolean;
   dragging?: boolean;
-}
+}>;
 
-export const UploadDatasetNode: FC<UploadDatasetNodeProps> = ({
-  // id, // TODO: Use id when needed
-  // data, // TODO: Use data when needed
+export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
   selected,
   dragging,
 }) => {
-  const handleFilesUploaded = (files: File[]) => {
-    // Handle the uploaded files here
-    console.log("Files uploaded in UploadDatasetNode:", files);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  const handleFileUploaded = (file: File | null) => {
+    setUploadedFile(file);
   };
 
   return (
@@ -73,7 +74,7 @@ export const UploadDatasetNode: FC<UploadDatasetNodeProps> = ({
               </Tooltip>
             </div>
             {/* file input - react dropzone implementation */}
-            <DropzoneArea onFilesUploaded={handleFilesUploaded} />
+            <DropzoneArea onFileUploaded={handleFileUploaded} />
             {/* Extra cues regarding the format */}
             <div className="text-text-inactive text-[10px] tracking-tight font-medium">
               Supported formats: CSV
@@ -89,7 +90,14 @@ export const UploadDatasetNode: FC<UploadDatasetNodeProps> = ({
             size="default"
             className="tracking-tighter"
           >
-            Select a file
+            {uploadedFile ? (
+              <div className="flex items-center">
+                <File className="size-3 mr-1" />
+                {uploadedFile.name}
+              </div>
+            ) : (
+              "Select a file"
+            )}
           </CustomPills>
         </div>
       </div>

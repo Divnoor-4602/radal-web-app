@@ -6,17 +6,36 @@ import { motion } from "motion/react";
 interface AnimatedImagesProps {
   isHovered: boolean;
   isDragActive: boolean;
+  translateFileImages: boolean;
+  translateBackIntoView?: boolean; // Bring images back from top
+  disableHoverEffects?: boolean; // Disable hover animations
 }
 
-export const AnimatedImages: FC<AnimatedImagesProps> = ({
+const AnimatedImages: FC<AnimatedImagesProps> = ({
   isHovered,
   isDragActive,
+  translateFileImages,
+  translateBackIntoView = false,
+  disableHoverEffects = false,
 }) => {
-  // Trigger animations when either hovering or dragging
-  const doAnimate = isHovered || isDragActive;
+  // Trigger animations when either hovering or dragging (but not if disabled)
+  const doAnimate = !disableHoverEffects && (isHovered || isDragActive);
+
+  // translate out of view
+  const doTranslate = translateFileImages;
+
+  // translate back into view from top
+  const doTranslateBack = translateBackIntoView;
 
   return (
-    <motion.div className="w-16 h-16 relative flex items-center justify-center">
+    <motion.div
+      className="w-16 h-16 relative flex items-center justify-center"
+      animate={{
+        y: doTranslateBack ? 0 : doTranslate ? -200 : 0,
+        scale: doTranslateBack ? 1 : doTranslate ? 0.8 : 1,
+      }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
       {/* Green CSV - stays in center */}
       <motion.img
         src="/images/csv-green.svg"
