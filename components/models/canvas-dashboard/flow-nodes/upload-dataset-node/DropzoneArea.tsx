@@ -1,22 +1,40 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { validateCSVFileAndContent } from "@/lib/validations/csv.schema";
 import { File } from "lucide-react";
-import { motion } from "motion/react";
-import { formatFileSize } from "@/lib/utils";
-import AnimatedStateList from "./AnimatedStateList";
+import { useAnimate } from "motion/react";
 import AnimatedImages from "./AnimatedImages";
+import AnimatedStateList from "./AnimatedStateList";
+import { formatFileSize } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 type TDropzoneAreaProps = {
   onFileUploaded?: (file: File | null) => void;
+  projectId: string;
+  title: string;
+  description?: string;
 };
 
+/***
+ * Client-side
+ * Idle -> empty state
+ * client-side-validating -> Preparing before the flow starts
+ * uploading -> client side validation and steps before sending to the server
+ * Server-side
+ * validating -> server side validation
+ * cleaning -> preprocessing the data
+ * normalising -> normalising the columns
+ * transforming -> just an update
+ * saving -> saving the data to the storage
+ * uploaded -> the file is uploaded and the flow is complete and the response has been obtained
+ */
 export type TDropzoneUploadStatus = {
   state:
     | "idle"
-    | "filename"
+    | "client-side-validating"
     | "uploading"
     | "validating"
     | "cleaning"
@@ -27,140 +45,327 @@ export type TDropzoneUploadStatus = {
     | "error";
   error?: string;
   uploadedFile?: File;
+  projectId?: string;
+  title?: string;
+  description?: string;
 };
 
-// Upload flow configuration
-const uploadSteps = [
-  { state: "uploading", duration: 2000 },
-  { state: "validating", duration: 2000 },
-  { state: "cleaning", duration: 2000 },
-  { state: "normalising", duration: 2000 },
-  { state: "transforming", duration: 2000 },
-  { state: "saving", duration: 2000 },
-] as const;
-
-export const DropzoneArea: FC<TDropzoneAreaProps> = ({ onFileUploaded }) => {
+export const DropzoneArea: FC<TDropzoneAreaProps> = ({
+  onFileUploaded,
+  projectId,
+  title,
+  description,
+}) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const [isValidating, setIsValidating] = useState<boolean>(false);
-  const [showSuccessText, setShowSuccessText] = useState<boolean>(false);
 
   const [uploadStatus, setUploadStatus] = useState<TDropzoneUploadStatus>({
     state: "idle",
   });
 
-  // Derived states from uploadStatus.state
-  const translateFileImages = uploadSteps.some(
-    (step) => step.state === uploadStatus.state,
-  );
-  const shouldExitStateList = uploadStatus.state === "uploaded";
-  const translateImagesBack = uploadStatus.state === "uploaded";
-
-  // Notify parent only when file changes (not during upload steps)
-
-  // TODO: Replace this with actual upload logic
-  const simulateUploadFlow = async () => {
-    // Show filename for 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Wait before showing checkbox list
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Process each upload step
-    for (const step of uploadSteps) {
-      setUploadStatus((prev) => ({ ...prev, state: step.state }));
-      await new Promise((resolve) => setTimeout(resolve, step.duration));
-    }
-
-    // Wait for exit animation
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    // Mark as uploaded
-    setUploadStatus((prev) => ({ ...prev, state: "uploaded" }));
-
-    // Wait for images to settle, then show success text
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    setShowSuccessText(true);
+  const handleUploadStatus = (
+    status: Partial<TDropzoneUploadStatus>,
+    error?: string,
+  ) => {
+    setUploadStatus((prev) => ({
+      ...prev,
+      ...status,
+      error: error || prev.error || "",
+      uploadedFile: status.uploadedFile || prev.uploadedFile, // Preserve uploadedFile
+    }));
   };
 
-  /***
-   * onDrop is the function that is called when a file is dropped on the dropzone
-   * It is used to validate the file and pass it to the parent component i.e. UploadDatasetNode
-   */
+  const resetUploadDropzoneArea = () => {
+    // reset the state of the upload dropzone area
+    // reset the dropzone area
+    setUploadStatus({
+      state: "idle",
+      error: "",
+      uploadedFile: undefined,
+    });
+
+    // reset the upload dataset node
+    onFileUploaded?.(null);
+  };
+
+  // Get the scope and animate from the use animate hook
+  const [scope, animate] = useAnimate();
+
+  // Animation orchestration
+  const animations = {
+    // uploading -> this is shown till the client side validation and file prepartion goes on
+    clientSideValidating: async () => {
+      // disable hover effects for the animated images
+    },
+
+    // server side upload flow -> All the steps from validating to saving are handled here
+    serverSideUploadFlow: async () => {
+      // translate the animated images out of the view
+      await animate(
+        ".animated-images",
+        {
+          y: -150,
+        },
+        { duration: 0.4, ease: "easeOut" },
+      );
+      // bring the state list in view
+      await animate(
+        ".animated-content",
+        {
+          y: 0,
+          opacity: 1,
+        },
+        { duration: 0.4, ease: "easeOut" },
+      );
+    },
+
+    // uploaded -> this is shown after the server side upload flow is complete (success flow)
+    uploaded: async () => {
+      // Hide state list first
+      await animate(
+        ".animated-content",
+        { opacity: 0, y: 200 },
+        {
+          duration: 0.3,
+          ease: "easeOut",
+        },
+      );
+
+      // Bring images back
+      await animate(
+        ".animated-images",
+        { y: 0 },
+        {
+          duration: 0.3,
+          ease: "easeOut",
+        },
+      );
+    },
+
+    // error -> this is shown after the server side upload flow is complete
+    error: async () => {
+      // Hide state list first
+      await animate(
+        ".animated-content",
+        { opacity: 0, y: 200 },
+        { duration: 0.3, ease: "easeOut" },
+      );
+
+      // Bring images back
+      await animate(
+        ".animated-images",
+        { y: 0 },
+        { duration: 0.3, ease: "easeOut" },
+      );
+
+      // Add shake animation for error feedback
+      await animate(
+        ".animated-images",
+        {
+          x: [0, -3, 4, -2, 3, -1, 2, 0],
+          rotate: [0, -2, 2, -1, 1, 0],
+        },
+        { duration: 0.3, ease: "linear" },
+      );
+    },
+  };
+
+  const handleStreamingUpload = async (fileToUpload?: File) => {
+    try {
+      // get the file from parameter or upload status
+      const file = fileToUpload || uploadStatus.uploadedFile;
+
+      if (!file) {
+        throw new Error("No file available for upload");
+      }
+
+      // Validate required props
+      if (!projectId || !title) {
+        throw new Error(
+          `Missing required props: ${!projectId ? "projectId" : ""} ${!title ? "title" : ""}`,
+        );
+      }
+
+      // prepare form data for the API call
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("projectId", projectId);
+      formData.append("title", title);
+      if (description) {
+        formData.append("description", description);
+      }
+
+      // Make the API call to upload the dataset with streaming
+      const response = await fetch("/api/upload-dataset", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        // Try to get error details from response
+        let errorText = "Unknown error";
+        try {
+          const errorData = await response.json();
+          errorText = errorData.error || errorData.message || errorText;
+        } catch {
+          // If JSON parsing fails, try text
+          try {
+            errorText = await response.text();
+          } catch {
+            // Could not parse error response
+          }
+        }
+
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No readable stream available");
+      }
+
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        // Decode the chunk and add to buffer
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process complete lines
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.trim().startsWith("data: ")) {
+            try {
+              const jsonStr = line.trim().substring(6); // Remove 'data: ' prefix
+              const update = JSON.parse(jsonStr);
+
+              // Update UI state based on server response
+              if (update.state === "error") {
+                handleUploadStatus({
+                  state: "error",
+                  error: update.error || "Upload failed",
+                });
+                return;
+              } else if (update.state === "uploaded") {
+                handleUploadStatus({ state: "uploaded" });
+                return;
+              } else {
+                // Update to intermediate state
+                handleUploadStatus({
+                  state: update.state as TDropzoneUploadStatus["state"],
+                });
+              }
+            } catch (parseError) {
+              console.error("Failed to parse state update:", parseError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      handleUploadStatus({
+        state: "error",
+        error: error instanceof Error ? error.message : "Upload failed",
+      });
+    }
+  };
+
+  useEffect(() => {
+    const triggerAnimation = async () => {
+      switch (uploadStatus.state) {
+        case "uploading":
+          await animations.serverSideUploadFlow();
+          break;
+        case "uploaded":
+          // success flow state
+          await animations.uploaded();
+          break;
+        case "error":
+          // Show error state
+          await animations.error();
+          break;
+      }
+    };
+
+    triggerAnimation();
+  }, [uploadStatus.state, animate]);
+
   const onDrop = async (
     acceptedFiles: File[],
     rejectedFiles: FileRejection[],
   ) => {
-    // Reset states for new upload
-    setIsValidating(true);
-    setUploadStatus({
-      state: "idle",
-      error: undefined,
-    });
-    setShowSuccessText(false);
-    onFileUploaded?.(null); // Clear previous file from parent
+    // reset the dropzone area before the drop upload starts
+    resetUploadDropzoneArea();
+
+    // Client side states
+    // Set the state to client side validating when the file is dropped
+    handleUploadStatus({ state: "client-side-validating" });
 
     // Handle rejected files from dropzone
     if (rejectedFiles.length > 0) {
       const rejection = rejectedFiles[0];
-      setUploadStatus({
+      handleUploadStatus({
         state: "error",
         error: rejection.errors[0]?.message || "File rejected",
       });
-      setIsValidating(false);
-      onFileUploaded?.(null); // Clear file from parent
+      onFileUploaded?.(null);
       return;
     }
 
     // Validate accepted files
     if (acceptedFiles.length === 0) {
-      setUploadStatus({
+      handleUploadStatus({
         state: "error",
         error: "No files selected",
       });
-      setIsValidating(false);
-      onFileUploaded?.(null); // Clear file from parent
+
+      onFileUploaded?.(null);
       return;
     }
 
     try {
-      const file = acceptedFiles[0]; // Single file only
+      const file = acceptedFiles[0];
 
       // Use new CSV validation
       const validation = await validateCSVFileAndContent(file);
 
       if (!validation.isValid) {
-        setUploadStatus({
+        handleUploadStatus({
           state: "error",
           error: validation.errors?.[0] || "Invalid file",
         });
-        setIsValidating(false);
-        onFileUploaded?.(null); // Clear file from parent
+        onFileUploaded?.(null);
         return;
       }
 
       // File is valid, start upload process
-      console.log("File validated successfully:", validation.data);
-
-      // Start with filename state
-      setUploadStatus({
-        state: "filename",
+      // Set the state to uploading and the uploaded file
+      handleUploadStatus({
+        state: "uploading",
         uploadedFile: file,
       });
 
       // Notify parent that file is selected
       onFileUploaded?.(file);
 
-      simulateUploadFlow();
+      // Start streaming upload
+      handleStreamingUpload(file);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Validation failed";
-      setUploadStatus({
+      handleUploadStatus({
         state: "error",
         error: errorMessage,
       });
-      onFileUploaded?.(null); // Clear file from parent
-    } finally {
-      setIsValidating(false);
+      onFileUploaded?.(null);
     }
   };
 
@@ -173,101 +378,128 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({ onFileUploaded }) => {
     maxFiles: 1,
   });
 
-  // Check if should show active state (hover or drag) - disable when uploaded
-  const isActive =
-    (isHovered || isDragActive) && uploadStatus.state !== "uploaded";
+  // Check if should show active state (hover or drag)
+  const isActive = isHovered || isDragActive;
 
   return (
     <div
       {...getRootProps()}
+      ref={scope}
       className={`
-        border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default overflow-hidden
+        relative border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default overflow-hidden
         ${isActive ? "bg-[#241E1E] border-border-highlight" : ""}
-        ${uploadStatus.error ? "border-red-500" : ""}
-        ${isValidating ? "border-yellow-400 bg-yellow-50/5" : ""}
+        ${uploadStatus.state === "error" && uploadStatus.error ? "border-error bg-bg-100" : ""}
+        ${uploadStatus.state === "uploaded" ? "border-success-border bg-[#241E1E]" : ""}
+        ${uploadStatus.state === "client-side-validating" ? "border-border-highlight bg-[#241E1E]" : ""}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center gap-1">
-        <div>
-          <AnimatedImages
-            isHovered={isHovered}
-            isDragActive={isDragActive}
-            translateFileImages={translateFileImages}
-            translateBackIntoView={translateImagesBack}
-            disableHoverEffects={uploadStatus.state === "uploaded"}
-          />
-        </div>
-        <div className="">
-          {isValidating ? (
-            <p className="text-blue-400 text-xs font-medium">
-              Validating file...
-            </p>
-          ) : uploadStatus.state === "filename" ? (
-            <div className="flex flex-col gap-1">
-              <div className="text-text-inactive text-xs tracking-tight font-medium transition-colors duration-200 animate-pulse flex items-center gap-1">
-                <File className="size-3" />
-                {uploadStatus.uploadedFile?.name}
-              </div>
-              <p className="text-text-muted text-[10px] tracking-tight font-medium transition-colors duration-200">
-                Preparing
-              </p>
-            </div>
-          ) : uploadSteps.some((step) => step.state === uploadStatus.state) ? (
-            <AnimatedStateList
-              currentState={
-                uploadStatus.state as
-                  | "uploading"
-                  | "validating"
-                  | "cleaning"
-                  | "normalising"
-                  | "transforming"
-                  | "saving"
-              }
-              shouldExit={shouldExitStateList}
-            />
-          ) : uploadStatus.state === "uploaded" ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: showSuccessText ? 1 : 0, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex flex-col gap-2"
-            >
-              <div className="flex flex-col gap-1">
-                <p className="text-success-border text-xs tracking-tight font-medium transition-colors duration-200">
-                  File uploaded successfully
-                </p>
-                <div className="text-text-muted text-[10px] tracking-tight font-medium transition-colors duration-200 flex items-center gap-1">
-                  <File className="size-2" />
-                  {uploadStatus.uploadedFile?.name} -{" "}
-                  {uploadStatus.uploadedFile &&
-                    formatFileSize(uploadStatus.uploadedFile.size)}
-                </div>
-              </div>
-            </motion.div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <p
-                className={`text-xs tracking-tight font-medium transition-colors duration-200 ${
-                  isActive ? "text-text-highlight" : "text-text-inactive"
-                }`}
-              >
-                Drag & drop your CSV file here
-              </p>
-              <p className="text-text-muted text-[10px] tracking-tight font-medium transition-colors duration-200">
-                Must have exactly 2 columns
-              </p>
-            </div>
-          )}
-        </div>
-        {uploadStatus.error && (
-          <div className="text-red-400 text-xs font-medium mt-2 max-w-xs text-center">
-            {uploadStatus.error}
-          </div>
-        )}
+
+      {/* Animatable components -> always mounted */}
+      {/* Animated images - centered in dropzone */}
+      <div className="animated-images absolute mb-12">
+        <AnimatedImages
+          isHovered={isHovered}
+          isDragActive={isDragActive}
+          disableHoverEffects={uploadStatus.state !== "idle"}
+        />
       </div>
+
+      {/* Animated state list - positioned for animation */}
+      <div
+        className="animated-content absolute"
+        style={{ transform: "translateY(200px)", opacity: 0 }}
+      >
+        {/* The step counter list is rendered after the client side validation is complete */}
+        <AnimatedStateList
+          currentState={
+            uploadStatus.state as
+              | "uploading"
+              | "validating"
+              | "cleaning"
+              | "normalising"
+              | "transforming"
+              | "saving"
+          }
+        />
+      </div>
+
+      {/* Conditional rendered content -> not reliant on animation state */}
+
+      {/* Base text on idle component */}
+      {uploadStatus.state === "idle" && (
+        <div className="flex flex-col gap-1 items-center mt-12">
+          <p
+            className={`text-xs tracking-tight font-medium transition-colors duration-200 ${
+              isActive ? "text-text-highlight" : "text-text-inactive"
+            }`}
+          >
+            Drag & drop your CSV file here
+          </p>
+          <p className="text-text-muted text-[10px] tracking-tight font-medium">
+            Must have exactly 2 columns
+          </p>
+        </div>
+      )}
+      {/* Client side validating -> preparing text */}
+      {uploadStatus.state === "client-side-validating" && (
+        <div className="flex flex-col gap-1 items-center mt-12">
+          <p
+            className={`text-xs tracking-tight font-medium transition-colors animate-pulse duration-200 text-text-highlight`}
+          >
+            Preparing
+          </p>
+          <p className="text-text-muted text-[10px] tracking-tight font-medium">
+            Working on your file for upload.
+          </p>
+        </div>
+      )}
+
+      {/* Animated presence for the success text to animate the entry and exit properly */}
+      <AnimatePresence>
+        {uploadStatus.state === "uploaded" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col gap-1 items-center mt-12"
+          >
+            {/* file details content */}
+            <p className="text-success-border text-xs tracking-tight font-medium">
+              File uploaded successfully
+            </p>
+            <div className="text-text-muted text-[10px] tracking-tight font-medium flex items-center gap-1">
+              <File className="size-2" />
+              {uploadStatus.uploadedFile?.name} -{" "}
+              {uploadStatus.uploadedFile &&
+                formatFileSize(uploadStatus.uploadedFile.size)}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Animated presence for the error text to animate the entry and exit properly */}
+      <AnimatePresence>
+        {uploadStatus.state === "error" && uploadStatus.error && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex flex-col gap-1 items-center mt-12"
+          >
+            <p className="text-error-border text-xs tracking-tight font-medium">
+              {uploadStatus.error}
+            </p>
+            <p className="text-text-muted text-[10px] tracking-tight font-medium">
+              Please try uploading again.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

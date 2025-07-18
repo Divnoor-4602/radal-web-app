@@ -20,6 +20,24 @@ export const current = query({
   },
 });
 
+export const getByClerkId = query({
+  args: { clerkId: v.string() },
+  returns: v.union(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      name: v.string(),
+      clerkId: v.string(),
+      email: v.string(),
+      createdAt: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, { clerkId }) => {
+    return await userByClerkId(ctx, clerkId);
+  },
+});
+
 export const upsertFromClerk = internalMutation({
   args: { data: v.any() as Validator<UserJSON> }, // no runtime validation, trust Clerk
   returns: v.null(),

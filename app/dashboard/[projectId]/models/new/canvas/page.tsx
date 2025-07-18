@@ -10,6 +10,7 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import React, { useCallback } from "react";
+import { useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
   UploadDatasetNode,
@@ -25,6 +26,7 @@ const nodeTypes: NodeTypes = {
 };
 
 const CanvasContent = () => {
+  const { projectId } = useParams();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } =
     useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
@@ -44,9 +46,9 @@ const CanvasContent = () => {
         y: event.clientY,
       });
 
-      addNode(type, position);
+      addNode(type, position, projectId as string);
     },
-    [screenToFlowPosition, addNode],
+    [screenToFlowPosition, addNode, projectId],
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -57,7 +59,10 @@ const CanvasContent = () => {
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
       <ReactFlow
-        nodes={nodes}
+        nodes={nodes.map((node) => ({
+          ...node,
+          data: { ...node.data, projectId },
+        }))}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

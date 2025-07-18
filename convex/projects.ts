@@ -200,6 +200,85 @@ export const getProjectById = query({
   },
 });
 
+// Server-side compatible version that takes clerkId as parameter
+export const getProjectByIdWithClerkId = query({
+  args: {
+    projectId: v.id("projects"),
+    clerkId: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("projects"),
+      name: v.string(),
+      description: v.string(),
+      createdAt: v.number(),
+      _creationTime: v.number(),
+      status: v.union(
+        v.literal("draft"),
+        v.literal("valid"),
+        v.literal("training"),
+        v.literal("ready"),
+        v.literal("error"),
+      ),
+      graph: v.object({
+        schema_version: v.optional(v.number()),
+        nodes: v.array(v.any()),
+        edges: v.array(v.any()),
+        meta: v.optional(
+          v.object({
+            created_by: v.string(),
+            created_at: v.string(),
+            clerk_id: v.string(),
+            jwt_token: v.string(),
+          }),
+        ),
+      }),
+      updatedAt: v.number(),
+      jobId: v.optional(v.string()),
+      hfSpaceUrl: v.optional(v.string()),
+      blobPackage: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    // Find the user by clerkId
+    const user = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the project by ID
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      return null;
+    }
+
+    // Check if the project belongs to the specified user
+    if (project.userId !== user._id) {
+      throw new Error("Project not found or access denied");
+    }
+
+    // Return full project details without userId
+    return {
+      _id: project._id,
+      name: project.name,
+      description: project.description,
+      createdAt: project.createdAt,
+      _creationTime: project._creationTime,
+      status: project.status,
+      graph: project.graph,
+      updatedAt: project.updatedAt,
+      jobId: project.jobId,
+      hfSpaceUrl: project.hfSpaceUrl,
+      blobPackage: project.blobPackage,
+    };
+  },
+});
+
 // Update project graph and status
 export const updateProjectGraph = mutation({
   args: {

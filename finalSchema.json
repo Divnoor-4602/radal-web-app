@@ -6,7 +6,16 @@
       "type": "Dataset",
       "props": {
         "uris": [
-          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh71y6f5qb7x4pbg34cdmzt5497kn7bj/projects/jd70grbw4ra3e8n695k0sttqn57kpbr1/datasets/WOM22V0_03eCqQanxofmd/original.csv"
+          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh712b71mkcwtreyqhbjyjnvqn7kt69t/projects/jd7dvtvz1eqntprptmeb7apkkh7kvy8c/datasets/ZO0un32K3WagDMcF_Z_EP/prompt_engineering_dataset_2025-07-16_21-44-59.csv"
+        ]
+      }
+    },
+    "d2": {
+      "id": "d2",
+      "type": "Dataset",
+      "props": {
+        "uris": [
+          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh712b71mkcwtreyqhbjyjnvqn7kt69t/projects/jd7dvtvz1eqntprptmeb7apkkh7kvy8c/datasets/wUd_nc8wLPEvZDEh3Pn2P/data_records_20th_Feb_2025-07-16_21-45-16.csv"
         ]
       }
     },
@@ -14,14 +23,14 @@
       "id": "b1",
       "type": "BaseModel",
       "props": {
-        "model_id": "microsoft/phi-2"
+        "model_id": "microsoft/Phi-3-mini-4k-instruct"
       }
     },
     "t1": {
       "id": "t1",
       "type": "Train",
       "props": {
-        "epochs": 3,
+        "epochs": 1,
         "batch_size": 4,
         "train_quant": "int8",
         "download_quant": "int4"
@@ -34,14 +43,18 @@
       "to": "b1"
     },
     {
+      "from": "d2",
+      "to": "b1"
+    },
+    {
       "from": "b1",
       "to": "t1"
     }
   ],
   "meta": {
-    "created_by": "jh71y6f5qb7x4pbg34cdmzt5497kn7bj",
-    "created_at": "2025-07-14T07:48:31.457Z",
-    "clerk_id": "user_2zqD7x8BTXrBxsLDXxa0hnURsG3",
-    "jwt_token": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yelFkRkhIVWFURVRLYUJoSVFXbU1hYWJsZzQiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJleHAiOjE3NTI0NzkzNjYsImZ2YSI6WzQ4NiwtMV0sImlhdCI6MTc1MjQ3OTMwNiwiaXNzIjoiaHR0cHM6Ly92YXN0LWtpZC0zNC5jbGVyay5hY2NvdW50cy5kZXYiLCJuYmYiOjE3NTI0NzkyOTYsInNpZCI6InNlc3NfMnpxRUc0OGVvNU9qUW5JZHltb2VMTENER1o0Iiwic3ViIjoidXNlcl8yenFEN3g4QlRYckJ4c0xEWHhhMGhuVVJzRzMiLCJ2IjoyfQ.Uo5aHUhmXt5wvATaNBJSnqVdiEuX8wb4iux4BzO9yYTNjv5-TrzXkxqIdNnCK2lxQZNAqJW8owkwTlyMbDa00GlaaQjySZwsEktS9c_P-xr0UAi1tC9Mf_1ue1GsKVGOBnpnOPYDM-2vrOBtC8jnmKeaLJSslk6LR_s7uus-zZhd--dcuuH81O09qT9pM1PNdPz5KzYDlC5pRfqfc_k3lks7z9ji_ZlelO6jhhjB66sBka4_dbX1M_N9YXibdjguwqrqY0KYkrmZQVM3M2L0kXgvHl7XdFmEzJqBqQdBpapovx3wQ1C3CoQXhwc0iLdNACf9UA7ayrXonsy67JmpjA"
+    "created_by": "jh712b71mkcwtreyqhbjyjnvqn7kt69t",
+    "created_at": "2025-07-16T21:53:29.064Z",
+    "clerk_id": "user_2zyOyVCjf8Yy4yOaEGAZ04otJZq",
+    "jwt_token": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yelFkRkhIVWFURVRLYUJoSVFXbU1hYWJsZzQiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL2Y5MzVhODc5M2UzMS5uZ3Jvay1mcmVlLmFwcCIsImV4cCI6MTc1MjcwMjgzNiwiZnZhIjpbNDQsLTFdLCJpYXQiOjE3NTI3MDI3NzYsImlzcyI6Imh0dHBzOi8vdmFzdC1raWQtMzQuY2xlcmsuYWNjb3VudHMuZGV2IiwibmJmIjoxNzUyNzAyNzY2LCJzaWQiOiJzZXNzXzJ6eU95UnFITlFIemRiZXJJczd3a3BOQWZ6dyIsInN1YiI6InVzZXJfMnp5T3lWQ2pmOFl5NHlPYUVHQVowNG90SlpxIiwidiI6Mn0.DUMrqdnTYqThLqRBjK2g4vo7kbTfR04mCvn0Kyrm0q_TgyhOHznIIz8whb0zo-MTSb8Jl9snMz0a7CVqSmCzQ3u6XApSd39lXrcrXoQ3ZJ1mf1h73LQpkVEdKjX8IsXbmUAEsg0CIVWcgHWdPqKZpQ0b8YGIuJnWV0xnGU1IiN_Ml1_X7f6vmbuxsGrqmJP-bN5rq2j4PoN4X3JV_Bj8J204XElEeKgNpevLgFlpIVwsUsg6lFOGKy0L5Ocx1UdrHRc4W5jcsdrb7vwJtCW9H5BIEgUhAUGjbzLFPmuomkt18zFSZ0uGo5tmMxkNPDHX8REsgeqnmvZ_7n0DqhORYA"
   }
 }

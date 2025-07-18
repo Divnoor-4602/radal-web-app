@@ -13,7 +13,6 @@ type TAnimatedStateListProps = {
     | "normalising"
     | "transforming"
     | "saving";
-  shouldExit?: boolean; // Trigger exit animation when true
 };
 
 type StateItem = {
@@ -37,14 +36,8 @@ const states: StateItem[] = [
   { id: "saving", label: "Saving", displayLabel: "Saving" },
 ];
 
-const AnimatedStateList: FC<TAnimatedStateListProps> = ({
-  currentState,
-  shouldExit = false,
-}) => {
+const AnimatedStateList: FC<TAnimatedStateListProps> = ({ currentState }) => {
   const currentIndex = states.findIndex((state) => state.id === currentState);
-
-  // Calculate the approximate height of the list for exit animation
-  const listHeight = states.length * 30; // Approximate height per item (20px spacing + item height)
 
   const getStateStatus = (stateId: string, index: number) => {
     const status =
@@ -53,7 +46,6 @@ const AnimatedStateList: FC<TAnimatedStateListProps> = ({
         : index === currentIndex
           ? "current"
           : "pending";
-    console.log(`State ${stateId} (index ${index}): ${status}`);
     return status;
   };
 
@@ -61,7 +53,7 @@ const AnimatedStateList: FC<TAnimatedStateListProps> = ({
     const distance = Math.abs(index - currentIndex);
     if (distance === 0) return 1;
     if (distance === 1) return 0.7;
-    return 0.6;
+    return 0.4;
   };
 
   const getYOffset = (index: number) => {
@@ -79,15 +71,7 @@ const AnimatedStateList: FC<TAnimatedStateListProps> = ({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -50 }}
-      animate={{
-        opacity: shouldExit ? 0 : 1,
-        y: shouldExit ? -listHeight : 0,
-      }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="flex flex-col items-center gap-4 h-full"
-    >
+    <div className="flex flex-col items-center">
       <div className="relative flex flex-col items-center gap-2 h-full">
         {states.map((state, index) => {
           const status = getStateStatus(state.id, index);
@@ -97,13 +81,13 @@ const AnimatedStateList: FC<TAnimatedStateListProps> = ({
           return (
             <motion.div
               key={state.id}
-              className="flex items-center gap-2 w-full h-full"
+              className="flex items-center gap-2 h-full w-full"
               animate={{
                 y: getYOffset(index),
                 opacity: getOpacity(index),
               }}
               transition={{
-                duration: 0.2,
+                duration: 0.3,
                 ease: "easeInOut",
               }}
             >
@@ -138,7 +122,7 @@ const AnimatedStateList: FC<TAnimatedStateListProps> = ({
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

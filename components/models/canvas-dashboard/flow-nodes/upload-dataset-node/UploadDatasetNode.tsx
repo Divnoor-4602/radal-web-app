@@ -20,6 +20,7 @@ type TUploadDatasetNodeProps = Readonly<{
 }>;
 
 export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
+  data,
   selected,
   dragging,
 }) => {
@@ -74,7 +75,12 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
               </Tooltip>
             </div>
             {/* file input - react dropzone implementation */}
-            <DropzoneArea onFileUploaded={handleFileUploaded} />
+            <DropzoneArea
+              onFileUploaded={handleFileUploaded}
+              projectId={data.projectId || ""}
+              title={data.title}
+              description={data.description}
+            />
             {/* Extra cues regarding the format */}
             <div className="text-text-inactive text-[10px] tracking-tight font-medium">
               Supported formats: CSV

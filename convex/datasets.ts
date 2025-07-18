@@ -13,11 +13,12 @@ export const generateUploadUrl = mutation({
   },
 });
 
-// Save dataset metadata after file upload
+// Save dataset metadata after file upload (Azure Blob Storage)
 export const saveDataset = mutation({
   args: {
     projectId: v.id("projects"),
-    storageId: v.id("_storage"),
+    storageId: v.string(), // Azure blob path
+    azureUrl: v.optional(v.string()), // Public Azure URL
     title: v.string(),
     description: v.optional(v.string()),
     originalFilename: v.string(),
@@ -71,7 +72,8 @@ export const saveDataset = mutation({
       title: args.title,
       description: args.description,
       originalFilename: args.originalFilename,
-      storageId: args.storageId,
+      storageId: args.storageId, // Azure blob path
+      azureUrl: args.azureUrl, // Public Azure URL
       fileSize: args.fileSize,
       mimeType: args.mimeType || "text/csv",
       rowCount: 0, // Will be updated after processing

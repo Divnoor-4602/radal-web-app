@@ -19,6 +19,7 @@ export interface DatasetNodeData extends Record<string, unknown> {
   files?: File[] | string[];
   datasetId?: string;
   storageId?: string;
+  projectId?: string;
   stats?: {
     rows: number;
     columns: number;
@@ -39,6 +40,7 @@ export interface ModelNodeData extends Record<string, unknown> {
   description: string;
   modelId: string;
   quant: string;
+  projectId?: string;
   isTrained?: boolean;
 }
 
@@ -48,6 +50,7 @@ export interface TrainingNodeData extends Record<string, unknown> {
   epochs?: number;
   learningRate?: number;
   batchSize?: number;
+  projectId?: string;
   isTrained?: boolean;
 }
 
@@ -79,7 +82,11 @@ export interface FlowState {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
-  addNode: (type: string, position: { x: number; y: number }) => void;
+  addNode: (
+    type: string,
+    position: { x: number; y: number },
+    projectId?: string,
+  ) => void;
   updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => void;
   resetFlow: () => void;
   loadExistingFlow: (projectGraph: ProjectGraph) => void;
@@ -107,7 +114,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
     });
   },
 
-  addNode: (type: string, position: { x: number; y: number }) => {
+  addNode: (
+    type: string,
+    position: { x: number; y: number },
+    projectId?: string,
+  ) => {
     const id = nanoid();
     const currentNodes = get().nodes;
     const currentEdges = get().edges;
@@ -119,6 +130,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
         description: "Upload your CSV to be used for tuning the model",
         files: [],
         datasetId: `dataset_${Date.now()}`,
+        projectId: projectId || "",
         stats: {
           rows: 0,
           columns: 0,

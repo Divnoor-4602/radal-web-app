@@ -48,14 +48,15 @@ export default defineSchema({
     .index("byUserId", ["userId"])
     .index("byStatus", ["status"]),
 
-  // datasets schema for CSV files
+  // datasets schema for CSV files (using Azure Blob Storage)
   datasets: defineTable({
     projectId: v.id("projects"),
     userId: v.id("users"),
     title: v.string(),
     description: v.optional(v.string()),
     originalFilename: v.string(),
-    storageId: v.id("_storage"),
+    storageId: v.string(), // Azure blob path (e.g., "users/{userId}/projects/{projectId}/datasets/{datasetId}/file.csv")
+    azureUrl: v.optional(v.string()), // Public Azure blob URL
     fileSize: v.number(),
     mimeType: v.string(),
     rowCount: v.optional(v.number()),
