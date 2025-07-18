@@ -12,6 +12,7 @@ import {
 } from "@xyflow/react";
 import { create } from "zustand";
 import { nanoid } from "nanoid";
+import { availableModels } from "@/constants";
 
 export interface DatasetNodeData extends Record<string, unknown> {
   title: string;
@@ -42,6 +43,8 @@ export interface ModelNodeData extends Record<string, unknown> {
   quant: string;
   projectId?: string;
   isTrained?: boolean;
+  availableModels?: typeof availableModels;
+  selectedModelId?: string;
 }
 
 export interface TrainingNodeData extends Record<string, unknown> {
@@ -151,6 +154,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
         description: "Pick a base model and quantization level",
         modelId: "phi-2",
         quant: "int4",
+        availableModels: availableModels,
+        selectedModelId: "",
       } as ModelNodeData;
     } else if (type === "training") {
       data = {
@@ -254,6 +259,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
             description: "Previously configured model",
             modelId: graphNode.props?.model_id || "phi-2",
             quant: graphNode.props?.quant || "int4",
+            availableModels: availableModels,
+            selectedModelId: graphNode.props?.model_id || "phi-2",
             // Mark as trained/readonly
             isTrained: true,
           } as ModelNodeData,

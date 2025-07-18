@@ -8,8 +8,8 @@ export {
 export {
   SelectModelNode,
   default as SelectModelNodeDefault,
-} from "./SelectModelNode";
+} from "./select-model-node/SelectModelNode";
 export {
   TrainingConfigurationNode,
   default as TrainingConfigurationNodeDefault,
-} from "./TrainingConfigurationNode";
+} from "./training-configuration-node/TrainingConfigurationNode";
