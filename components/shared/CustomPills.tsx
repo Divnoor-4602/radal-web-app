@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import React from "react";
 
-type PillVariant = "success" | "error" | "info";
+type PillVariant = "success" | "error" | "info" | "neutral";
 
 interface CustomPillsProps {
   children: React.ReactNode;
@@ -16,6 +16,7 @@ const variantStyles: Record<PillVariant, string> = {
   success: "bg-success border-success-border text-success-foreground",
   error: "bg-error border-error-border text-error-foreground",
   info: "bg-info border-info-border text-info-foreground",
+  neutral: "bg-[#2E2E2E] border-[#4D4D4D] text-[#B3B3B3]",
 };
 
 const CustomPills = ({
@@ -30,7 +31,7 @@ const CustomPills = ({
     <>
       {iconPosition === "left" && icon}
       <span
-        className={cn("font-medium", size === "sm" ? "text-[10px]" : "text-xs")}
+        className={cn("font-base", size === "sm" ? "text-[10px]" : "text-xs")}
       >
         {children}
       </span>
@@ -44,6 +45,7 @@ const CustomPills = ({
         "inline-flex items-center gap-1.5 rounded-full border custom-pills-inner-shadow",
         size === "sm" ? "px-2 py-0.5" : "px-2.5 py-1",
         variantStyles[variant],
+        variant === "neutral" && "custom-neutral-pills-drop-shadow",
         className,
       )}
     >

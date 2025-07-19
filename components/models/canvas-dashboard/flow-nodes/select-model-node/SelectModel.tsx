@@ -89,12 +89,12 @@ export const SelectModel: React.FC<SelectModelProps> = ({
                   priority
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 {model.provider} {model.display_name}
                 <CustomPills
-                  variant="info"
+                  variant="neutral"
                   size="sm"
-                  className="tracking-tighter py-0 px-1 text-[4px]"
+                  className="tracking-tighter py-[1px] px-2 text-[4px]"
                 >
                   {model.parameters}
                 </CustomPills>

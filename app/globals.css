@@ -301,6 +301,11 @@
   box-shadow: inset 0px 1px 4.5px hsla(0, 95%, 89%, 0.25);
 }
 
+/* Custom Neutral Pills Drop Shadow */
+.custom-neutral-pills-drop-shadow {
+  box-shadow: inset 0px 1px 4px rgba(149, 108, 108, 0.25);
+}
+
 /* Custom Project Card Drop Shadow */
 .custom-project-card-drop-shadow {
   filter: drop-shadow(0px 1px 6px hsla(0, 0%, 0%, 0.25));
