@@ -73,3 +73,39 @@ export function normalizeEmptyValue(value: string): string {
   }
   return processed;
 }
+
+// Helper function to convert async iterator to stream
+export function iteratorToStream(
+  iterator: AsyncGenerator<Uint8Array, void, unknown>,
+) {
+  return new ReadableStream({
+    async pull(controller) {
+      const { value, done } = await iterator.next();
+
+      if (done) {
+        controller.close();
+      } else {
+        controller.enqueue(value);
+      }
+    },
+  });
+}
+
+// Helper function to create streaming state update
+export function createStateUpdate(
+  state: string,
+  message?: string,
+  error?: string,
+  data?: Record<string, unknown>,
+) {
+  const encoder = new TextEncoder();
+  const update = {
+    state,
+    message,
+    error,
+    data,
+    timestamp: Date.now(),
+  };
+
+  return encoder.encode(`data: ${JSON.stringify(update)}\n\n`);
+}

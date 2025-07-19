@@ -20,6 +20,8 @@ import {
   isNumericIndexColumn,
   preprocessText,
   normalizeEmptyValue,
+  iteratorToStream,
+  createStateUpdate,
 } from "./utils";
 
 // Create Convex client
@@ -33,43 +35,6 @@ const uploadRateLimiter = new RateLimiterMemory({
   points: 20, // 20 uploads
   duration: 60 * 60, // per hour
 });
-
-// Helper function to convert async iterator to stream
-function iteratorToStream(iterator: AsyncGenerator<Uint8Array, void, unknown>) {
-  return new ReadableStream({
-    async pull(controller) {
-      const { value, done } = await iterator.next();
-
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
-      }
-    },
-  });
-}
-
-const encoder = new TextEncoder();
-
-// Helper function to create streaming state update
-function createStateUpdate(
-  state: string,
-  message?: string,
-  error?: string,
-  data?: Record<string, unknown>,
-) {
-  const update = {
-    state,
-    message,
-    error,
-    data,
-    timestamp: Date.now(),
-  };
-
-  console.log("State update:", state, message || "");
-
-  return encoder.encode(`data: ${JSON.stringify(update)}\n\n`);
-}
 
 export async function POST(request: NextRequest) {
   // Create async generator for streaming updates
@@ -92,6 +57,7 @@ export async function POST(request: NextRequest) {
       const convexUser = await convex.query(api.users.getByClerkId, {
         clerkId: clerkUserId,
       });
+
       if (!convexUser) {
         yield createStateUpdate(
           "error",

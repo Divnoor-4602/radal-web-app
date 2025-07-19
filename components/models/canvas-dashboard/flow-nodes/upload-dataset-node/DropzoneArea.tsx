@@ -69,7 +69,7 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
     setUploadStatus((prev) => ({
       ...prev,
       ...status,
-      error: error || prev.error || "",
+      error: error || status.error || prev.error || "",
       uploadedFile: status.uploadedFile || prev.uploadedFile, // Preserve uploadedFile
     }));
   };
@@ -376,30 +376,46 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
     },
     multiple: false,
     maxFiles: 1,
+    disabled: uploadStatus.state === "uploaded", // Disable when uploaded
   });
 
-  // Check if should show active state (hover or drag)
-  const isActive = isHovered || isDragActive;
+  // Check if should show active state (hover or drag) - but not when uploaded
+  const isActive =
+    (isHovered || isDragActive) && uploadStatus.state !== "uploaded";
+
+  // Disable hover when uploaded
+  const handleMouseEnter = () => {
+    if (uploadStatus.state !== "uploaded") {
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (uploadStatus.state !== "uploaded") {
+      setIsHovered(false);
+    }
+  };
 
   return (
     <div
-      {...getRootProps()}
+      {...(uploadStatus.state === "uploaded" ? {} : getRootProps())}
       ref={scope}
       className={`
-        relative border-1 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default overflow-hidden
+        relative border-1 border-dashed rounded-lg p-6 text-center transition-colors duration-200 h-[200px] flex items-center justify-center bg-[#1C1717] border-border-default overflow-hidden
+        ${uploadStatus.state === "uploaded" ? "cursor-default" : "cursor-pointer"}
         ${isActive ? "bg-[#241E1E] border-border-highlight" : ""}
         ${uploadStatus.state === "error" && uploadStatus.error ? "border-error bg-bg-100" : ""}
         ${uploadStatus.state === "uploaded" ? "border-success-border bg-[#241E1E]" : ""}
         ${uploadStatus.state === "client-side-validating" ? "border-border-highlight bg-[#241E1E]" : ""}
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
-      <input {...getInputProps()} />
+      {uploadStatus.state !== "uploaded" && <input {...getInputProps()} />}
 
       {/* Animatable components -> always mounted */}
       {/* Animated images - centered in dropzone */}
-      <div className="animated-images absolute mb-12">
+      <div className="animated-images absolute mb-12 z-0">
         <AnimatedImages
           isHovered={isHovered}
           isDragActive={isDragActive}
@@ -489,7 +505,7 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex flex-col gap-1 items-center mt-12"
+            className="flex flex-col gap-1 items-center mt-12 relative z-10"
           >
             <p className="text-error-border text-xs tracking-tight font-medium">
               {uploadStatus.error}
