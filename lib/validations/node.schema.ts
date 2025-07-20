@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { ModelDetailSchema } from "./model.schema";
+import {
+  EpochsSchema,
+  BatchSizeSchema,
+  DownloadQuantSchema,
+  QuantizationSchema,
+} from "./training.schema";
 
 // Dataset Node Schema - for upload dataset nodes
 export const DatasetNodeDataSchema = z.object({
@@ -25,14 +31,10 @@ export const ModelNodeDataSchema = z.object({
 export const TrainingNodeDataSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  epochs: z.number().min(1, "Epochs must be at least 1").optional(),
-  learningRate: z
-    .number()
-    .min(0.0001, "Learning rate must be positive")
-    .optional(),
-  batchSize: z.number().min(1, "Batch size must be at least 1").optional(),
-  projectId: z.string().min(1, "Project ID is required").optional(),
-  isTrained: z.boolean().optional(),
+  quantization: QuantizationSchema,
+  epochs: EpochsSchema,
+  batchSize: BatchSizeSchema,
+  downloadQuant: DownloadQuantSchema,
 });
 
 // Union schema for all node data types

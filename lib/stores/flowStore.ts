@@ -110,11 +110,10 @@ const useFlowStore = create<FlowState>((set, get) => ({
       data = {
         title: "Training Configuration",
         description: "Configure training parameters",
-        epochs: 3,
-        learningRate: 0.001,
+        epochs: 1,
         batchSize: 4,
-        projectId: projectId || "",
-        isTrained: false,
+        quantization: "int8",
+        downloadQuant: "int8",
       } as TrainingNodeData;
     } else {
       return;

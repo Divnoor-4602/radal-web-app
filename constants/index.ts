@@ -1,6 +1,7 @@
 import { Brain, Gauge, HelpCircle, Bolt } from "lucide-react";
 import { Dataset } from "@/components/project-dashboard/dataset-table/columns";
 import { TModelDetail } from "@/lib/validations/model.schema";
+import { TQuantizationSchema } from "@/lib/validations/training.schema";
 
 // Import provider icons
 import MicrosoftIcon from "@/public/icons/microsoft-icon.svg";
@@ -163,13 +164,4 @@ export const availableModels: Record<string, TModelDetail> = {
 };
 
 // The available quantisations
-export const availableQuantisations = {
-  int4: {
-    display_name: "int4",
-    value: "int4",
-  },
-  int8: {
-    display_name: "int8",
-    value: "int8",
-  },
-};
+export const availableQuantisations: TQuantizationSchema[] = ["int4", "int8"];
