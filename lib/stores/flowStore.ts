@@ -92,8 +92,9 @@ const useFlowStore = create<FlowState>((set, get) => ({
       data = {
         title: "Upload Dataset",
         description: "Upload your CSV to be used for tuning the model",
-        files: [],
-        datasetId: `dataset_${Date.now()}`,
+        file: undefined,
+        azureUrl: undefined,
+        storageId: undefined,
         projectId: projectId || "",
         status: "idle",
       } as DatasetNodeData;
@@ -101,10 +102,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
       data = {
         title: "Model Selection",
         description: "Pick a base model and quantization level",
-        modelId: "phi-2",
-        quant: "int4",
         availableModels: availableModels,
-        selectedModelId: "",
+        selectedModel: undefined,
         isTrained: false,
       } as ModelNodeData;
     } else if (type === "training") {
@@ -114,6 +113,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
         epochs: 3,
         learningRate: 0.001,
         batchSize: 4,
+        projectId: projectId || "",
         isTrained: false,
       } as TrainingNodeData;
     } else {
@@ -194,7 +194,10 @@ const useFlowStore = create<FlowState>((set, get) => ({
           data: {
             title: "Dataset (Trained)",
             description: "Previously uploaded training data",
-            files: [],
+            file: undefined,
+            azureUrl: undefined,
+            storageId: undefined,
+            projectId: undefined,
             status: "success",
             // Mark as trained/readonly
             isTrained: true,
@@ -202,6 +205,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
         };
         loadedNodes.push(datasetNode);
       } else if (graphNode.type === "BaseModel") {
+        // Find the model from available models
+        const selectedModel = Object.values(availableModels).find(
+          (model) => model.model_id === graphNode.props?.model_id,
+        );
+
         const modelNode: Node = {
           id: graphNode.id || `model-${index}`,
           type: "model",
@@ -209,10 +217,8 @@ const useFlowStore = create<FlowState>((set, get) => ({
           data: {
             title: "Base Model (Trained)",
             description: "Previously configured model",
-            modelId: graphNode.props?.model_id || "phi-2",
-            quant: graphNode.props?.quant || "int4",
             availableModels: availableModels,
-            selectedModelId: graphNode.props?.model_id || "phi-2",
+            selectedModel: selectedModel,
             // Mark as trained/readonly
             isTrained: true,
           } as ModelNodeData,

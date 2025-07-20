@@ -1,5 +1,6 @@
 import { Brain, Gauge, HelpCircle, Bolt } from "lucide-react";
 import { Dataset } from "@/components/project-dashboard/dataset-table/columns";
+import { TModelDetail } from "@/lib/validations/model.schema";
 
 // Import provider icons
 import MicrosoftIcon from "@/public/icons/microsoft-icon.svg";
@@ -110,7 +111,7 @@ export const dummyDatasetData: Dataset[] = [
 ];
 
 // The availble models to show in the model selection node
-export const availableModels = {
+export const availableModels: Record<string, TModelDetail> = {
   "phi-2": {
     display_name: "Phi-2",
     model_id: "microsoft/phi-2",

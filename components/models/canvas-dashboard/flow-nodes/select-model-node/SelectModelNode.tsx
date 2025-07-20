@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { ModelNodeData } from "@/lib/stores/flowStore";
+import { type ModelNodeData } from "@/lib/validations/node.schema";
+import { type TModelDetail } from "@/lib/validations/model.schema";
 import { Brain, BrainCog } from "lucide-react";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import CustomPills from "@/components/shared/CustomPills";
 import SelectModel from "./SelectModel";
 import useFlowStore from "@/lib/stores/flowStore";
@@ -15,34 +16,30 @@ type TSelectModelNodeProps = {
   dragging?: boolean;
 };
 
-// selected model types
-type TSelectedModel = {
-  display_name: string;
-  model_id: string;
-  description: string;
-  parameters: string;
-  provider: string;
-  providerIcon: StaticImageData;
-};
-
 export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
   id,
-  data,
   selected,
   dragging,
 }) => {
-  const { updateNodeData } = useFlowStore();
+  const { nodes, updateNodeData } = useFlowStore();
+
+  // get the current node data from the nodes
+  const currentNode = nodes.find((node) => node.id === id);
+  const currentData = currentNode?.data as ModelNodeData;
 
   const handleModelChange = (modelId: string) => {
-    updateNodeData(id, { selectedModelId: modelId });
+    // Find the full model object from available models
+    const selectedModelObj = Object.values(
+      currentData?.availableModels || {},
+    ).find((model) => model.model_id === modelId);
+
+    if (selectedModelObj) {
+      updateNodeData(id, { selectedModel: selectedModelObj });
+    }
   };
 
-  const selectedModelDetails: TSelectedModel | undefined =
-    data.selectedModelId && data.selectedModelId !== ""
-      ? Object.values(data.availableModels || {}).find(
-          (model) => model.model_id === data.selectedModelId,
-        ) || undefined
-      : undefined;
+  const selectedModelDetails: TModelDetail | undefined =
+    currentData?.selectedModel;
 
   return (
     <>
@@ -74,9 +71,9 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
           <div className="flex flex-col mt-5 mb-6.5 px-5">
             {/* Model selector  */}
             <SelectModel
-              selectedModelId={data.selectedModelId || ""}
+              selectedModelId={currentData?.selectedModel?.model_id || ""}
               onModelChange={handleModelChange}
-              availableModels={data.availableModels || {}}
+              availableModels={currentData?.availableModels || {}}
             />
             {/* Hugging face link for the model */}
             <div className="flex items-center gap-1 mt-6 ml-1">
@@ -86,11 +83,11 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
                 width={24}
                 height={24}
                 priority
-                className={`${data.selectedModelId === "" ? "image-muted" : ""}`}
+                className={`${!currentData?.selectedModel ? "image-muted" : ""}`}
               />
               <div
                 className={`text-sm tracking-tighter font-medium ${
-                  data.selectedModelId === ""
+                  !currentData?.selectedModel
                     ? "text-text-inactive"
                     : "text-text-primary"
                 }`}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ModelDetailSchema } from "./model.schema";
 
 // Dataset Node Schema - for upload dataset nodes
 export const DatasetNodeDataSchema = z.object({
@@ -15,12 +16,9 @@ export const DatasetNodeDataSchema = z.object({
 export const ModelNodeDataSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  modelId: z.string().min(1, "Model ID is required"),
-  quant: z.string().min(1, "Quantization is required"),
-  projectId: z.string().min(1, "Project ID is required").optional(),
   isTrained: z.boolean().optional(),
-  availableModels: z.record(z.unknown()).optional(),
-  selectedModelId: z.string().optional(),
+  availableModels: z.record(ModelDetailSchema).optional(),
+  selectedModel: ModelDetailSchema.optional(),
 });
 
 // Training Node Schema - for training configuration nodes

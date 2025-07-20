@@ -15,24 +15,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import CustomPills from "@/components/shared/CustomPills";
 import { cn } from "@/lib/utils";
-
-type ModelType = {
-  display_name: string;
-  model_id: string;
-  description: string;
-  parameters: string;
-  provider: string;
-  providerIcon: StaticImageData;
-  tags: string[];
-};
+import { type TModelDetail } from "@/lib/validations/model.schema";
 
 type SelectModelProps = {
   selectedModelId: string;
   onModelChange: (modelId: string) => void;
-  availableModels?: Record<string, ModelType>;
+  availableModels?: Record<string, TModelDetail>;
 };
 
 export const SelectModel: React.FC<SelectModelProps> = ({
@@ -81,13 +72,15 @@ export const SelectModel: React.FC<SelectModelProps> = ({
               className="flex items-center justify-between"
             >
               <div className="flex items-center gap-1">
-                <Image
-                  src={model.providerIcon}
-                  alt={model.provider}
-                  width={20}
-                  height={20}
-                  priority
-                />
+                {model.providerIcon && (
+                  <Image
+                    src={model.providerIcon}
+                    alt={model.provider}
+                    width={20}
+                    height={20}
+                    priority
+                  />
+                )}
               </div>
               <div className="flex items-center gap-4">
                 {model.provider} {model.display_name}
