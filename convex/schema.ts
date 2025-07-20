@@ -21,29 +21,12 @@ export default defineSchema({
     description: v.string(),
     createdAt: v.number(),
     updatedAt: v.number(),
-    graph: v.object({
-      schema_version: v.optional(v.number()),
-      nodes: v.array(v.any()),
-      edges: v.array(v.any()),
-      meta: v.optional(
-        v.object({
-          created_by: v.string(),
-          created_at: v.string(),
-          clerk_id: v.string(),
-          jwt_token: v.string(),
-        }),
-      ),
-    }),
     status: v.union(
-      v.literal("draft"),
       v.literal("valid"),
       v.literal("training"),
       v.literal("ready"),
       v.literal("error"),
     ),
-    jobId: v.optional(v.string()),
-    hfSpaceUrl: v.optional(v.string()),
-    blobPackage: v.optional(v.string()),
   })
     .index("byUserId", ["userId"])
     .index("byStatus", ["status"]),
@@ -62,35 +45,69 @@ export default defineSchema({
     rowCount: v.optional(v.number()),
     columnCount: v.optional(v.number()),
     headers: v.optional(v.array(v.string())),
-    status: v.union(
-      v.literal("uploading"),
-      v.literal("processing"),
-      v.literal("ready"),
-      v.literal("error"),
-    ),
-    errorMessage: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("byProject", ["projectId"])
-    .index("byUser", ["userId"])
-    .index("byStatus", ["status"]),
+    .index("byUser", ["userId"]),
 
-  // models schema for base model configurations
+  // models schema for fine tuned model configurations
   models: defineTable({
+    // base fields
     projectId: v.id("projects"),
     userId: v.id("users"),
     title: v.string(),
-    description: v.optional(v.string()),
-    modelId: v.union(v.literal("phi-2")), // Can expand to more models later
-    quant: v.union(v.literal("int4"), v.literal("int8"), v.literal("fp16")),
-    status: v.union(v.literal("draft"), v.literal("ready"), v.literal("error")),
+
+    // base model details
+    baseModelDetails: v.object({
+      modelId: v.union(v.literal("microsoft/phi-2")), // Can expand to more models later
+      displayName: v.string(),
+      provider: v.string(),
+      parameters: v.string(),
+      huggingFaceUrl: v.string(),
+    }),
+
+    // Dataset reference used for fine tuning the models
+    datasetIds: v.array(v.id("datasets")),
+
+    // Training configuration used for the model.
+    trainingConfig: v.object({
+      epochs: v.number(), // 1-10
+      batch_size: v.number(), // 1, 2, 4, 8
+      train_quant: v.union(v.literal("int4"), v.literal("int8")),
+      download_quant: v.union(v.literal("int4"), v.literal("int8")),
+    }),
+
+    // donwload url of the model
+    modelDownloadUrl: v.optional(v.string()),
+
+    // Complete training graph of the model for reproducability
+    trainingGraph: v.optional(
+      v.object({
+        schema_version: v.optional(v.number()),
+        nodes: v.record(v.string(), v.any()),
+        edges: v.array(v.any()),
+      }),
+    ),
+
+    // Status of the model
+    status: v.union(
+      v.literal("draft"),
+      v.literal("training"),
+      v.literal("converting"),
+      v.literal("ready"),
+      v.literal("error"),
+    ),
+
+    // Job id
+    jobId: v.optional(v.string()),
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("byProject", ["projectId"])
     .index("byUser", ["userId"])
-    .index("byModelId", ["modelId"])
+    .index("byDataset", ["datasetIds"])
+    .index("byModelId", ["baseModelDetails.modelId"])
     .index("byStatus", ["status"]),
 });

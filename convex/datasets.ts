@@ -78,7 +78,6 @@ export const saveDataset = mutation({
       mimeType: args.mimeType || "text/csv",
       rowCount: 0, // Will be updated after processing
       columnCount: 0, // Will be updated after processing
-      status: "uploading",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -145,7 +144,6 @@ export const updateDatasetStats = mutation({
       rowCount: args.rows,
       columnCount: args.columns,
       headers: args.headers,
-      status: "ready",
       updatedAt: Date.now(),
     });
 
@@ -200,7 +198,6 @@ export const getProjectDatasets = query({
       rowCount: v.optional(v.number()),
       columnCount: v.optional(v.number()),
       headers: v.optional(v.array(v.string())),
-      status: v.string(),
       createdAt: v.number(),
       storageUrl: v.optional(v.string()),
     }),
@@ -248,7 +245,6 @@ export const getProjectDatasets = query({
           rowCount: dataset.rowCount,
           columnCount: dataset.columnCount,
           headers: dataset.headers,
-          status: dataset.status,
           createdAt: dataset.createdAt,
           storageUrl: storageUrl || undefined,
         };

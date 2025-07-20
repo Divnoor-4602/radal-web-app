@@ -37,18 +37,7 @@ export const createProject = mutation({
       name: args.name,
       description: args.description,
       createdAt: Date.now(),
-      graph: {
-        schema_version: 1,
-        nodes: [],
-        edges: [],
-        meta: {
-          created_by: user._id,
-          created_at: new Date().toISOString(),
-          clerk_id: identity.subject,
-          jwt_token: "initial-creation",
-        },
-      },
-      status: "draft",
+      status: "valid", // Updated to match new schema
       updatedAt: Date.now(),
     });
 
@@ -129,29 +118,12 @@ export const getProjectById = query({
       createdAt: v.number(),
       _creationTime: v.number(),
       status: v.union(
-        v.literal("draft"),
         v.literal("valid"),
         v.literal("training"),
         v.literal("ready"),
         v.literal("error"),
       ),
-      graph: v.object({
-        schema_version: v.optional(v.number()),
-        nodes: v.array(v.any()),
-        edges: v.array(v.any()),
-        meta: v.optional(
-          v.object({
-            created_by: v.string(),
-            created_at: v.string(),
-            clerk_id: v.string(),
-            jwt_token: v.string(),
-          }),
-        ),
-      }),
       updatedAt: v.number(),
-      jobId: v.optional(v.string()),
-      hfSpaceUrl: v.optional(v.string()),
-      blobPackage: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -183,7 +155,7 @@ export const getProjectById = query({
       throw new Error("Project not found or access denied");
     }
 
-    // Return full project details without userId
+    // Return project details without userId
     return {
       _id: project._id,
       name: project.name,
@@ -191,11 +163,7 @@ export const getProjectById = query({
       createdAt: project.createdAt,
       _creationTime: project._creationTime,
       status: project.status,
-      graph: project.graph,
       updatedAt: project.updatedAt,
-      jobId: project.jobId,
-      hfSpaceUrl: project.hfSpaceUrl,
-      blobPackage: project.blobPackage,
     };
   },
 });
@@ -214,29 +182,12 @@ export const getProjectByIdWithClerkId = query({
       createdAt: v.number(),
       _creationTime: v.number(),
       status: v.union(
-        v.literal("draft"),
         v.literal("valid"),
         v.literal("training"),
         v.literal("ready"),
         v.literal("error"),
       ),
-      graph: v.object({
-        schema_version: v.optional(v.number()),
-        nodes: v.array(v.any()),
-        edges: v.array(v.any()),
-        meta: v.optional(
-          v.object({
-            created_by: v.string(),
-            created_at: v.string(),
-            clerk_id: v.string(),
-            jwt_token: v.string(),
-          }),
-        ),
-      }),
       updatedAt: v.number(),
-      jobId: v.optional(v.string()),
-      hfSpaceUrl: v.optional(v.string()),
-      blobPackage: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -262,7 +213,7 @@ export const getProjectByIdWithClerkId = query({
       throw new Error("Project not found or access denied");
     }
 
-    // Return full project details without userId
+    // Return project details without userId
     return {
       _id: project._id,
       name: project.name,
@@ -270,71 +221,21 @@ export const getProjectByIdWithClerkId = query({
       createdAt: project.createdAt,
       _creationTime: project._creationTime,
       status: project.status,
-      graph: project.graph,
       updatedAt: project.updatedAt,
-      jobId: project.jobId,
-      hfSpaceUrl: project.hfSpaceUrl,
-      blobPackage: project.blobPackage,
     };
   },
 });
 
-// Update project graph and status
-export const updateProjectGraph = mutation({
-  args: {
-    projectId: v.id("projects"),
-    graph: v.object({
-      schema_version: v.optional(v.number()),
-      nodes: v.array(v.any()),
-      edges: v.array(v.any()),
-      meta: v.optional(
-        v.object({
-          created_by: v.string(),
-          created_at: v.string(),
-          clerk_id: v.string(),
-          jwt_token: v.string(),
-        }),
-      ),
-    }),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("valid"),
-      v.literal("training"),
-      v.literal("ready"),
-      v.literal("error"),
-    ),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    // Get the project to verify it exists
-    const project = await ctx.db.get(args.projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    // Update the project with new graph and status
-    await ctx.db.patch(args.projectId, {
-      graph: args.graph,
-      status: args.status,
-      updatedAt: Date.now(),
-    });
-
-    return null;
-  },
-});
-
-// Update project status and job ID
+// Update project status only (removed graph update functionality)
 export const updateProjectStatus = mutation({
   args: {
     projectId: v.id("projects"),
     status: v.union(
-      v.literal("draft"),
       v.literal("valid"),
       v.literal("training"),
       v.literal("ready"),
       v.literal("error"),
     ),
-    jobId: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -344,10 +245,9 @@ export const updateProjectStatus = mutation({
       throw new Error("Project not found");
     }
 
-    // Update the project status and jobId
+    // Update the project status
     await ctx.db.patch(args.projectId, {
       status: args.status,
-      jobId: args.jobId,
       updatedAt: Date.now(),
     });
 
