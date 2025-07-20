@@ -90,7 +90,7 @@ export async function startTraining(nodes: Node[], _edges: Edge[]) {
 
     try {
       console.log("Sending request to:", `https://api.radal.ai/train`);
-      const response = await fetch(`${FASTAPI_URL}/train`, {
+      const response = await fetch(`https://api.radal.ai/train`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
