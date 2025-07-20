@@ -1,7 +1,10 @@
 import { Brain, Gauge, HelpCircle, Bolt } from "lucide-react";
 import { Dataset } from "@/components/project-dashboard/dataset-table/columns";
 import { TModelDetail } from "@/lib/validations/model.schema";
-import { TQuantizationSchema } from "@/lib/validations/training.schema";
+import {
+  TBatchSizeSchema,
+  TQuantizationSchema,
+} from "@/lib/validations/training.schema";
 
 // Import provider icons
 import MicrosoftIcon from "@/public/icons/microsoft-icon.svg";
@@ -165,3 +168,6 @@ export const availableModels: Record<string, TModelDetail> = {
 
 // The available quantisations
 export const availableQuantisations: TQuantizationSchema[] = ["int4", "int8"];
+
+// Availble batch sizes
+export const availbleBatchSizes: TBatchSizeSchema[] = ["512", "1024"];

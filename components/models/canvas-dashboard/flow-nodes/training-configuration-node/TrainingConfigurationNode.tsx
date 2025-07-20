@@ -1,25 +1,17 @@
 import React from "react";
 import { type TrainingNodeData } from "@/lib/validations/node.schema";
-import { Sparkles, Info } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import CustomPills from "@/components/shared/CustomPills";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import useFlowStore from "@/lib/stores/flowStore";
 import SelectQuantization from "./SelectQuantization";
 import { availableQuantisations } from "@/constants";
-import { TQuantizationSchema } from "@/lib/validations/training.schema";
+import {
+  TBatchSizeSchema,
+  TQuantizationSchema,
+  TEpochsSchema,
+} from "@/lib/validations/training.schema";
+import SelectEpochSlider from "./SelectEpochSlider";
+import SelectBatchSize from "./SelectBatchSize";
 
 type TrainingConfigurationNodeProps = {
   id: string;
@@ -33,6 +25,7 @@ export const TrainingConfigurationNode: React.FC<
 > = ({ id, selected, dragging }) => {
   const { nodes, updateNodeData } = useFlowStore();
 
+  // function to handle quantization selection in the state
   const handleQuantizationChange = (
     quantization: TQuantizationSchema,
     type: string,
@@ -42,6 +35,16 @@ export const TrainingConfigurationNode: React.FC<
     } else if (type === "download") {
       updateNodeData(id, { downloadQuant: quantization });
     }
+  };
+
+  // function to handle the batch size selection
+  const handleBatchSizeChange = (batchSize: TBatchSizeSchema) => {
+    updateNodeData(id, { batchSize });
+  };
+
+  // function to handle the epochs selection
+  const handleEpochsChange = (epochs: TEpochsSchema) => {
+    updateNodeData(id, { epochs });
   };
 
   // get the current node data
@@ -85,6 +88,20 @@ export const TrainingConfigurationNode: React.FC<
               onQuantizationChange={handleQuantizationChange}
               selectedQuantization={currentData?.quantization}
             />
+            {/* Epochs Custom Slider */}
+            <SelectEpochSlider
+              labelText="Epochs"
+              tooltipText="Number of training epochs (1-10)"
+              selectedEpochs={currentData?.epochs || 1}
+              onEpochsChange={handleEpochsChange}
+            />
+            {/* Batch Size Custom Slider */}
+            <SelectBatchSize
+              labelText="Batch Size"
+              tooltipText="Select the batch size for your model."
+              onBatchSizeChange={handleBatchSizeChange}
+              selectedBatchSize={currentData?.batchSize}
+            />
             {/* Download Quantization Select */}
             <SelectQuantization
               labelText="Download Quantization"
@@ -94,81 +111,6 @@ export const TrainingConfigurationNode: React.FC<
               onQuantizationChange={handleQuantizationChange}
               selectedQuantization={currentData?.downloadQuant}
             />
-
-            {/* Epochs Select */}
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2">
-                <Label className="text-text-primary text-sm ml-1">Epochs</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="size-3 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-bg-100"
-                    arrowClassName="bg-bg-100 fill-bg-100"
-                  >
-                    <p>Number of training epochs for your model.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Select>
-                <SelectTrigger
-                  className={cn(
-                    "w-full bg-[#1C1717] focus:ring-0 focus:ring-offset-0 focus:outline-none data-[state=open]:ring-0 data-[state=open]:ring-offset-0 [&>svg]:text-[#666666] [&_[data-slot=select-value]]:text-text-primary border-border-default",
-                  )}
-                  placeholderClassName="text-sm tracking-tight text-[#666666]"
-                >
-                  <SelectValue
-                    placeholder="Select epochs"
-                    className="text-sm tracking-tight"
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-bg-100 border-border-default">
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                  <SelectItem value="5">5</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Download Type Select */}
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2">
-                <Label className="text-text-primary text-sm ml-1">
-                  Download Type
-                </Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="size-3 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-bg-100"
-                    arrowClassName="bg-bg-100 fill-bg-100"
-                  >
-                    <p>Choose the format for downloading your trained model.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <Select>
-                <SelectTrigger
-                  className={cn(
-                    "w-full bg-[#1C1717] focus:ring-0 focus:ring-offset-0 focus:outline-none data-[state=open]:ring-0 data-[state=open]:ring-offset-0 [&>svg]:text-[#666666] [&_[data-slot=select-value]]:text-text-primary border-border-default",
-                  )}
-                  placeholderClassName="text-sm tracking-tight text-[#666666]"
-                >
-                  <SelectValue
-                    placeholder="Select download type"
-                    className="text-sm tracking-tight"
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-bg-100 border-border-default">
-                  <SelectItem value="safetensors">SafeTensors</SelectItem>
-                  <SelectItem value="gguf">GGUF</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           {/* Seperator */}
           <div className="bg-border-default w-full h-[1px]" />
