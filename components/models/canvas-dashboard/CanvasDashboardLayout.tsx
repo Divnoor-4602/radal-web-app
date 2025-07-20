@@ -11,10 +11,26 @@ import CanvasSidebar from "@/components/models/canvas-dashboard/CanvasSidebar";
 import { ArrowLeft, BrainCircuit, Sparkles } from "lucide-react";
 import CustomButton from "@/components/shared/CustomButton";
 import { useRouter } from "next/navigation";
+import useFlowStore from "@/lib/stores/flowStore";
+import { startTraining } from "@/lib/actions/training.actions";
 
 // Canvas specific topbar/breadcrumb
 const CanvasTopbarWithActions = () => {
   const router = useRouter();
+  const { nodes, edges } = useFlowStore();
+
+  const handleTrainClick = async () => {
+    try {
+      console.log("Starting training with nodes:", nodes);
+      console.log("Starting training with edges:", edges);
+
+      const result = await startTraining(nodes, edges);
+      console.log("Training result:", result);
+    } catch (error) {
+      console.error("Training failed:", error);
+    }
+  };
+
   return (
     <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5 bg-bg-100 border-b border-border-default">
       {/* Sidebar and back arrow actions */}
@@ -44,6 +60,7 @@ const CanvasTopbarWithActions = () => {
           text="Train"
           icon={<BrainCircuit className="size-4" strokeWidth={1.6} />}
           className="gap-1.5"
+          onClick={handleTrainClick}
         />
       </div>
     </header>
