@@ -1,7 +1,6 @@
 "use client";
 
-import React, { FC, useState } from "react";
-import { DatasetNodeData } from "@/lib/stores/flowStore";
+import React, { FC } from "react";
 import { Database, Info, File } from "lucide-react";
 import CustomPills from "@/components/shared/CustomPills";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,8 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { DropzoneArea } from "./DropzoneArea";
+import { type DatasetNodeData } from "@/lib/validations/node.schema";
+import useFlowStore from "@/lib/stores/flowStore";
 
 type TUploadDatasetNodeProps = Readonly<{
   id: string;
@@ -20,15 +21,16 @@ type TUploadDatasetNodeProps = Readonly<{
 }>;
 
 export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
+  id,
   data,
   selected,
   dragging,
 }) => {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const { nodes } = useFlowStore();
 
-  const handleFileUploaded = (file: File | null) => {
-    setUploadedFile(file);
-  };
+  // Get the current node data from the store
+  const currentNode = nodes.find((node) => node.id === id);
+  const currentData = currentNode?.data as DatasetNodeData;
 
   return (
     <div className="relative">
@@ -76,10 +78,10 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
             </div>
             {/* file input - react dropzone implementation */}
             <DropzoneArea
-              onFileUploaded={handleFileUploaded}
-              projectId={data.projectId || ""}
-              title={data.title}
-              description={data.description}
+              nodeId={id}
+              projectId={currentData?.projectId || data.projectId || ""}
+              title={currentData?.title || data.title}
+              description={currentData?.description || data.description}
             />
             {/* Extra cues regarding the format */}
             <div className="text-text-inactive text-[10px] tracking-tight font-medium">
@@ -91,20 +93,28 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
         <div className="bg-border-default w-full h-[1px]" />
         {/* custom pill div or state showing div */}
         <div className="flex items-center px-5 justify-end py-5">
-          <CustomPills
-            variant="info"
-            size="default"
-            className="tracking-tighter"
-          >
-            {uploadedFile ? (
+          {currentData?.file ? (
+            <CustomPills
+              variant="success"
+              size="default"
+              className="tracking-tighter"
+            >
               <div className="flex items-center">
                 <File className="size-3 mr-1" />
-                {uploadedFile.name}
+                {typeof currentData.file === "string"
+                  ? currentData.file
+                  : currentData.file.name}
               </div>
-            ) : (
-              "Select a file"
-            )}
-          </CustomPills>
+            </CustomPills>
+          ) : (
+            <CustomPills
+              variant="info"
+              size="default"
+              className="tracking-tighter"
+            >
+              Select a file
+            </CustomPills>
+          )}
         </div>
       </div>
     </div>

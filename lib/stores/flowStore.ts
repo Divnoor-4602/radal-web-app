@@ -13,51 +13,12 @@ import {
 import { create } from "zustand";
 import { nanoid } from "nanoid";
 import { availableModels } from "@/constants";
-
-export interface DatasetNodeData extends Record<string, unknown> {
-  title: string;
-  description: string;
-  files?: File[] | string[];
-  datasetId?: string;
-  storageId?: string;
-  projectId?: string;
-  stats?: {
-    rows: number;
-    columns: number;
-    headers: string[];
-  };
-  preprocessing?: {
-    originalColumns: number;
-    finalColumns: number;
-    removedColumns: number;
-    removedIndexColumns: boolean;
-    totalRows: number;
-  };
-  isTrained?: boolean;
-}
-
-export interface ModelNodeData extends Record<string, unknown> {
-  title: string;
-  description: string;
-  modelId: string;
-  quant: string;
-  projectId?: string;
-  isTrained?: boolean;
-  availableModels?: typeof availableModels;
-  selectedModelId?: string;
-}
-
-export interface TrainingNodeData extends Record<string, unknown> {
-  title: string;
-  description: string;
-  epochs?: number;
-  learningRate?: number;
-  batchSize?: number;
-  projectId?: string;
-  isTrained?: boolean;
-}
-
-export type FlowNodeData = DatasetNodeData | ModelNodeData | TrainingNodeData;
+import {
+  type DatasetNodeData,
+  type ModelNodeData,
+  type TrainingNodeData,
+  type FlowNodeData,
+} from "@/lib/validations/node.schema";
 
 export interface ProjectGraphNode {
   id: string;
@@ -134,19 +95,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
         files: [],
         datasetId: `dataset_${Date.now()}`,
         projectId: projectId || "",
-        stats: {
-          rows: 0,
-          columns: 0,
-          headers: [],
-        },
-        preprocessing: {
-          originalColumns: 0,
-          finalColumns: 0,
-          removedColumns: 0,
-          removedIndexColumns: false,
-          totalRows: 0,
-        },
-        isTrained: false,
+        status: "idle",
       } as DatasetNodeData;
     } else if (type === "model") {
       data = {
@@ -156,6 +105,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
         quant: "int4",
         availableModels: availableModels,
         selectedModelId: "",
+        isTrained: false,
       } as ModelNodeData;
     } else if (type === "training") {
       data = {
@@ -164,6 +114,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
         epochs: 3,
         learningRate: 0.001,
         batchSize: 4,
+        isTrained: false,
       } as TrainingNodeData;
     } else {
       return;
@@ -244,6 +195,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
             title: "Dataset (Trained)",
             description: "Previously uploaded training data",
             files: [],
+            status: "success",
             // Mark as trained/readonly
             isTrained: true,
           } as DatasetNodeData,

@@ -10,9 +10,10 @@ import AnimatedStateList from "./AnimatedStateList";
 import { formatFileSize } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { AnimatePresence } from "framer-motion";
+import useFlowStore from "@/lib/stores/flowStore";
 
 type TDropzoneAreaProps = {
-  onFileUploaded?: (file: File | null) => void;
+  nodeId: string;
   projectId: string;
   title: string;
   description?: string;
@@ -51,11 +52,12 @@ export type TDropzoneUploadStatus = {
 };
 
 export const DropzoneArea: FC<TDropzoneAreaProps> = ({
-  onFileUploaded,
+  nodeId,
   projectId,
   title,
   description,
 }) => {
+  const { updateNodeData } = useFlowStore();
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   const [uploadStatus, setUploadStatus] = useState<TDropzoneUploadStatus>({
@@ -84,7 +86,6 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
     });
 
     // reset the upload dataset node
-    onFileUploaded?.(null);
   };
 
   // Get the scope and animate from the use animate hook
@@ -254,9 +255,27 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
                   state: "error",
                   error: update.error || "Upload failed",
                 });
+
+                // Update flow store status to error
+                updateNodeData(nodeId, {
+                  status: "error",
+                });
                 return;
               } else if (update.state === "uploaded") {
                 handleUploadStatus({ state: "uploaded" });
+
+                // Update flow store with the uploaded dataset data
+                if (
+                  update.data &&
+                  update.data.azureUrl &&
+                  update.data.storageId
+                ) {
+                  updateNodeData(nodeId, {
+                    status: "success",
+                    azureUrl: update.data.azureUrl,
+                    storageId: update.data.storageId,
+                  });
+                }
                 return;
               } else {
                 // Update to intermediate state
@@ -274,6 +293,11 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
       handleUploadStatus({
         state: "error",
         error: error instanceof Error ? error.message : "Upload failed",
+      });
+
+      // Update flow store status to error
+      updateNodeData(nodeId, {
+        status: "error",
       });
     }
   };
@@ -316,7 +340,6 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
         state: "error",
         error: rejection.errors[0]?.message || "File rejected",
       });
-      onFileUploaded?.(null);
       return;
     }
 
@@ -327,7 +350,6 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
         error: "No files selected",
       });
 
-      onFileUploaded?.(null);
       return;
     }
 
@@ -342,19 +364,22 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
           state: "error",
           error: validation.errors?.[0] || "Invalid file",
         });
-        onFileUploaded?.(null);
         return;
       }
 
       // File is valid, start upload process
+      // Update flow store with the file immediately after validation
+      updateNodeData(nodeId, {
+        file: file.name,
+      });
+
       // Set the state to uploading and the uploaded file
       handleUploadStatus({
         state: "uploading",
         uploadedFile: file,
       });
 
-      // Notify parent that file is selected
-      onFileUploaded?.(file);
+      // File is now stored in flow store
 
       // Start streaming upload
       handleStreamingUpload(file);
@@ -365,7 +390,6 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = ({
         state: "error",
         error: errorMessage,
       });
-      onFileUploaded?.(null);
     }
   };
 
