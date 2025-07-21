@@ -27,12 +27,10 @@ const ConnectionLine: FC<ConnectionLineComponentProps> = ({
 
   // Determine the line color based on connection status
   const getStrokeColor = () => {
-    if (connectionStatus === "valid") return "#732BF4"; // Purple theme matching your handles
+    if (connectionStatus === "valid") return "#8142D7"; // Purple theme matching your handles
     if (connectionStatus === "invalid") return "#ef4444"; // Red for invalid connections
-    return "#732BF4"; // Default purple
+    return "#8142D7"; // Default purple
   };
-
-  console.log(connectionStatus);
 
   return (
     <g>
@@ -47,15 +45,15 @@ const ConnectionLine: FC<ConnectionLineComponentProps> = ({
         className="animated"
       />
       {/* Animated dot that moves along the path */}
-
       <circle
-        cx={toX}
-        cy={toY}
-        fill="#fff"
-        r={3}
-        stroke={getStrokeColor()}
-        strokeWidth={1.5}
-      />
+        r="3"
+        fill={getStrokeColor()}
+        style={{
+          filter: "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))",
+        }}
+      >
+        <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
+      </circle>
     </g>
   );
 };

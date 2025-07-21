@@ -7,7 +7,6 @@ import {
   OnEdgesChange,
   applyNodeChanges,
   applyEdgeChanges,
-  addEdge,
   Connection,
 } from "@xyflow/react";
 import { create } from "zustand";
@@ -73,8 +72,19 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
 
   onConnect: (connection: Connection) => {
+    const newEdge: Edge = {
+      id: nanoid(),
+      source: connection.source!,
+      target: connection.target!,
+      sourceHandle: connection.sourceHandle,
+      targetHandle: connection.targetHandle,
+      type: "custom",
+      animated: true,
+      style: { stroke: "#8142D7", strokeWidth: 2 },
+    };
+
     set({
-      edges: addEdge(connection, get().edges),
+      edges: [...get().edges, newEdge],
     });
   },
 
@@ -131,17 +141,20 @@ const useFlowStore = create<FlowState>((set, get) => ({
 
     // Auto-connect nodes in sequence: dataset -> model -> training
     if (type === "model") {
-      const datasetNode = currentNodes.find((node) => node.type === "dataset");
-      if (datasetNode) {
+      const datasetNodes = currentNodes.filter(
+        (node) => node.type === "dataset",
+      );
+      datasetNodes.forEach((datasetNode) => {
         const edge: Edge = {
           id: nanoid(),
           source: datasetNode.id,
           target: id,
+          type: "custom",
           animated: true,
-          style: { stroke: "#3b82f6", strokeWidth: 2 },
+          style: { stroke: "#8142D7", strokeWidth: 2 },
         };
         newEdges = [...newEdges, edge];
-      }
+      });
     } else if (type === "training") {
       const modelNode = currentNodes.find((node) => node.type === "model");
       if (modelNode) {
@@ -149,8 +162,9 @@ const useFlowStore = create<FlowState>((set, get) => ({
           id: nanoid(),
           source: modelNode.id,
           target: id,
+          type: "custom",
           animated: true,
-          style: { stroke: "#10b981", strokeWidth: 2 },
+          style: { stroke: "#8142D7", strokeWidth: 2 },
         };
         newEdges = [...newEdges, edge];
       }
@@ -232,8 +246,9 @@ const useFlowStore = create<FlowState>((set, get) => ({
         id: `edge-${index}`,
         source: graphEdge.from,
         target: graphEdge.to,
+        type: "custom",
         animated: true,
-        style: { stroke: "#10b981", strokeWidth: 3 }, // Green for trained
+        style: { stroke: "#8142D7", strokeWidth: 2 },
       };
       loadedEdges.push(edge);
     });

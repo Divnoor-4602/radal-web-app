@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, CSSProperties } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, useNodeConnections } from "@xyflow/react";
 
 // Data passed in the blue handle
 export type BlueHandleData = {
@@ -17,7 +17,7 @@ export type BlueHandleData = {
 // Type definitions using type aliases (per user preference)
 type BlueHandleProps = {
   data?: BlueHandleData;
-  isConnectable?: boolean;
+  connectionCount?: number;
   position?: Position;
   type?: "source" | "target";
   id?: string;
@@ -38,7 +38,7 @@ const DEFAULT_BLUE_HANDLE_STYLE: CSSProperties = {
 
 const BlueHandle = memo<BlueHandleProps>(
   ({
-    isConnectable = true,
+    connectionCount = 0,
     position = Position.Right,
     type = "source",
     id = "blue-handle",
@@ -50,14 +50,20 @@ const BlueHandle = memo<BlueHandleProps>(
       ...style,
     };
 
+    const connections = useNodeConnections({
+      handleType: type,
+    });
+
+    console.log(connections);
+
     return (
       <Handle
         type={type}
         position={position}
         id={id}
         style={mergedStyle}
-        isConnectable={isConnectable}
-        className="blue-handle blue-handle-drop-shadow blue-handle-glow"
+        isConnectable={connections.length < connectionCount}
+        className={`blue-handle blue-handle-drop-shadow blue-handle-glow`}
       />
     );
   },

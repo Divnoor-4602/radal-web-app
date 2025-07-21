@@ -50,6 +50,7 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
         {/* BlueHandle on the right side */}
         <BlueHandle
           type="target"
+          connectionCount={10}
           position={Position.Left}
           id="select-model-input"
           data={{

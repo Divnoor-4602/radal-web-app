@@ -39,6 +39,7 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
       {/* BlueHandle on the right side */}
       <BlueHandle
         type="source"
+        connectionCount={1}
         position={Position.Right}
         id="upload-dataset-output"
         data={{

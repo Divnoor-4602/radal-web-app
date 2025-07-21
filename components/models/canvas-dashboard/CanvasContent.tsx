@@ -19,12 +19,18 @@ import {
   TrainingConfigurationNode,
 } from "@/components/models/canvas-dashboard/flow-nodes";
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
+import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
 
 // Node types mapping
 const nodeTypes: NodeTypes = {
   dataset: UploadDatasetNode,
   model: SelectModelNode,
   training: TrainingConfigurationNode,
+};
+
+// Edge types mapping
+const edgeTypes = {
+  custom: CustomEdge,
 };
 
 const CanvasContent = () => {
@@ -97,6 +103,7 @@ const CanvasContent = () => {
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         connectionLineComponent={ConnectionLine}
         fitView
         style={{ backgroundColor: "#090707" }}
