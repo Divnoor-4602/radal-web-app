@@ -7,8 +7,6 @@ import {
   useReactFlow,
   NodeTypes,
   BackgroundVariant,
-  Connection,
-  Edge,
 } from "@xyflow/react";
 import React, { useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -35,8 +33,18 @@ const edgeTypes = {
 
 const CanvasContent = () => {
   const { projectId } = useParams();
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect, addNode } =
-    useFlowStore();
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onReconnectStart,
+    onReconnect,
+    onReconnectEnd,
+    addNode,
+    isValidConnection,
+  } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
 
   const onDrop = useCallback(
@@ -64,60 +72,6 @@ const CanvasContent = () => {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  // validation logic - allow connections between compatible node types
-  const isValidConnection = useCallback(
-    (connection: Edge | Connection) => {
-      console.log(connection);
-      const sourceNode = nodes.find((node) => node.id === connection.source);
-      const targetNode = nodes.find((node) => node.id === connection.target);
-
-      // Check if both nodes exist
-      if (!sourceNode || !targetNode) return false;
-
-      console.log(sourceNode, targetNode);
-
-      // Define valid connection patterns
-      const validConnections = [
-        { source: "dataset", target: "model" },
-        { source: "model", target: "training" },
-      ];
-
-      // Check if this connection type is valid
-      const isValidType = validConnections.some(
-        (validConn) =>
-          validConn.source === sourceNode.type &&
-          validConn.target === targetNode.type,
-      );
-
-      if (!isValidType) return false;
-
-      // For model -> training connections, enforce one-to-one rule
-      if (sourceNode.type === "model" && targetNode.type === "training") {
-        // Check if source model already has a training connection
-        const modelHasTrainingConnection = edges.some(
-          (edge) =>
-            edge.source === connection.source &&
-            nodes.find((node) => node.id === edge.target)?.type === "training",
-        );
-
-        // Check if target training already has a model connection
-        const trainingHasModelConnection = edges.some(
-          (edge) =>
-            edge.target === connection.target &&
-            nodes.find((node) => node.id === edge.source)?.type === "model",
-        );
-
-        // Reject if either already has a connection
-        if (modelHasTrainingConnection || trainingHasModelConnection) {
-          return false;
-        }
-      }
-
-      return true;
-    },
-    [nodes, edges],
-  );
-
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
       <ReactFlow
@@ -127,9 +81,13 @@ const CanvasContent = () => {
         }))}
         edges={edges}
         isValidConnection={isValidConnection}
+        edgesReconnectable={true}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onReconnectStart={onReconnectStart}
+        onReconnect={onReconnect}
+        onReconnectEnd={onReconnectEnd}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}

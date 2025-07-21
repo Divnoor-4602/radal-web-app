@@ -2,6 +2,8 @@
 
 import { memo, CSSProperties } from "react";
 import { Handle, Position, useNodeConnections } from "@xyflow/react";
+import useFlowStore from "@/lib/stores/flowStore";
+import { isCustomHandleConnectable } from "@/lib/utils";
 
 // Data passed in the handle
 export type HandleData = {
@@ -58,7 +60,7 @@ const SIZE_CONFIGS = {
 const CustomHandle = memo<CustomHandleProps>(
   ({
     data,
-    connectionCount = 0,
+    connectionCount,
     position = Position.Right,
     type = "source",
     id = "custom-handle",
@@ -88,6 +90,15 @@ const CustomHandle = memo<CustomHandleProps>(
       handleType: type,
     });
 
+    const { isReconnecting } = useFlowStore();
+
+    // Determine if handle is connectable using utility function
+    const isConnectable = isCustomHandleConnectable(
+      connectionCount,
+      connections.length,
+      isReconnecting,
+    );
+
     // Build CSS classes
     const handleClasses = `
       custom-handle 
@@ -102,7 +113,7 @@ const CustomHandle = memo<CustomHandleProps>(
         position={position}
         id={id}
         style={handleStyle}
-        isConnectable={connections.length < connectionCount}
+        isConnectable={isConnectable}
         className={handleClasses}
         data-handle-data={data ? JSON.stringify(data) : undefined}
       />

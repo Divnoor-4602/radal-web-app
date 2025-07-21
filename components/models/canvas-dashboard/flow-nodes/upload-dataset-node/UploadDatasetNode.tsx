@@ -39,7 +39,6 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
       {/* CustomHandle on the right side */}
       <CustomHandle
         type="source"
-        connectionCount={1}
         position={Position.Right}
         id="upload-dataset-output"
         colorTheme="purple"

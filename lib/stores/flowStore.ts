@@ -18,6 +18,7 @@ import {
   type TrainingNodeData,
   type FlowNodeData,
 } from "@/lib/validations/node.schema";
+import { isConnectionCompatible } from "@/lib/utils";
 
 export interface ProjectGraphNode {
   id: string;
@@ -42,9 +43,14 @@ export interface ProjectGraph {
 export interface FlowState {
   nodes: Node[];
   edges: Edge[];
+  edgeReconnectSuccessful: boolean;
+  isReconnecting: boolean;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
+  onReconnectStart: () => void;
+  onReconnect: (oldEdge: Edge, newConnection: Connection) => void;
+  onReconnectEnd: (event: MouseEvent | TouchEvent, edge: Edge) => void;
   addNode: (
     type: string,
     position: { x: number; y: number },
@@ -53,11 +59,14 @@ export interface FlowState {
   updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => void;
   resetFlow: () => void;
   loadExistingFlow: (projectGraph: ProjectGraph) => void;
+  isValidConnection: (connection: Edge | Connection) => boolean;
 }
 
 const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
   edges: [],
+  edgeReconnectSuccessful: false,
+  isReconnecting: false,
 
   onNodesChange: (changes: NodeChange[]) => {
     set({
@@ -87,6 +96,55 @@ const useFlowStore = create<FlowState>((set, get) => ({
     set({
       edges: [...get().edges, newEdge],
     });
+  },
+
+  onReconnectStart: () => {
+    set({ edgeReconnectSuccessful: false, isReconnecting: true });
+  },
+
+  onReconnect: (oldEdge: Edge, newConnection: Connection) => {
+    // Validate the new connection
+    const { nodes } = get();
+    const sourceNode = nodes.find((node) => node.id === newConnection.source);
+    const targetNode = nodes.find((node) => node.id === newConnection.target);
+
+    // Check if both nodes exist and connection is compatible
+    const isValid =
+      sourceNode && targetNode && isConnectionCompatible(newConnection);
+
+    if (isValid) {
+      set({ edgeReconnectSuccessful: true });
+
+      // Create the new edge manually with all properties preserved
+      const newEdge: Edge = {
+        ...oldEdge,
+        source: newConnection.source!,
+        target: newConnection.target!,
+        sourceHandle: newConnection.sourceHandle,
+        targetHandle: newConnection.targetHandle,
+      };
+
+      // Remove the old edge and add the new edge
+      const updatedEdges = get()
+        .edges.filter((e) => e.id !== oldEdge.id)
+        .concat(newEdge);
+      set({ edges: updatedEdges });
+    } else {
+      set({ edgeReconnectSuccessful: false });
+    }
+  },
+
+  onReconnectEnd: (event: MouseEvent | TouchEvent, edge: Edge) => {
+    const { edgeReconnectSuccessful } = get();
+
+    if (!edgeReconnectSuccessful) {
+      // Delete the edge if reconnection wasn't successful
+      set({
+        edges: get().edges.filter((e) => e.id !== edge.id),
+      });
+    }
+
+    set({ edgeReconnectSuccessful: false, isReconnecting: false });
   },
 
   addNode: (
@@ -273,6 +331,18 @@ const useFlowStore = create<FlowState>((set, get) => ({
       nodes: loadedNodes,
       edges: loadedEdges,
     });
+  },
+
+  isValidConnection: (connection: Edge | Connection) => {
+    const { nodes } = get();
+    const sourceNode = nodes.find((node) => node.id === connection.source);
+    const targetNode = nodes.find((node) => node.id === connection.target);
+
+    // Check if both nodes exist
+    if (!sourceNode || !targetNode) return false;
+
+    // Check if connection is compatible based on business rules
+    return isConnectionCompatible(connection);
   },
 }));
 

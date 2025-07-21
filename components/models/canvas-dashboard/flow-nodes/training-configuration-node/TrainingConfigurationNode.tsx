@@ -59,8 +59,8 @@ export const TrainingConfigurationNode: React.FC<
         {/* CustomHandle on the left side to receive model connections */}
         <CustomHandle
           type="target"
-          connectionCount={1}
           position={Position.Left}
+          connectionCount={1}
           id="training-config-input"
           colorTheme="amber"
           size="md"
