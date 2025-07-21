@@ -1,6 +1,8 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import React from "react";
-import { Button } from "../ui/button";
+import { motion } from "motion/react";
 
 type TCustomButton = {
   text: string;
@@ -20,27 +22,53 @@ const CustomButton = ({
   const getVariantStyles = () => {
     switch (variant) {
       case "secondary":
-        return "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow";
+        return {
+          button:
+            "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow",
+          shadow: "bg-[#0a0a0a] border border-[#141414]",
+        };
       case "tertiary":
-        return "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow";
+        return {
+          button:
+            "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow hover:text-yellow-200",
+          shadow: "bg-white/20 border border-bg-300",
+        };
       case "primary":
       default:
-        return "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow";
+        return {
+          button:
+            "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow",
+          shadow:
+            "bg-violet-300 border border-primary custom-button-inner-shadow",
+        };
     }
   };
 
+  const styles = getVariantStyles();
+
   return (
-    <Button
-      className={cn(
-        "rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100",
-        getVariantStyles(),
-        className,
-      )}
-      onClick={onClick}
-    >
-      {icon}
-      {text}
-    </Button>
+    <div className={cn("relative inline-block", className)}>
+      {/* Shadow/Bottom div */}
+      <motion.div
+        className={cn("absolute inset-0 rounded-[10px]", styles.shadow)}
+      />
+
+      {/* Main button */}
+      <motion.button
+        className={cn(
+          "relative rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100",
+          styles.button,
+        )}
+        onClick={onClick}
+        initial={{ y: 0 }}
+        whileHover={{ y: -3 }}
+        whileTap={{ y: 0 }}
+        transition={{ duration: 0.1, ease: "easeOut" }}
+      >
+        {icon}
+        {text}
+      </motion.button>
+    </div>
   );
 };
 
