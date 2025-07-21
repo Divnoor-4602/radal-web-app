@@ -1,60 +1,42 @@
 {
-  "schema_version": 1,
-  "nodes": {
-    "d1": {
-      "id": "d1",
-      "type": "Dataset",
-      "props": {
-        "uris": [
-          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh712b71mkcwtreyqhbjyjnvqn7kt69t/projects/jd7dvtvz1eqntprptmeb7apkkh7kvy8c/datasets/ZO0un32K3WagDMcF_Z_EP/prompt_engineering_dataset_2025-07-16_21-44-59.csv"
-        ]
+  "training_id": "kd78exg2qyg1dkvn92nhytb36h7ktfws",
+  "project_name": "DialoGPT-finetune",
+  "node_schema": {
+    "schema_version": 1,
+    "nodes": {
+      "d1": {
+        "id": "d1",
+        "type": "Dataset",
+        "props": {
+          "uris": [
+            "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh71y6f5qb7x4pbg34cdmzt5497kn7bj/projects/jd79azeytqyzz42238vk8t4tms7ktbd5/datasets/v-HR5Ntc7nIergzzgtOjm/sample_prompts_100_2025-07-16_18-59-20.csv"
+          ]
+        }
+      },
+      "b1": {
+        "id": "b1",
+        "type": "BaseModel",
+        "props": {
+          "model_id": "microsoft/DialoGPT-small"
+        }
+      },
+      "t1": {
+        "id": "t1",
+        "type": "Train",
+        "props": {
+          "epochs": 1,
+          "batch_size": 4,
+          "train_quant": "int8",
+          "download_quant": "int4"
+        }
       }
     },
-    "d2": {
-      "id": "d2",
-      "type": "Dataset",
-      "props": {
-        "uris": [
-          "https://radalwebstorage148.blob.core.windows.net/datasets/users/jh712b71mkcwtreyqhbjyjnvqn7kt69t/projects/jd7dvtvz1eqntprptmeb7apkkh7kvy8c/datasets/wUd_nc8wLPEvZDEh3Pn2P/data_records_20th_Feb_2025-07-16_21-45-16.csv"
-        ]
-      }
-    },
-    "b1": {
-      "id": "b1",
-      "type": "BaseModel",
-      "props": {
-        "model_id": "microsoft/Phi-3-mini-4k-instruct"
-      }
-    },
-    "t1": {
-      "id": "t1",
-      "type": "Train",
-      "props": {
-        "epochs": 1,
-        "batch_size": 4,
-        "train_quant": "int8",
-        "download_quant": "int4"
-      }
+    "edges": [
+      { "from": "d1", "to": "b1" },
+      { "from": "b1", "to": "t1" }
+    ],
+    "meta": {
+      "created_by": "user_xyz"
     }
-  },
-  "edges": [
-    {
-      "from": "d1",
-      "to": "b1"
-    },
-    {
-      "from": "d2",
-      "to": "b1"
-    },
-    {
-      "from": "b1",
-      "to": "t1"
-    }
-  ],
-  "meta": {
-    "created_by": "jh712b71mkcwtreyqhbjyjnvqn7kt69t",
-    "created_at": "2025-07-16T21:53:29.064Z",
-    "clerk_id": "user_2zyOyVCjf8Yy4yOaEGAZ04otJZq",
-    "jwt_token": "eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yelFkRkhIVWFURVRLYUJoSVFXbU1hYWJsZzQiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwczovL2Y5MzVhODc5M2UzMS5uZ3Jvay1mcmVlLmFwcCIsImV4cCI6MTc1MjcwMjgzNiwiZnZhIjpbNDQsLTFdLCJpYXQiOjE3NTI3MDI3NzYsImlzcyI6Imh0dHBzOi8vdmFzdC1raWQtMzQuY2xlcmsuYWNjb3VudHMuZGV2IiwibmJmIjoxNzUyNzAyNzY2LCJzaWQiOiJzZXNzXzJ6eU95UnFITlFIemRiZXJJczd3a3BOQWZ6dyIsInN1YiI6InVzZXJfMnp5T3lWQ2pmOFl5NHlPYUVHQVowNG90SlpxIiwidiI6Mn0.DUMrqdnTYqThLqRBjK2g4vo7kbTfR04mCvn0Kyrm0q_TgyhOHznIIz8whb0zo-MTSb8Jl9snMz0a7CVqSmCzQ3u6XApSd39lXrcrXoQ3ZJ1mf1h73LQpkVEdKjX8IsXbmUAEsg0CIVWcgHWdPqKZpQ0b8YGIuJnWV0xnGU1IiN_Ml1_X7f6vmbuxsGrqmJP-bN5rq2j4PoN4X3JV_Bj8J204XElEeKgNpevLgFlpIVwsUsg6lFOGKy0L5Ocx1UdrHRc4W5jcsdrb7vwJtCW9H5BIEgUhAUGjbzLFPmuomkt18zFSZ0uGo5tmMxkNPDHX8REsgeqnmvZ_7n0DqhORYA"
   }
 }

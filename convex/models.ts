@@ -1,5 +1,7 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
 import { v } from "convex/values";
+import { api } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
 
 // Get all models for a project
 export const getModelsByProject = query({
@@ -25,14 +27,14 @@ export const getModelsByProject = query({
         download_quant: v.union(v.literal("int4"), v.literal("int8")),
       }),
       modelDownloadUrl: v.optional(v.string()),
+      repoId: v.optional(v.string()),
       status: v.union(
-        v.literal("draft"),
+        v.literal("pending"),
         v.literal("training"),
         v.literal("converting"),
         v.literal("ready"),
-        v.literal("error"),
+        v.literal("failed"),
       ),
-      jobId: v.optional(v.string()),
       errorMessage: v.optional(v.string()),
       createdAt: v.number(),
       updatedAt: v.number(),
@@ -72,6 +74,7 @@ export const getModelById = query({
         download_quant: v.union(v.literal("int4"), v.literal("int8")),
       }),
       modelDownloadUrl: v.optional(v.string()),
+      repoId: v.optional(v.string()),
       trainingGraph: v.optional(
         v.object({
           schema_version: v.optional(v.number()),
@@ -80,13 +83,12 @@ export const getModelById = query({
         }),
       ),
       status: v.union(
-        v.literal("draft"),
+        v.literal("pending"),
         v.literal("training"),
         v.literal("converting"),
         v.literal("ready"),
-        v.literal("error"),
+        v.literal("failed"),
       ),
-      jobId: v.optional(v.string()),
       errorMessage: v.optional(v.string()),
       createdAt: v.number(),
       updatedAt: v.number(),
@@ -128,11 +130,11 @@ export const createModel = mutation({
     ),
     status: v.optional(
       v.union(
-        v.literal("draft"),
+        v.literal("pending"),
         v.literal("training"),
         v.literal("converting"),
         v.literal("ready"),
-        v.literal("error"),
+        v.literal("failed"),
       ),
     ),
   },
@@ -148,7 +150,7 @@ export const createModel = mutation({
       datasetIds: args.datasetIds,
       trainingConfig: args.trainingConfig,
       trainingGraph: args.trainingGraph,
-      status: args.status || "draft",
+      status: args.status || "pending",
       createdAt: now,
       updatedAt: now,
     });
@@ -160,24 +162,24 @@ export const updateModelStatus = mutation({
   args: {
     modelId: v.id("models"),
     status: v.union(
-      v.literal("draft"),
+      v.literal("pending"),
       v.literal("training"),
       v.literal("converting"),
       v.literal("ready"),
-      v.literal("error"),
+      v.literal("failed"),
     ),
     errorMessage: v.optional(v.string()),
-    jobId: v.optional(v.string()),
     modelDownloadUrl: v.optional(v.string()),
+    repoId: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     const updateData: {
-      status: "draft" | "training" | "converting" | "ready" | "error";
+      status: "pending" | "training" | "converting" | "ready" | "failed";
       updatedAt: number;
       errorMessage?: string;
-      jobId?: string;
       modelDownloadUrl?: string;
+      repoId?: string;
     } = {
       status: args.status,
       updatedAt: Date.now(),
@@ -186,11 +188,11 @@ export const updateModelStatus = mutation({
     if (args.errorMessage !== undefined) {
       updateData.errorMessage = args.errorMessage;
     }
-    if (args.jobId !== undefined) {
-      updateData.jobId = args.jobId;
-    }
     if (args.modelDownloadUrl !== undefined) {
       updateData.modelDownloadUrl = args.modelDownloadUrl;
+    }
+    if (args.repoId !== undefined) {
+      updateData.repoId = args.repoId;
     }
 
     await ctx.db.patch(args.modelId, updateData);
@@ -244,14 +246,14 @@ export const getModelsByUser = query({
         download_quant: v.union(v.literal("int4"), v.literal("int8")),
       }),
       modelDownloadUrl: v.optional(v.string()),
+      repoId: v.optional(v.string()),
       status: v.union(
-        v.literal("draft"),
+        v.literal("pending"),
         v.literal("training"),
         v.literal("converting"),
         v.literal("ready"),
-        v.literal("error"),
+        v.literal("failed"),
       ),
-      jobId: v.optional(v.string()),
       errorMessage: v.optional(v.string()),
       createdAt: v.number(),
       updatedAt: v.number(),
@@ -267,56 +269,58 @@ export const getModelsByUser = query({
   },
 });
 
-// Get models by job ID
-export const getModelByJobId = query({
-  args: { jobId: v.string() },
-  returns: v.union(
-    v.object({
-      _id: v.id("models"),
-      projectId: v.id("projects"),
-      userId: v.id("users"),
-      title: v.string(),
-      baseModelDetails: v.object({
-        modelId: v.union(v.literal("microsoft/phi-2")),
-        displayName: v.string(),
-        provider: v.string(),
-        parameters: v.string(),
-        huggingFaceUrl: v.string(),
-      }),
-      datasetIds: v.array(v.id("datasets")),
-      trainingConfig: v.object({
-        epochs: v.number(),
-        batch_size: v.number(),
-        train_quant: v.union(v.literal("int4"), v.literal("int8")),
-        download_quant: v.union(v.literal("int4"), v.literal("int8")),
-      }),
-      modelDownloadUrl: v.optional(v.string()),
-      trainingGraph: v.optional(
-        v.object({
-          schema_version: v.optional(v.number()),
-          nodes: v.record(v.string(), v.any()),
-          edges: v.array(v.any()),
-        }),
-      ),
-      status: v.union(
-        v.literal("draft"),
-        v.literal("training"),
-        v.literal("converting"),
-        v.literal("ready"),
-        v.literal("error"),
-      ),
-      jobId: v.optional(v.string()),
-      errorMessage: v.optional(v.string()),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      _creationTime: v.number(),
-    }),
-    v.null(),
-  ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("models")
-      .filter((q) => q.eq(q.field("jobId"), args.jobId))
-      .unique();
+// ACTION WRAPPER: External HTTP API endpoint for updating model status => JOB REPLACEMENT
+// This wraps the updateModelStatus mutation so it can be called via /api/setModelMetadata
+export const setModelMetadata = action({
+  args: {
+    trainingId: v.string(), // Accept string, will convert to Id internally (this is the model ID)
+    state: v.union(
+      v.literal("pending"),
+      v.literal("training"),
+      v.literal("converting"),
+      v.literal("ready"),
+      v.literal("failed"),
+    ),
+    error: v.optional(v.string()),
+    repoId: v.optional(v.string()),
+    modelUrl: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    // Convert string trainingId to Convex Id
+    const modelId = args.trainingId as Id<"models">;
+
+    // Call the internal mutation
+    await ctx.runMutation(api.models.updateModelStatus, {
+      modelId: modelId,
+      status: args.state,
+      errorMessage: args.error,
+      repoId: args.repoId,
+      modelDownloadUrl: args.modelUrl,
+    });
+
+    return null;
+  },
+});
+
+// ACTION WRAPPER: Set model URL for a training job
+export const setModelUrl = action({
+  args: {
+    trainingId: v.string(), // This is the model ID
+    modelUrl: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args): Promise<null> => {
+    // Convert string trainingId to Convex Id
+    const modelId = args.trainingId as Id<"models">;
+
+    // Call the internal mutation to update the model download URL
+    await ctx.runMutation(api.models.updateModelStatus, {
+      modelId: modelId,
+      status: "ready", // Set status to ready when model URL is provided
+      modelDownloadUrl: args.modelUrl,
+    });
+
+    return null;
   },
 });

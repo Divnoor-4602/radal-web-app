@@ -80,6 +80,8 @@ export default defineSchema({
 
     // donwload url of the model
     modelDownloadUrl: v.optional(v.string()),
+    // respository of the tuned model
+    repoId: v.optional(v.string()), // username/model-name
 
     // Complete training graph of the model for reproducability
     trainingGraph: v.optional(
@@ -92,15 +94,13 @@ export default defineSchema({
 
     // Status of the model
     status: v.union(
-      v.literal("draft"),
-      v.literal("training"),
-      v.literal("converting"),
-      v.literal("ready"),
-      v.literal("error"),
+      v.literal("pending"), // Row created
+      v.literal("training"), // AutoTrain running
+      v.literal("converting"), // GGUF conversion running
+      v.literal("ready"), // Complete - ready for download
+      v.literal("failed"), // Hard failure
     ),
 
-    // Job id
-    jobId: v.optional(v.string()),
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
