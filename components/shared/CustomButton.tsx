@@ -10,6 +10,7 @@ type TCustomButton = {
   icon?: React.ReactNode;
   onClick?: () => void;
   variant?: "primary" | "secondary" | "tertiary";
+  disableShadow?: boolean;
 };
 
 const CustomButton = ({
@@ -18,6 +19,7 @@ const CustomButton = ({
   icon,
   onClick,
   variant = "primary",
+  disableShadow = false,
 }: TCustomButton) => {
   const getVariantStyles = () => {
     switch (variant) {
@@ -49,19 +51,21 @@ const CustomButton = ({
   return (
     <div className={cn("relative inline-block", className)}>
       {/* Shadow/Bottom div */}
-      <motion.div
-        className={cn("absolute inset-0 rounded-[10px]", styles.shadow)}
-      />
+      {!disableShadow && (
+        <motion.div
+          className={cn("absolute inset-0 rounded-[10px]", styles.shadow)}
+        />
+      )}
 
       {/* Main button */}
       <motion.button
         className={cn(
-          "relative rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100",
+          "relative rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100 gap-1",
           styles.button,
         )}
         onClick={onClick}
         initial={{ y: 0 }}
-        whileHover={{ y: -3 }}
+        whileHover={!disableShadow ? { y: -3 } : {}}
         whileTap={{ y: 0 }}
         transition={{ duration: 0.1, ease: "easeOut" }}
       >

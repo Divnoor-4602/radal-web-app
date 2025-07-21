@@ -25,8 +25,9 @@ const DatasetUploadMetricCard = () => {
             <CustomButton
               text="Filter"
               variant="secondary"
-              className="gap-1.5"
-              icon={<Filter />}
+              className="gap-2"
+              icon={<Filter className="size-4" />}
+              disableShadow={true}
             />
           </div>
           {/* Data Table */}

@@ -6,6 +6,11 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import React from "react";
 import CanvasSidebar from "@/components/models/canvas-dashboard/CanvasSidebar";
 import { ArrowLeft, BrainCircuit, Sparkles } from "lucide-react";
@@ -35,16 +40,36 @@ const CanvasTopbarWithActions = () => {
     <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5 bg-bg-100 border-b border-border-default">
       {/* Sidebar and back arrow actions */}
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="-ml-1 text-text-muted" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SidebarTrigger className="-ml-1 text-text-muted hover:text-text-primary cursor-pointer" />
+          </TooltipTrigger>
+          <TooltipContent
+            className="bg-bg-400"
+            arrowClassName="bg-bg-400 fill-bg-400"
+          >
+            Toggle sidebar
+          </TooltipContent>
+        </Tooltip>
         <Separator
           orientation="vertical"
           className="data-[orientation=vertical]:h-4 bg-border-default"
         />
         {/* Go back to the previous page */}
-        <ArrowLeft
-          className="size-5 text-text-muted cursor-pointer"
-          onClick={() => router.back()}
-        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <ArrowLeft
+              className="size-5 text-text-muted cursor-pointer hover:text-text-primary"
+              onClick={() => router.back()}
+            />
+          </TooltipTrigger>
+          <TooltipContent
+            className="bg-bg-400"
+            arrowClassName="bg-bg-400 fill-bg-400"
+          >
+            Go back to previous page
+          </TooltipContent>
+        </Tooltip>
       </div>
       {/* Train and Assistant actions */}
       <div className="flex items-center gap-3">
