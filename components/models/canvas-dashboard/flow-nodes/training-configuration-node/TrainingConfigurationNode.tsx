@@ -12,6 +12,8 @@ import {
 } from "@/lib/validations/training.schema";
 import SelectEpochSlider from "./SelectEpochSlider";
 import SelectBatchSize from "./SelectBatchSize";
+import { Position } from "@xyflow/react";
+import CustomHandle from "../../handles/CustomHandle";
 
 type TrainingConfigurationNodeProps = {
   id: string;
@@ -54,6 +56,23 @@ export const TrainingConfigurationNode: React.FC<
   return (
     <>
       <div className="relative">
+        {/* CustomHandle on the left side to receive model connections */}
+        <CustomHandle
+          type="target"
+          connectionCount={1}
+          position={Position.Left}
+          id="training-config-input"
+          colorTheme="amber"
+          size="md"
+          data={{
+            nodeId: id,
+            dataType: "training",
+            payload: {
+              format: "training",
+              status: "ready",
+            },
+          }}
+        />
         {/* Main card */}
         <div
           className={`relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full max-w-[400px] rounded-2xl border custom-project-card-drop-shadow to-[120%] from-[-15%] ${

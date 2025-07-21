@@ -64,7 +64,7 @@ const CanvasContent = () => {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  // validation logic - allow blue handles (dataset and model nodes) to connect
+  // validation logic - allow connections between compatible node types
   const isValidConnection = useCallback(
     (connection: Edge | Connection) => {
       console.log(connection);
@@ -74,18 +74,48 @@ const CanvasContent = () => {
       // Check if both nodes exist
       if (!sourceNode || !targetNode) return false;
 
-      // Get node types that can connect (nodes with blue handles)
-      const allowedNodeTypes = ["dataset", "model"];
-
       console.log(sourceNode, targetNode);
 
-      // Allow connection only if both nodes are allowed types
-      return (
-        allowedNodeTypes.includes(sourceNode.type || "") &&
-        allowedNodeTypes.includes(targetNode.type || "")
+      // Define valid connection patterns
+      const validConnections = [
+        { source: "dataset", target: "model" },
+        { source: "model", target: "training" },
+      ];
+
+      // Check if this connection type is valid
+      const isValidType = validConnections.some(
+        (validConn) =>
+          validConn.source === sourceNode.type &&
+          validConn.target === targetNode.type,
       );
+
+      if (!isValidType) return false;
+
+      // For model -> training connections, enforce one-to-one rule
+      if (sourceNode.type === "model" && targetNode.type === "training") {
+        // Check if source model already has a training connection
+        const modelHasTrainingConnection = edges.some(
+          (edge) =>
+            edge.source === connection.source &&
+            nodes.find((node) => node.id === edge.target)?.type === "training",
+        );
+
+        // Check if target training already has a model connection
+        const trainingHasModelConnection = edges.some(
+          (edge) =>
+            edge.target === connection.target &&
+            nodes.find((node) => node.id === edge.source)?.type === "model",
+        );
+
+        // Reject if either already has a connection
+        if (modelHasTrainingConnection || trainingHasModelConnection) {
+          return false;
+        }
+      }
+
+      return true;
     },
-    [nodes],
+    [nodes, edges],
   );
 
   return (

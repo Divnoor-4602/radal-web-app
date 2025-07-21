@@ -13,7 +13,7 @@ import {
 import { DropzoneArea } from "./DropzoneArea";
 import { type DatasetNodeData } from "@/lib/validations/node.schema";
 import useFlowStore from "@/lib/stores/flowStore";
-import BlueHandle from "@/components/models/canvas-dashboard/handles/BlueHandle";
+import CustomHandle from "@/components/models/canvas-dashboard/handles/CustomHandle";
 
 type TUploadDatasetNodeProps = Readonly<{
   id: string;
@@ -36,12 +36,14 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
 
   return (
     <div className="relative">
-      {/* BlueHandle on the right side */}
-      <BlueHandle
+      {/* CustomHandle on the right side */}
+      <CustomHandle
         type="source"
         connectionCount={1}
         position={Position.Right}
         id="upload-dataset-output"
+        colorTheme="purple"
+        size="md"
         data={{
           nodeId: id,
           dataType: "dataset",

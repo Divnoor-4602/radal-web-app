@@ -72,6 +72,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
 
   onConnect: (connection: Connection) => {
+    // Don't set any style here - let CustomEdge component handle all colors
     const newEdge: Edge = {
       id: nanoid(),
       source: connection.source!,
@@ -80,7 +81,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
       targetHandle: connection.targetHandle,
       type: "custom",
       animated: true,
-      style: { stroke: "#8142D7", strokeWidth: 2 },
+      // Remove style completely - let CustomEdge handle colors
     };
 
     set({
@@ -158,15 +159,26 @@ const useFlowStore = create<FlowState>((set, get) => ({
     } else if (type === "training") {
       const modelNode = currentNodes.find((node) => node.type === "model");
       if (modelNode) {
-        const edge: Edge = {
-          id: nanoid(),
-          source: modelNode.id,
-          target: id,
-          type: "custom",
-          animated: true,
-          style: { stroke: "#8142D7", strokeWidth: 2 },
-        };
-        newEdges = [...newEdges, edge];
+        // Check if this model already has a training connection (one-to-one rule)
+        const modelHasTrainingConnection = currentEdges.some(
+          (edge) =>
+            edge.source === modelNode.id &&
+            currentNodes.find((node) => node.id === edge.target)?.type ===
+              "training",
+        );
+
+        // Only create connection if model doesn't already have a training connection
+        if (!modelHasTrainingConnection) {
+          const edge: Edge = {
+            id: nanoid(),
+            source: modelNode.id,
+            target: id,
+            type: "custom",
+            animated: true,
+            style: { stroke: "#E17100", strokeWidth: 1 }, // Amber for model->training connections
+          };
+          newEdges = [...newEdges, edge];
+        }
       }
     }
 

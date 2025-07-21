@@ -9,7 +9,7 @@ import CustomPills from "@/components/shared/CustomPills";
 import SelectModel from "./SelectModel";
 import useFlowStore from "@/lib/stores/flowStore";
 import { Position } from "@xyflow/react";
-import BlueHandle from "../../handles/BlueHandle";
+import CustomHandle from "../../handles/CustomHandle";
 
 type TSelectModelNodeProps = {
   id: string;
@@ -47,12 +47,14 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
     <>
       <div className="relative">
         {/* Main card */}
-        {/* BlueHandle on the right side */}
-        <BlueHandle
+        {/* CustomHandle on the left side */}
+        <CustomHandle
           type="target"
           connectionCount={10}
           position={Position.Left}
           id="select-model-input"
+          colorTheme="purple"
+          size="md"
           data={{
             nodeId: id,
             dataType: "model",
@@ -61,6 +63,15 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
               status: currentData?.selectedModel ? "ready" : "processing",
             },
           }}
+        />
+        {/* CustomHandle on the right side */}
+        <CustomHandle
+          type="source"
+          connectionCount={1}
+          position={Position.Right}
+          id="select-model-output"
+          colorTheme="amber"
+          size="md"
         />
         <div
           className={`relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full max-w-[400px] rounded-2xl border custom-project-card-drop-shadow to-[120%] from-[-15%] ${
