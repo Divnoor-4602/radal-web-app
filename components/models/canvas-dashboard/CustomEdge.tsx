@@ -17,7 +17,7 @@ const CustomEdge: FC<EdgeProps> = ({
   source,
   target,
 }) => {
-  const { nodes } = useFlowStore();
+  const { nodes, edges } = useFlowStore();
 
   // Generate a smooth bezier path
   const [edgePath] = getBezierPath({
@@ -29,15 +29,22 @@ const CustomEdge: FC<EdgeProps> = ({
     targetPosition,
   });
 
-  // Determine stroke color based on connection type
+  // Determine stroke color based on connection type and handle
   const getStrokeColor = () => {
     // Find source and target nodes
     const sourceNode = nodes.find((node) => node.id === source);
     const targetNode = nodes.find((node) => node.id === target);
 
-    // Connection from SelectModelNode to TrainingConfigurationNode (amber)
+    // Find the current edge to get handle information
+    const currentEdge = edges.find((edge) => edge.id === id);
+    const sourceHandle = currentEdge?.sourceHandle;
+
+    // Check for amber handle connections (model -> training via amber handle)
     if (sourceNode?.type === "model" && targetNode?.type === "training") {
-      return "#E17100"; // Amber color matching the amber handle
+      // If coming from the amber handle (select-model-output), use amber color
+      if (sourceHandle === "select-model-output") {
+        return "#E17100"; // Amber color matching the amber handle
+      }
     }
 
     // Connection from Dataset to SelectModel (purple) - default
@@ -57,7 +64,7 @@ const CustomEdge: FC<EdgeProps> = ({
       <path
         id={id}
         fill="none"
-        strokeWidth={2}
+        strokeWidth={1}
         strokeDasharray="4 4"
         strokeLinecap="round"
         d={edgePath}

@@ -72,7 +72,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
   },
 
   onConnect: (connection: Connection) => {
-    // Don't set any style here - let CustomEdge component handle all colors
+    // Create edge with handle information - let CustomEdge component handle all colors
     const newEdge: Edge = {
       id: nanoid(),
       source: connection.source!,
@@ -81,7 +81,7 @@ const useFlowStore = create<FlowState>((set, get) => ({
       targetHandle: connection.targetHandle,
       type: "custom",
       animated: true,
-      // Remove style completely - let CustomEdge handle colors
+      // No style - let CustomEdge handle colors based on handles
     };
 
     set({
@@ -150,9 +150,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
           id: nanoid(),
           source: datasetNode.id,
           target: id,
+          sourceHandle: "upload-dataset-output", // Dataset output handle
+          targetHandle: "select-model-input", // Model purple input handle
           type: "custom",
           animated: true,
-          style: { stroke: "#8142D7", strokeWidth: 2 },
+          // No style - let CustomEdge handle colors
         };
         newEdges = [...newEdges, edge];
       });
@@ -173,9 +175,11 @@ const useFlowStore = create<FlowState>((set, get) => ({
             id: nanoid(),
             source: modelNode.id,
             target: id,
+            sourceHandle: "select-model-output", // Amber output handle
+            targetHandle: "training-config-input", // Training input handle
             type: "custom",
             animated: true,
-            style: { stroke: "#E17100", strokeWidth: 1 }, // Amber for model->training connections
+            // No style - let CustomEdge handle colors
           };
           newEdges = [...newEdges, edge];
         }
