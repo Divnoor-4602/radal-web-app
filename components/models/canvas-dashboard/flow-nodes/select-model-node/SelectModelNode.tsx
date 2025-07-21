@@ -8,6 +8,8 @@ import Image from "next/image";
 import CustomPills from "@/components/shared/CustomPills";
 import SelectModel from "./SelectModel";
 import useFlowStore from "@/lib/stores/flowStore";
+import { Position } from "@xyflow/react";
+import BlueHandle from "../../handles/BlueHandle";
 
 type TSelectModelNodeProps = {
   id: string;
@@ -45,6 +47,20 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = ({
     <>
       <div className="relative">
         {/* Main card */}
+        {/* BlueHandle on the right side */}
+        <BlueHandle
+          type="target"
+          position={Position.Left}
+          id="select-model-input"
+          data={{
+            nodeId: id,
+            dataType: "model",
+            payload: {
+              format: "model",
+              status: currentData?.selectedModel ? "ready" : "processing",
+            },
+          }}
+        />
         <div
           className={`relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full max-w-[400px] rounded-2xl border custom-project-card-drop-shadow to-[120%] from-[-15%] ${
             selected ? "border-border-highlight" : "border-border-default"

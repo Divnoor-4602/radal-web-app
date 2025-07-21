@@ -2,6 +2,7 @@
 
 import React, { FC } from "react";
 import { Database, Info, File } from "lucide-react";
+import { Position } from "@xyflow/react";
 import CustomPills from "@/components/shared/CustomPills";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,6 +13,7 @@ import {
 import { DropzoneArea } from "./DropzoneArea";
 import { type DatasetNodeData } from "@/lib/validations/node.schema";
 import useFlowStore from "@/lib/stores/flowStore";
+import BlueHandle from "@/components/models/canvas-dashboard/handles/BlueHandle";
 
 type TUploadDatasetNodeProps = Readonly<{
   id: string;
@@ -34,6 +36,21 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = ({
 
   return (
     <div className="relative">
+      {/* BlueHandle on the right side */}
+      <BlueHandle
+        type="source"
+        position={Position.Right}
+        id="upload-dataset-output"
+        data={{
+          nodeId: id,
+          dataType: "dataset",
+          payload: {
+            format: "csv",
+            status: currentData?.file ? "ready" : "processing",
+          },
+        }}
+      />
+
       {/* Main card */}
       <div
         className={`relative pt-4.5 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[400px] rounded-2xl border border-border-default custom-project-card-drop-shadow to-[120%] from-[-15%] ${

@@ -347,3 +347,8 @@
     contrast(var(--image-muted-contrast));
   transition: filter 0.2s ease;
 }
+
+/* Custom Blue Handle Drop Shadow */
+.blue-handle-drop-shadow {
+  filter: drop-shadow(0px 1px 4px rgba(115, 43, 244, 0.4));
+}

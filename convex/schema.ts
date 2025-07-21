@@ -101,7 +101,7 @@ export default defineSchema({
       v.literal("failed"), // Hard failure
     ),
 
-    errorMessage: v.optional(v.string()),
+    errorMessage: v.optional(v.string()), // Error message if failed
     createdAt: v.number(),
     updatedAt: v.number(),
   })

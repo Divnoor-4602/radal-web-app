@@ -7,6 +7,8 @@ import {
   useReactFlow,
   NodeTypes,
   BackgroundVariant,
+  Connection,
+  Edge,
 } from "@xyflow/react";
 import React, { useCallback } from "react";
 import { useParams } from "next/navigation";
@@ -16,6 +18,7 @@ import {
   SelectModelNode,
   TrainingConfigurationNode,
 } from "@/components/models/canvas-dashboard/flow-nodes";
+import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 
 // Node types mapping
 const nodeTypes: NodeTypes = {
@@ -55,6 +58,30 @@ const CanvasContent = () => {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  // validation logic - allow blue handles (dataset and model nodes) to connect
+  const isValidConnection = useCallback(
+    (connection: Edge | Connection) => {
+      console.log(connection);
+      const sourceNode = nodes.find((node) => node.id === connection.source);
+      const targetNode = nodes.find((node) => node.id === connection.target);
+
+      // Check if both nodes exist
+      if (!sourceNode || !targetNode) return false;
+
+      // Get node types that can connect (nodes with blue handles)
+      const allowedNodeTypes = ["dataset", "model"];
+
+      console.log(sourceNode, targetNode);
+
+      // Allow connection only if both nodes are allowed types
+      return (
+        allowedNodeTypes.includes(sourceNode.type || "") &&
+        allowedNodeTypes.includes(targetNode.type || "")
+      );
+    },
+    [nodes],
+  );
+
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
       <ReactFlow
@@ -63,12 +90,14 @@ const CanvasContent = () => {
           data: { ...node.data, projectId },
         }))}
         edges={edges}
+        isValidConnection={isValidConnection}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
+        connectionLineComponent={ConnectionLine}
         fitView
         style={{ backgroundColor: "#090707" }}
       >
