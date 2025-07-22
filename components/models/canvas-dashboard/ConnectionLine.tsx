@@ -1,6 +1,6 @@
 "use client";
 
-import React, { type FC } from "react";
+import React, { type FC, memo, useMemo } from "react";
 import {
   getBezierPath,
   type ConnectionLineComponentProps,
@@ -12,42 +12,47 @@ type ExtendedConnectionLineProps = ConnectionLineComponentProps & {
   toHandle?: { id?: string };
 };
 
-const ConnectionLine: FC<ConnectionLineComponentProps> = (props) => {
+const ConnectionLine: FC<ConnectionLineComponentProps> = memo((props) => {
   const { fromX, fromY, toX, toY, fromPosition, toPosition, connectionStatus } =
     props;
 
   // Handle objects (may not be in official types yet)
   const { fromHandle, toHandle } = props as ExtendedConnectionLineProps;
 
-  // Generate a smooth bezier path
-  const [edgePath] = getBezierPath({
-    sourceX: fromX,
-    sourceY: fromY,
-    sourcePosition: fromPosition,
-    targetX: toX,
-    targetY: toY,
-    targetPosition: toPosition,
-  });
+  // Memoize the expensive bezier path calculation
+  const edgePath = useMemo(() => {
+    const [path] = getBezierPath({
+      sourceX: fromX,
+      sourceY: fromY,
+      sourcePosition: fromPosition,
+      targetX: toX,
+      targetY: toY,
+      targetPosition: toPosition,
+    });
+    return path;
+  }, [fromX, fromY, fromPosition, toX, toY, toPosition]);
 
-  // Get stroke color using utility function
-  const strokeColor = getConnectionStrokeColor({
-    connectionStatus: connectionStatus === null ? undefined : connectionStatus,
-    fromHandleId: fromHandle?.id,
-    toHandleId: toHandle?.id,
-  });
+  // Memoize stroke color calculation
+  const strokeColor = useMemo(() => {
+    return getConnectionStrokeColor({
+      connectionStatus:
+        connectionStatus === null ? undefined : connectionStatus,
+      fromHandleId: fromHandle?.id,
+      toHandleId: toHandle?.id,
+    });
+  }, [connectionStatus, fromHandle?.id, toHandle?.id]);
+
+  // Memoize style object to prevent recreation
+  const pathStyle = useMemo(
+    () => ({
+      filter: "drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3))",
+      opacity: 0.9,
+    }),
+    [],
+  );
 
   return (
     <g>
-      {/* invisible path */}
-      {/* <path
-        fill="none"
-        stroke="transparent"
-        strokeWidth={15}
-        strokeLinecap="round"
-        d={edgePath}
-        className="react-flow__connection-line-path"
-      /> */}
-
       <path
         fill="none"
         stroke={strokeColor}
@@ -56,13 +61,12 @@ const ConnectionLine: FC<ConnectionLineComponentProps> = (props) => {
         strokeLinecap="round"
         className="animated"
         d={edgePath}
-        style={{
-          filter: "drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3))",
-          opacity: 0.9,
-        }}
+        style={pathStyle}
       />
     </g>
   );
-};
+});
+
+ConnectionLine.displayName = "ConnectionLine";
 
 export default ConnectionLine;

@@ -86,11 +86,17 @@ const CustomHandle = memo<CustomHandleProps>(
       ...style, // Allow custom style overrides
     };
 
+    // Simple connection check for handle connectability
     const connections = useNodeConnections({
       handleType: type,
+      handleId: id,
     });
 
-    const { isReconnecting } = useFlowStore();
+    // Only subscribe to isReconnecting if connectionCount is actually limited
+    // This avoids unnecessary re-renders for handles with unlimited connections
+    const isReconnecting = useFlowStore((state) =>
+      connectionCount && connectionCount > 0 ? state.isReconnecting : false,
+    );
 
     // Determine if handle is connectable using utility function
     const isConnectable = isCustomHandleConnectable(

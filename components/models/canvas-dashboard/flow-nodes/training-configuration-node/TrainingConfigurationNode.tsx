@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import { type TrainingNodeData } from "@/lib/validations/node.schema";
 import { Sparkles } from "lucide-react";
 import CustomPills from "@/components/shared/CustomPills";
@@ -24,33 +24,40 @@ type TrainingConfigurationNodeProps = {
 
 export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps> =
   memo(({ id, selected, dragging }) => {
-    const { nodes, updateNodeData } = useFlowStore();
+    // Use separate selectors to avoid re-renders on other node changes
+    const updateNodeData = useFlowStore((state) => state.updateNodeData);
+    const currentData = useFlowStore(
+      (state) =>
+        state.nodes.find((node) => node.id === id)?.data as TrainingNodeData,
+    );
 
-    // function to handle quantization selection in the state
-    const handleQuantizationChange = (
-      quantization: TQuantizationSchema,
-      type: string,
-    ) => {
-      if (type === "quantization") {
-        updateNodeData(id, { quantization });
-      } else if (type === "download") {
-        updateNodeData(id, { downloadQuant: quantization });
-      }
-    };
+    // Memoized function to handle quantization selection in the state
+    const handleQuantizationChange = useCallback(
+      (quantization: TQuantizationSchema, type: string) => {
+        if (type === "quantization") {
+          updateNodeData(id, { quantization });
+        } else if (type === "download") {
+          updateNodeData(id, { downloadQuant: quantization });
+        }
+      },
+      [updateNodeData, id],
+    );
 
-    // function to handle the batch size selection
-    const handleBatchSizeChange = (batchSize: TBatchSizeSchema) => {
-      updateNodeData(id, { batchSize });
-    };
+    // Memoized function to handle the batch size selection
+    const handleBatchSizeChange = useCallback(
+      (batchSize: TBatchSizeSchema) => {
+        updateNodeData(id, { batchSize });
+      },
+      [updateNodeData, id],
+    );
 
-    // function to handle the epochs selection
-    const handleEpochsChange = (epochs: TEpochsSchema) => {
-      updateNodeData(id, { epochs });
-    };
-
-    // get the current node data
-    const currentNode = nodes.find((node) => node.id === id);
-    const currentData = currentNode?.data as TrainingNodeData;
+    // Memoized function to handle the epochs selection
+    const handleEpochsChange = useCallback(
+      (epochs: TEpochsSchema) => {
+        updateNodeData(id, { epochs });
+      },
+      [updateNodeData, id],
+    );
 
     return (
       <>

@@ -22,11 +22,12 @@ import { startTraining } from "@/lib/actions/training.actions";
 // Canvas specific topbar/breadcrumb - memoized to prevent unnecessary re-renders
 const CanvasTopbarWithActions = memo(() => {
   const router = useRouter();
-  const { nodes, edges } = useFlowStore();
 
-  // Memoize the train click handler to prevent unnecessary re-renders
+  // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
     try {
+      // Access current state inside the function to avoid dependencies on volatile arrays
+      const { nodes, edges } = useFlowStore.getState();
       console.log("Starting training with nodes:", nodes);
       console.log("Starting training with edges:", edges);
 
@@ -35,7 +36,7 @@ const CanvasTopbarWithActions = memo(() => {
     } catch (error) {
       console.error("Training failed:", error);
     }
-  }, [nodes, edges]);
+  }, []); // No dependencies - stable reference
 
   // Memoize the back navigation handler
   const handleBackClick = useCallback(() => {

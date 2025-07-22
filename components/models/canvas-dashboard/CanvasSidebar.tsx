@@ -7,9 +7,9 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { ComponentIcon, Database, BrainCog, Sparkles } from "lucide-react";
 import { PreviewNode } from "./flow-nodes/PreviewNode";
-import React from "react";
+import React, { memo } from "react";
 
-const CanvasSidebar = () => {
+const CanvasSidebar = memo(() => {
   return (
     <Sidebar className="bg-bg-100 border-r border-border-default py-4 min-h-screen px-4">
       <SidebarHeader className="mb-4.5">
@@ -80,6 +80,8 @@ const CanvasSidebar = () => {
       </SidebarFooter>
     </Sidebar>
   );
-};
+});
+
+CanvasSidebar.displayName = "CanvasSidebar";
 
 export default CanvasSidebar;

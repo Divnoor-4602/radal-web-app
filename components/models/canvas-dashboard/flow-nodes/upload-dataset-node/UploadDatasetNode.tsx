@@ -24,11 +24,11 @@ type TUploadDatasetNodeProps = Readonly<{
 
 export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
   ({ id, data, selected, dragging }) => {
-    const { nodes } = useFlowStore();
-
-    // Get the current node data from the store
-    const currentNode = nodes.find((node) => node.id === id);
-    const currentData = currentNode?.data as DatasetNodeData;
+    // Use specific selector to avoid re-renders on other node changes
+    const currentData = useFlowStore(
+      (state) =>
+        state.nodes.find((node) => node.id === id)?.data as DatasetNodeData,
+    );
 
     return (
       <div className="relative">

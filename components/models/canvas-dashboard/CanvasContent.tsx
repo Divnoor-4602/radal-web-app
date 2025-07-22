@@ -47,16 +47,6 @@ const CanvasContent = () => {
   } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
 
-  // Memoize nodes with projectId to prevent unnecessary re-renders
-  const nodesWithProjectId = useMemo(
-    () =>
-      nodes.map((node) => ({
-        ...node,
-        data: { ...node.data, projectId },
-      })),
-    [nodes, projectId],
-  );
-
   // Memoize style object to prevent unnecessary re-renders
   const canvasStyle = useMemo(() => ({ backgroundColor: "#090707" }), []);
 
@@ -88,7 +78,7 @@ const CanvasContent = () => {
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
       <ReactFlow
-        nodes={nodesWithProjectId}
+        nodes={nodes}
         edges={edges}
         isValidConnection={isValidConnection}
         edgesReconnectable={true}

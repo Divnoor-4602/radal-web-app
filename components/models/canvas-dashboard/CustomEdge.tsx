@@ -1,93 +1,101 @@
 "use client";
 
-import React, { type FC } from "react";
+import React, { type FC, memo, useMemo } from "react";
 import { getBezierPath, type EdgeProps } from "@xyflow/react";
 import useFlowStore from "@/lib/stores/flowStore";
 import { getConnectionStrokeColor } from "@/lib/utils";
 
-const CustomEdge: FC<EdgeProps> = ({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style = {},
-  markerEnd,
-  source,
-  target,
-  selected,
-}) => {
-  const { nodes, edges } = useFlowStore();
-
-  // Generate a smooth bezier path
-  const [edgePath] = getBezierPath({
+// Optimized CustomEdge component following React Flow performance guidelines
+const CustomEdge: FC<EdgeProps> = memo(
+  ({
+    id,
     sourceX,
     sourceY,
-    sourcePosition,
     targetX,
     targetY,
+    sourcePosition,
     targetPosition,
-  });
+    style = {},
+    markerEnd,
+    source,
+    target,
+    selected,
+  }) => {
+    // Use separate selectors to avoid object recreation issues
+    const sourceNode = useFlowStore((state) =>
+      state.nodes.find((node) => node.id === source),
+    );
+    const targetNode = useFlowStore((state) =>
+      state.nodes.find((node) => node.id === target),
+    );
+    const currentEdge = useFlowStore((state) =>
+      state.edges.find((edge) => edge.id === id),
+    );
 
-  // Get stroke color using utility function
-  const sourceNode = nodes.find((node) => node.id === source);
-  const targetNode = nodes.find((node) => node.id === target);
-  const currentEdge = edges.find((edge) => edge.id === id);
+    // Memoize the expensive bezier path calculation
+    const edgePath = useMemo(() => {
+      const [path] = getBezierPath({
+        sourceX,
+        sourceY,
+        sourcePosition,
+        targetX,
+        targetY,
+        targetPosition,
+      });
+      return path;
+    }, [sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition]);
 
-  const finalStrokeColor = getConnectionStrokeColor({
-    sourceNodeType: sourceNode?.type,
-    targetNodeType: targetNode?.type,
-    sourceHandleId: currentEdge?.sourceHandle || undefined,
-    targetHandleId: currentEdge?.targetHandle || undefined,
-    isSelected: selected,
-  });
+    // Memoize stroke color calculation
+    const finalStrokeColor = useMemo(() => {
+      return getConnectionStrokeColor({
+        sourceNodeType: sourceNode?.type,
+        targetNodeType: targetNode?.type,
+        sourceHandleId: currentEdge?.sourceHandle || undefined,
+        targetHandleId: currentEdge?.targetHandle || undefined,
+        isSelected: selected,
+      });
+    }, [
+      sourceNode?.type,
+      targetNode?.type,
+      currentEdge?.sourceHandle,
+      currentEdge?.targetHandle,
+      selected,
+    ]);
 
-  return (
-    <g>
-      {/* Invisible interaction path - larger hit area for selection and reconnection */}
-      {/* <path
-        d={edgePath}
-        fill="none"
-        strokeOpacity={0}
-        stroke="transparent"
-        strokeWidth={20}
-        style={{
-          cursor: "pointer",
-          pointerEvents: "all",
-        }}
-      /> */}
+    // Memoize the circle style to prevent object recreation
+    const circleStyle = useMemo(
+      () => ({
+        filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
+        opacity: 0.95,
+        pointerEvents: "none" as const,
+      }),
+      [],
+    );
 
-      {/* Visible edge path */}
-      <path
-        id={id}
-        d={edgePath}
-        fill="none"
-        stroke={finalStrokeColor}
-        strokeWidth={1} // Back to 1px
-        strokeDasharray="4 4"
-        strokeLinecap="round"
-        markerEnd={markerEnd}
-        style={{
-          ...style,
-        }}
-      />
+    return (
+      <g>
+        {/* Visible edge path */}
+        <path
+          id={id}
+          d={edgePath}
+          fill="none"
+          stroke={finalStrokeColor}
+          strokeWidth={1}
+          strokeDasharray="4 4"
+          strokeLinecap="round"
+          markerEnd={markerEnd}
+          style={style}
+        />
 
-      {/* Animated dot */}
-      <circle
-        r="3"
-        fill={finalStrokeColor}
-        style={{
-          filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
-          opacity: 0.95,
-          pointerEvents: "none",
-        }}
-      >
-        <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-      </circle>
-    </g>
-  );
-};
+        {/* Animated dot */}
+        <circle r="3" fill={finalStrokeColor} style={circleStyle}>
+          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      </g>
+    );
+  },
+);
+
+CustomEdge.displayName = "CustomEdge";
 
 export default CustomEdge;

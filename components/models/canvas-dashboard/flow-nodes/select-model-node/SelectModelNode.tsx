@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import { type ModelNodeData } from "@/lib/validations/node.schema";
 import { type TModelDetail } from "@/lib/validations/model.schema";
 import { Brain, BrainCog } from "lucide-react";
@@ -10,7 +10,6 @@ import SelectModel from "./SelectModel";
 import useFlowStore from "@/lib/stores/flowStore";
 import { Position } from "@xyflow/react";
 import CustomHandle from "../../handles/CustomHandle";
-import { useNodeConnections, useNodesData } from "@xyflow/react";
 
 type TSelectModelNodeProps = {
   id: string;
@@ -21,37 +20,35 @@ type TSelectModelNodeProps = {
 
 export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
   ({ id, selected, dragging }) => {
-    const { nodes, updateNodeData } = useFlowStore();
+    // Use separate selectors to avoid object recreation issues
+    const updateNodeData = useFlowStore((state) => state.updateNodeData);
+    const currentNodeData = useFlowStore(
+      (state) =>
+        state.nodes.find((node) => node.id === id)?.data as ModelNodeData,
+    );
 
-    // get the node connections for the model input handle
-    const inputNodeConnections = useNodeConnections({
-      handleType: "target",
-      handleId: "select-model-input",
-    });
+    // Memoize the model change handler with stable dependencies
+    const handleModelChange = useCallback(
+      (modelId: string) => {
+        // Access current node data inside the function to avoid unstable dependencies
+        const currentData = useFlowStore
+          .getState()
+          .nodes.find((node) => node.id === id)?.data as ModelNodeData;
 
-    // get the node data for the model input handle
-    const inputNodeData = useNodesData(inputNodeConnections[0]?.source);
+        // Find the full model object from available models
+        const selectedModelObj = Object.values(
+          currentData?.availableModels || {},
+        ).find((model) => model.model_id === modelId);
 
-    console.log("inputNodeConnections", inputNodeConnections);
-    console.log("inputNodeData", inputNodeData);
-
-    // get the current node data from the nodes
-    const currentNode = nodes.find((node) => node.id === id);
-    const currentData = currentNode?.data as ModelNodeData;
-
-    const handleModelChange = (modelId: string) => {
-      // Find the full model object from available models
-      const selectedModelObj = Object.values(
-        currentData?.availableModels || {},
-      ).find((model) => model.model_id === modelId);
-
-      if (selectedModelObj) {
-        updateNodeData(id, { selectedModel: selectedModelObj });
-      }
-    };
+        if (selectedModelObj) {
+          updateNodeData(id, { selectedModel: selectedModelObj });
+        }
+      },
+      [updateNodeData, id],
+    ); // Only depend on stable references
 
     const selectedModelDetails: TModelDetail | undefined =
-      currentData?.selectedModel;
+      currentNodeData?.selectedModel;
 
     return (
       <>
@@ -70,7 +67,7 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
               dataType: "model",
               payload: {
                 format: "model",
-                status: currentData?.selectedModel ? "ready" : "processing",
+                status: currentNodeData?.selectedModel ? "ready" : "processing",
               },
             }}
           />
@@ -109,9 +106,9 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
             <div className="flex flex-col mt-5 mb-6.5 px-5">
               {/* Model selector  */}
               <SelectModel
-                selectedModelId={currentData?.selectedModel?.model_id || ""}
+                selectedModelId={currentNodeData?.selectedModel?.model_id || ""}
                 onModelChange={handleModelChange}
-                availableModels={currentData?.availableModels || {}}
+                availableModels={currentNodeData?.availableModels || {}}
               />
               {/* Hugging face link for the model */}
               <div className="flex items-center gap-1 mt-6 ml-1">
@@ -121,11 +118,11 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
                   width={24}
                   height={24}
                   priority
-                  className={`${!currentData?.selectedModel ? "image-muted" : ""}`}
+                  className={`${!currentNodeData?.selectedModel ? "image-muted" : ""}`}
                 />
                 <div
                   className={`text-sm tracking-tighter font-medium ${
-                    !currentData?.selectedModel
+                    !currentNodeData?.selectedModel
                       ? "text-text-inactive"
                       : "text-text-primary"
                   }`}
