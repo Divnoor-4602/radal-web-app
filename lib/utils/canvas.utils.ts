@@ -139,10 +139,10 @@ export function getConnectionStrokeColor(options: {
     }
   }
 
-  // Return darker color if selected
+  // Return lighter color if selected, darker if not selected but used to be selected logic
   if (isSelected) {
-    if (baseColor === "#E17100") return "#C65A00"; // Darker amber
-    if (baseColor === "#8142D7") return "#6A3AA0"; // Darker purple
+    if (baseColor === "#E17100") return "#fef3c7"; // Light amber when selected
+    if (baseColor === "#8142D7") return "#c4b5fd"; // Light purple when selected
   }
 
   return baseColor;

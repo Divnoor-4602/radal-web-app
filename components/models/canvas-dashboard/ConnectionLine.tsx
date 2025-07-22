@@ -56,7 +56,7 @@ const ConnectionLine: FC<ConnectionLineComponentProps> = memo((props) => {
       <path
         fill="none"
         stroke={strokeColor}
-        strokeWidth={1}
+        strokeWidth={1.5}
         strokeDasharray="4 4"
         strokeLinecap="round"
         className="animated"

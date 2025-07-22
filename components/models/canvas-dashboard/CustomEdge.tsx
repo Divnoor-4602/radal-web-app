@@ -1,7 +1,7 @@
 "use client";
 
 import React, { type FC, memo, useMemo } from "react";
-import { getBezierPath, type EdgeProps } from "@xyflow/react";
+import { BaseEdge, getBezierPath, type EdgeProps } from "@xyflow/react";
 import useFlowStore from "@/lib/stores/flowStore";
 import { getConnectionStrokeColor } from "@/lib/utils/canvas.utils";
 
@@ -62,36 +62,30 @@ const CustomEdge: FC<EdgeProps> = memo(
       selected,
     ]);
 
-    // Memoize the circle style to prevent object recreation
-    const circleStyle = useMemo(
-      () => ({
-        filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))",
-        opacity: 0.95,
-        pointerEvents: "none" as const,
-      }),
-      [],
-    );
+    // Memoize selection styling
+    const edgeStyle = useMemo(() => {
+      if (selected) {
+        return {
+          ...style,
+          stroke: finalStrokeColor,
+          strokeWidth: 2,
+        };
+      }
+
+      return {
+        ...style,
+        stroke: finalStrokeColor,
+        strokeWidth: 1,
+      };
+    }, [style, finalStrokeColor, selected]);
 
     return (
-      <g>
-        {/* Visible edge path */}
-        <path
-          id={id}
-          d={edgePath}
-          fill="none"
-          stroke={finalStrokeColor}
-          strokeWidth={1}
-          strokeDasharray="4 4"
-          strokeLinecap="round"
-          markerEnd={markerEnd}
-          style={style}
-        />
-
-        {/* Animated dot */}
-        <circle r="3" fill={finalStrokeColor} style={circleStyle}>
-          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-        </circle>
-      </g>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={edgeStyle}
+      />
     );
   },
 );
