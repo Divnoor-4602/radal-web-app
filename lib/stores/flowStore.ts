@@ -19,7 +19,10 @@ import {
   type TrainingNodeData,
   type FlowNodeData,
 } from "@/lib/validations/node.schema";
-import { isConnectionCompatible } from "@/lib/utils/canvas.utils";
+import {
+  isConnectionCompatible,
+  isDuplicateConnection,
+} from "@/lib/utils/canvas.utils";
 
 export interface ProjectGraphNode {
   id: string;
@@ -349,7 +352,7 @@ const useFlowStore = createWithEqualityFn<FlowState>(
     },
 
     isValidConnection: (connection: Edge | Connection) => {
-      const { nodes } = get();
+      const { nodes, edges } = get();
       const sourceNode = nodes.find((node) => node.id === connection.source);
       const targetNode = nodes.find((node) => node.id === connection.target);
 
@@ -357,7 +360,12 @@ const useFlowStore = createWithEqualityFn<FlowState>(
       if (!sourceNode || !targetNode) return false;
 
       // Check if connection is compatible based on business rules
-      return isConnectionCompatible(connection);
+      if (!isConnectionCompatible(connection)) return false;
+
+      // Check if this connection already exists (prevent duplicate connections)
+      if (isDuplicateConnection(connection, edges)) return false;
+
+      return true;
     },
   }),
   shallow,

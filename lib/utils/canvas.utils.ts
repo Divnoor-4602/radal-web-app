@@ -9,21 +9,33 @@ export const validConnectionPatterns = {
     sourceHandle: "upload-dataset-output",
     targetHandle: "select-model-input",
   },
-  modelToDataset: {
-    sourceHandle: "select-model-input",
-    targetHandle: "upload-dataset-output",
-  },
   // many to one between model and training
   modelToTraining: {
     sourceHandle: "select-model-output",
     targetHandle: "training-config-input",
   },
-  // one to many between training and model
-  trainingToModel: {
-    sourceHandle: "training-config-input",
-    targetHandle: "select-model-output",
-  },
 };
+
+// Check if a connection already exists between the same source and target nodes
+export function isDuplicateConnection(
+  connection: {
+    source?: string | null;
+    target?: string | null;
+  },
+  existingEdges: Array<{
+    source: string;
+    target: string;
+  }>,
+): boolean {
+  if (!connection.source || !connection.target) {
+    return false;
+  }
+
+  return existingEdges.some(
+    (edge) =>
+      edge.source === connection.source && edge.target === connection.target,
+  );
+}
 
 // Utility function to validate connections based on business rules
 export function isConnectionCompatible(connection: {
@@ -42,10 +54,10 @@ export function isConnectionCompatible(connection: {
   }
 
   // All valid handle combinations are now allowed:
-  // - Multiple datasets ↔ multiple models (many-to-many)
-  // - Multiple models ↔ one training config (many-to-one from model perspective)
-  // - One training config ↔ multiple models (one-to-many from training perspective)
+  // - Multiple datasets → multiple models (many-to-many)
+  // - Multiple models → one training config (many-to-one from model perspective)
   // - Datasets cannot connect to training (prevented by handle patterns)
+  // - Flow is unidirectional: Dataset → Model → Training
 
   return true;
 }
