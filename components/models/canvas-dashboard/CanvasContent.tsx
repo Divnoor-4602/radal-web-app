@@ -8,7 +8,7 @@ import {
   NodeTypes,
   BackgroundVariant,
 } from "@xyflow/react";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
@@ -19,14 +19,14 @@ import {
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
 
-// Node types mapping
+// Node types mapping - memoized outside component for stable reference
 const nodeTypes: NodeTypes = {
   dataset: UploadDatasetNode,
   model: SelectModelNode,
   training: TrainingConfigurationNode,
 };
 
-// Edge types mapping
+// Edge types mapping - memoized outside component for stable reference
 const edgeTypes = {
   custom: CustomEdge,
 };
@@ -46,6 +46,19 @@ const CanvasContent = () => {
     isValidConnection,
   } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
+
+  // Memoize nodes with projectId to prevent unnecessary re-renders
+  const nodesWithProjectId = useMemo(
+    () =>
+      nodes.map((node) => ({
+        ...node,
+        data: { ...node.data, projectId },
+      })),
+    [nodes, projectId],
+  );
+
+  // Memoize style object to prevent unnecessary re-renders
+  const canvasStyle = useMemo(() => ({ backgroundColor: "#090707" }), []);
 
   const onDrop = useCallback(
     (event: React.DragEvent) => {
@@ -75,10 +88,7 @@ const CanvasContent = () => {
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
       <ReactFlow
-        nodes={nodes.map((node) => ({
-          ...node,
-          data: { ...node.data, projectId },
-        }))}
+        nodes={nodesWithProjectId}
         edges={edges}
         isValidConnection={isValidConnection}
         edgesReconnectable={true}
@@ -94,7 +104,7 @@ const CanvasContent = () => {
         edgeTypes={edgeTypes}
         connectionLineComponent={ConnectionLine}
         fitView
-        style={{ backgroundColor: "#090707" }}
+        style={canvasStyle}
       >
         <Background
           variant={BackgroundVariant.Dots}

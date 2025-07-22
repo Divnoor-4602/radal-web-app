@@ -157,6 +157,19 @@ const useFlowStore = create<FlowState>((set, get) => ({
     const currentEdges = get().edges;
     let data: FlowNodeData;
 
+    // Ensure no more than one training config can exist on the canvas
+
+    // Check if trying to add a training node when one already exists
+    if (type === "training") {
+      const existingTrainingNode = currentNodes.find(
+        (node) => node.type === "training",
+      );
+      if (existingTrainingNode) {
+        // Don't add another training node - only one is allowed
+        return;
+      }
+    }
+
     if (type === "dataset") {
       data = {
         title: "Upload Dataset",
