@@ -15,17 +15,20 @@ import React, { useCallback, memo } from "react";
 import CanvasSidebar from "@/components/models/canvas-dashboard/CanvasSidebar";
 import { ArrowLeft, BrainCircuit, Sparkles } from "lucide-react";
 import CustomButton from "@/components/shared/CustomButton";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
   validateTrainingFlow,
   getConnectedTrainingNodes,
   transformFlowToTrainingSchema,
 } from "@/lib/utils/train.utils";
+import { startTraining } from "@/lib/actions/train.actions";
+import { type TrainingSchemaDataServer } from "@/lib/validations/train.server.schema";
 
 // Canvas specific topbar/breadcrumb - memoized to prevent unnecessary re-renders
 const CanvasTopbarWithActions = memo(() => {
   const router = useRouter();
+  const params = useParams();
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
@@ -64,13 +67,35 @@ const CanvasTopbarWithActions = memo(() => {
         return;
       }
 
-      console.log("Successfully transformed to training schema!");
+      console.log("✅ Successfully transformed to training schema!");
       console.log("Training schema data:", transformResult.data);
 
-      // TODO: Call the server action
-      // TODO: Make the page to show live updates while the model is in progress active.
+      // Ensure we have the transformed data
+      if (!transformResult.data) {
+        console.error("No transformed data available");
+        return;
+      }
 
-      // const result = await startTraining(transformResult.data);
+      // Extract projectId from URL params
+      const projectId = params.projectId as string;
+      if (!projectId) {
+        console.error("Project ID not found in URL params");
+        return;
+      }
+
+      console.log("🚀 Starting training with:", {
+        projectId,
+        datasetCount: transformResult.data.datasetNodes.length,
+      });
+
+      // Call the server action
+      // TODO: Handle loading states and show live updates while training is in progress
+      const result = await startTraining({
+        trainingData: transformResult.data! as TrainingSchemaDataServer, // Type cast
+        projectId,
+      });
+
+      console.log("Training result:", result);
     } catch (error) {
       console.error("Training failed:", error);
     }

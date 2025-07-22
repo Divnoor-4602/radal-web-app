@@ -13,11 +13,17 @@ export const getModelsByProject = query({
       userId: v.id("users"),
       title: v.string(),
       baseModelDetails: v.object({
-        modelId: v.union(v.literal("microsoft/phi-2")),
+        modelId: v.union(
+          v.literal("microsoft/phi-2"),
+          v.literal("microsoft/Phi-3-mini-4k-instruct"),
+          v.literal("microsoft/Phi-3.5-mini-instruct"),
+          v.literal("meta-llama/Llama-3.2-3B-Instruct"),
+          v.literal("meta-llama/Llama-3.2-1B-Instruct"),
+          v.literal("microsoft/DialoGPT-small"),
+        ),
         displayName: v.string(),
         provider: v.string(),
         parameters: v.string(),
-        huggingFaceUrl: v.string(),
       }),
       datasetIds: v.array(v.id("datasets")),
       trainingConfig: v.object({
@@ -60,11 +66,17 @@ export const getModelById = query({
       userId: v.id("users"),
       title: v.string(),
       baseModelDetails: v.object({
-        modelId: v.union(v.literal("microsoft/phi-2")),
+        modelId: v.union(
+          v.literal("microsoft/phi-2"),
+          v.literal("microsoft/Phi-3-mini-4k-instruct"),
+          v.literal("microsoft/Phi-3.5-mini-instruct"),
+          v.literal("meta-llama/Llama-3.2-3B-Instruct"),
+          v.literal("meta-llama/Llama-3.2-1B-Instruct"),
+          v.literal("microsoft/DialoGPT-small"),
+        ),
         displayName: v.string(),
         provider: v.string(),
         parameters: v.string(),
-        huggingFaceUrl: v.string(),
       }),
       datasetIds: v.array(v.id("datasets")),
       trainingConfig: v.object({
@@ -108,11 +120,17 @@ export const createModel = mutation({
     userId: v.id("users"),
     title: v.string(),
     baseModelDetails: v.object({
-      modelId: v.union(v.literal("microsoft/phi-2")),
+      modelId: v.union(
+        v.literal("microsoft/phi-2"),
+        v.literal("microsoft/Phi-3-mini-4k-instruct"),
+        v.literal("microsoft/Phi-3.5-mini-instruct"),
+        v.literal("meta-llama/Llama-3.2-3B-Instruct"),
+        v.literal("meta-llama/Llama-3.2-1B-Instruct"),
+        v.literal("microsoft/DialoGPT-small"),
+      ),
       displayName: v.string(),
       provider: v.string(),
       parameters: v.string(),
-      huggingFaceUrl: v.string(),
     }),
     datasetIds: v.array(v.id("datasets")),
     trainingConfig: v.object({
@@ -232,11 +250,17 @@ export const getModelsByUser = query({
       userId: v.id("users"),
       title: v.string(),
       baseModelDetails: v.object({
-        modelId: v.union(v.literal("microsoft/phi-2")),
+        modelId: v.union(
+          v.literal("microsoft/phi-2"),
+          v.literal("microsoft/Phi-3-mini-4k-instruct"),
+          v.literal("microsoft/Phi-3.5-mini-instruct"),
+          v.literal("meta-llama/Llama-3.2-3B-Instruct"),
+          v.literal("meta-llama/Llama-3.2-1B-Instruct"),
+          v.literal("microsoft/DialoGPT-small"),
+        ),
         displayName: v.string(),
         provider: v.string(),
         parameters: v.string(),
-        huggingFaceUrl: v.string(),
       }),
       datasetIds: v.array(v.id("datasets")),
       trainingConfig: v.object({
@@ -274,12 +298,14 @@ export const getModelsByUser = query({
 export const setModelMetadata = action({
   args: {
     trainingId: v.string(), // Accept string, will convert to Id internally (this is the model ID)
-    state: v.union(
-      v.literal("pending"),
-      v.literal("training"),
-      v.literal("converting"),
-      v.literal("ready"),
-      v.literal("failed"),
+    state: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("training"),
+        v.literal("converting"),
+        v.literal("ready"),
+        v.literal("failed"),
+      ),
     ),
     error: v.optional(v.string()),
     repoId: v.optional(v.string()),
@@ -293,7 +319,7 @@ export const setModelMetadata = action({
     // Call the internal mutation
     await ctx.runMutation(api.models.updateModelStatus, {
       modelId: modelId,
-      status: args.state,
+      status: args.state || "pending",
       errorMessage: args.error,
       repoId: args.repoId,
       modelDownloadUrl: args.modelUrl,

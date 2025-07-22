@@ -9,7 +9,6 @@ import {
 // Import provider icons
 import MicrosoftIcon from "@/public/icons/microsoft-icon.svg";
 import MetaIcon from "@/public/icons/meta-icon.svg";
-import BlackForestLabsIcon from "@/public/icons/black-forest-labs-flux.png";
 
 // Menu items for the project sidebar
 export const menuItems = [
@@ -120,45 +119,57 @@ export const availableModels: Record<string, TModelDetail> = {
     display_name: "Phi-2",
     model_id: "microsoft/phi-2",
     description:
-      "2.7B parameter model optimized for reasoning and code generation",
+      "2.7 B-parameter model optimised for compact reasoning and code tasks.",
     parameters: "2.7B",
     provider: "Microsoft",
     providerIcon: MicrosoftIcon,
     tags: ["reasoning", "code", "chat"],
   },
   "phi-3-mini": {
-    display_name: "Phi-3 Mini",
+    display_name: "Phi-3 Mini 4K",
     model_id: "microsoft/Phi-3-mini-4k-instruct",
-    description: "4B parameter lightweight model with 4k context window",
-    parameters: "4B",
+    description:
+      "3.8 B-parameter lightweight model with a 4 K token context window.",
+    parameters: "3.8B",
     provider: "Microsoft",
     providerIcon: MicrosoftIcon,
     tags: ["instruction-following", "chat", "efficient"],
   },
-  "flux-kontext": {
-    display_name: "FLUX.1 Kontext Dev",
-    model_id: "black-forest-labs/FLUX.1-Kontext-dev",
+  "phi-3_5-mini": {
+    display_name: "Phi-3.5 Mini",
+    model_id: "microsoft/Phi-3.5-mini-instruct",
     description:
-      "Advanced text-to-image generation model with context understanding",
-    parameters: "12B",
-    provider: "Black Forest Labs",
-    providerIcon: BlackForestLabsIcon,
-    tags: ["text-to-image", "multimodal", "creative"],
+      "3.8 B-parameter Phi-3.5 model (128 K context) for high-quality reasoning. *Requires Transformers ≥ 4.43*.",
+    parameters: "3.8B",
+    provider: "Microsoft",
+    providerIcon: MicrosoftIcon,
+    tags: ["reasoning", "long-context", "chat"],
   },
-  "llama-3-8b": {
-    display_name: "Llama 3 8B",
-    model_id: "meta-llama/Llama-3-8B-Instruct",
+  "llama-3.2-3b": {
+    display_name: "Llama-3.2 3B Instruct",
+    model_id: "meta-llama/Llama-3.2-3B-Instruct",
     description:
-      "8B parameter instruction-tuned model with strong reasoning capabilities",
-    parameters: "8B",
+      "3 B-parameter multilingual instruction-tuned model with 128 K context.",
+    parameters: "3B",
     provider: "Meta",
     providerIcon: MetaIcon,
-    tags: ["instruction-following", "reasoning", "chat"],
+    tags: ["multilingual", "chat", "long-context"],
+  },
+  "llama-3.2-1b": {
+    display_name: "Llama-3.2 1B Instruct",
+    model_id: "meta-llama/Llama-3.2-1B-Instruct",
+    description:
+      "1 B-parameter miniature Llama-3.2 model for edge or mobile use.",
+    parameters: "1B",
+    provider: "Meta",
+    providerIcon: MetaIcon,
+    tags: ["efficient", "multilingual", "chat"],
   },
   "DialoGPT-small": {
     display_name: "DialoGPT Small",
     model_id: "microsoft/DialoGPT-small",
-    description: "Small model for chatbot conversations",
+    description:
+      "1.3 B-parameter baseline model for conversational fine-tuning.",
     parameters: "1.3B",
     provider: "Microsoft",
     providerIcon: MicrosoftIcon,

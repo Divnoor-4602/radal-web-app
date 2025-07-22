@@ -60,11 +60,17 @@ export default defineSchema({
 
     // base model details
     baseModelDetails: v.object({
-      modelId: v.union(v.literal("microsoft/phi-2")), // Can expand to more models later
+      modelId: v.union(
+        v.literal("microsoft/phi-2"),
+        v.literal("microsoft/Phi-3-mini-4k-instruct"),
+        v.literal("microsoft/Phi-3.5-mini-instruct"),
+        v.literal("meta-llama/Llama-3.2-3B-Instruct"),
+        v.literal("meta-llama/Llama-3.2-1B-Instruct"),
+        v.literal("microsoft/DialoGPT-small"),
+      ),
       displayName: v.string(),
       provider: v.string(),
       parameters: v.string(),
-      huggingFaceUrl: v.string(),
     }),
 
     // Dataset reference used for fine tuning the models
