@@ -19,7 +19,7 @@ import {
   type TrainingNodeData,
   type FlowNodeData,
 } from "@/lib/validations/node.schema";
-import { isConnectionCompatible } from "@/lib/utils";
+import { isConnectionCompatible } from "@/lib/utils/canvas.utils";
 
 export interface ProjectGraphNode {
   id: string;

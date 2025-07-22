@@ -3,7 +3,7 @@
 import { memo, CSSProperties } from "react";
 import { Handle, Position, useNodeConnections } from "@xyflow/react";
 import useFlowStore from "@/lib/stores/flowStore";
-import { isCustomHandleConnectable } from "@/lib/utils";
+import { isCustomHandleConnectable } from "@/lib/utils/canvas.utils";
 
 // Data passed in the handle
 export type HandleData = {

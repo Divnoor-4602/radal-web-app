@@ -5,7 +5,7 @@ import {
   getBezierPath,
   type ConnectionLineComponentProps,
 } from "@xyflow/react";
-import { getConnectionStrokeColor } from "@/lib/utils";
+import { getConnectionStrokeColor } from "@/lib/utils/canvas.utils";
 
 type ExtendedConnectionLineProps = ConnectionLineComponentProps & {
   fromHandle?: { id?: string };

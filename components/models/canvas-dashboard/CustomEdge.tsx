@@ -3,7 +3,7 @@
 import React, { type FC, memo, useMemo } from "react";
 import { getBezierPath, type EdgeProps } from "@xyflow/react";
 import useFlowStore from "@/lib/stores/flowStore";
-import { getConnectionStrokeColor } from "@/lib/utils";
+import { getConnectionStrokeColor } from "@/lib/utils/canvas.utils";
 
 // Optimized CustomEdge component following React Flow performance guidelines
 const CustomEdge: FC<EdgeProps> = memo(

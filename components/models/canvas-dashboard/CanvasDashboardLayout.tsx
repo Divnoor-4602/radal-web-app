@@ -17,7 +17,11 @@ import { ArrowLeft, BrainCircuit, Sparkles } from "lucide-react";
 import CustomButton from "@/components/shared/CustomButton";
 import { useRouter } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
-import { startTraining } from "@/lib/actions/training.actions";
+import {
+  validateTrainingFlow,
+  getConnectedTrainingNodes,
+  transformFlowToTrainingSchema,
+} from "@/lib/utils/train.utils";
 
 // Canvas specific topbar/breadcrumb - memoized to prevent unnecessary re-renders
 const CanvasTopbarWithActions = memo(() => {
@@ -28,11 +32,45 @@ const CanvasTopbarWithActions = memo(() => {
     try {
       // Access current state inside the function to avoid dependencies on volatile arrays
       const { nodes, edges } = useFlowStore.getState();
-      console.log("Starting training with nodes:", nodes);
-      console.log("Starting training with edges:", edges);
 
-      const result = await startTraining(nodes, edges);
-      console.log("Training result:", result);
+      // Validate the training flow
+      const validation = validateTrainingFlow(nodes, edges);
+
+      if (!validation.isValid) {
+        console.error("Invalid training flow:", validation.errors);
+        // TODO: Show user-friendly error message
+        return;
+      }
+
+      // Collect and validate connected nodes
+      const connectedNodes = getConnectedTrainingNodes(nodes, edges);
+
+      if (!connectedNodes.isValid) {
+        console.error("Invalid connected nodes:", connectedNodes.errors);
+        // TODO: Show user-friendly error message
+        return;
+      }
+
+      // Transform to training schema format
+      const transformResult = transformFlowToTrainingSchema(nodes, edges);
+      console.log("Training schema transformation:", transformResult);
+
+      if (!transformResult.success) {
+        console.error(
+          "Failed to transform training schema:",
+          transformResult.errors,
+        );
+        // TODO: Show user-friendly error message
+        return;
+      }
+
+      console.log("Successfully transformed to training schema!");
+      console.log("Training schema data:", transformResult.data);
+
+      // TODO: Call the server action
+      // TODO: Make the page to show live updates while the model is in progress active.
+
+      // const result = await startTraining(transformResult.data);
     } catch (error) {
       console.error("Training failed:", error);
     }
