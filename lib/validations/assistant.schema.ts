@@ -215,13 +215,100 @@ export const DeleteNodeSchema = z.object({
 });
 
 /**
+ * Schema for adding new connections to the graph
+ * Validates connection compatibility and handle combinations based on canvas.utils.ts
+ */
+export const AddConnectionSchema = z
+  .object({
+    sourceNodeId: z.string().min(1, "Source node ID is required"),
+    targetNodeId: z.string().min(1, "Target node ID is required"),
+    sourceHandle: z.enum(["upload-dataset-output", "select-model-output"], {
+      errorMap: () => ({
+        message:
+          "Invalid source handle - must be upload-dataset-output or select-model-output",
+      }),
+    }),
+    targetHandle: z.enum(["select-model-input", "training-config-input"], {
+      errorMap: () => ({
+        message:
+          "Invalid target handle - must be select-model-input or training-config-input",
+      }),
+    }),
+  })
+  .refine(
+    (data) => {
+      // Validate handle combinations match valid patterns from canvas.utils.ts
+      const validCombinations = [
+        { source: "upload-dataset-output", target: "select-model-input" }, // dataset → model
+        { source: "select-model-output", target: "training-config-input" }, // model → training
+      ];
+
+      return validCombinations.some(
+        (combo) =>
+          combo.source === data.sourceHandle &&
+          combo.target === data.targetHandle,
+      );
+    },
+    {
+      message:
+        "Invalid handle combination - must be dataset→model (upload-dataset-output to select-model-input) or model→training (select-model-output to training-config-input)",
+    },
+  );
+
+/**
+ * Schema for deleting connections from the graph
+ * Can accept either specific connectionId or sourceNodeId + targetNodeId
+ */
+export const DeleteConnectionSchema = z
+  .object({
+    connectionId: z
+      .string()
+      .min(1, "Connection ID is required for deletion")
+      .optional(),
+    sourceNodeId: z.string().min(1, "Source node ID is required").optional(),
+    targetNodeId: z.string().min(1, "Target node ID is required").optional(),
+  })
+  .refine(
+    (data) => {
+      // Must have either connectionId OR both sourceNodeId and targetNodeId
+      const hasConnectionId = data.connectionId && data.connectionId.length > 0;
+      const hasNodeIds =
+        data.sourceNodeId &&
+        data.targetNodeId &&
+        data.sourceNodeId.length > 0 &&
+        data.targetNodeId.length > 0;
+
+      return hasConnectionId || hasNodeIds;
+    },
+    {
+      message:
+        "Must provide either connectionId or both sourceNodeId and targetNodeId",
+    },
+  );
+
+/**
  * Union schema for all tool invocations
  */
 export const ToolInvocationSchema = z.object({
-  toolName: z.enum(["updateNodeProperties", "addNode", "deleteNode"], {
-    errorMap: () => ({ message: "Invalid tool name" }),
-  }),
-  args: z.union([UpdateNodePropertiesSchema, AddNodeSchema, DeleteNodeSchema]),
+  toolName: z.enum(
+    [
+      "updateNodeProperties",
+      "addNode",
+      "deleteNode",
+      "addConnection",
+      "deleteConnection",
+    ],
+    {
+      errorMap: () => ({ message: "Invalid tool name" }),
+    },
+  ),
+  args: z.union([
+    UpdateNodePropertiesSchema,
+    AddNodeSchema,
+    DeleteNodeSchema,
+    AddConnectionSchema,
+    DeleteConnectionSchema,
+  ]),
 });
 
 // =============================================================================
@@ -323,6 +410,8 @@ export type AuthenticatedRequest = z.infer<typeof AuthenticatedRequestSchema>;
 export type UpdateNodeProperties = z.infer<typeof UpdateNodePropertiesSchema>;
 export type AddNode = z.infer<typeof AddNodeSchema>;
 export type DeleteNode = z.infer<typeof DeleteNodeSchema>;
+export type AddConnection = z.infer<typeof AddConnectionSchema>;
+export type DeleteConnection = z.infer<typeof DeleteConnectionSchema>;
 export type ToolInvocation = z.infer<typeof ToolInvocationSchema>;
 
 // Request/Response types

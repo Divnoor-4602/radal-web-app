@@ -31,7 +31,13 @@ const SendButton = () => {
   );
 
   // Get graph manipulation functions
-  const { updateNodeData, addNode, onNodesChange } = useFlowStore();
+  const {
+    updateNodeData,
+    addNode,
+    onNodesChange,
+    addConnection,
+    deleteConnection,
+  } = useFlowStore();
 
   // Memoize validation to avoid re-computation
   const canSend = useMemo(() => {
@@ -67,7 +73,7 @@ const SendButton = () => {
       // Create message with proper typing
       const userMessage: Message = {
         role: "user",
-        content: "Add another upload dataset node to the graph",
+        content: "delete the edge between the dataset to the model",
       };
 
       // Client-side request validation
@@ -111,6 +117,14 @@ const SendButton = () => {
                 updateNodeData,
                 addNode,
                 onNodesChange,
+                addConnection,
+                deleteConnection: (args: {
+                  connectionId?: string;
+                  sourceNodeId?: string;
+                  targetNodeId?: string;
+                }) => {
+                  return deleteConnection(args);
+                },
               },
             );
 
@@ -143,7 +157,15 @@ const SendButton = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, graphState, updateNodeData, addNode, onNodesChange]);
+  }, [
+    projectId,
+    graphState,
+    updateNodeData,
+    addNode,
+    onNodesChange,
+    addConnection,
+    deleteConnection,
+  ]);
 
   return (
     <motion.button

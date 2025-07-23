@@ -19,6 +19,10 @@ import { availableModels } from "@/constants";
 import { convertToCoreMessages, generateText } from "ai";
 import { generateSystemPrompt } from "../assistant/prompts/system-prompts";
 import { graphTools } from "../assistant/tools/graph-tools";
+import {
+  isConnectionCompatible,
+  isDuplicateConnection,
+} from "@/lib/utils/canvas.utils";
 
 // Initialize Convex client for server-side operations
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -28,6 +32,33 @@ const assistantRateLimiter = new RateLimiterMemory({
   points: 60, // 60 copilot requests
   duration: 60 * 60, // per hour
 });
+
+// Helper function to validate node type compatibility
+function validateNodeTypeCompatibility(
+  sourceNodeType: string,
+  targetNodeType: string,
+  sourceHandle: string,
+  targetHandle: string,
+): boolean {
+  // Dataset → Model connections
+  if (sourceNodeType === "dataset" && targetNodeType === "model") {
+    return (
+      sourceHandle === "upload-dataset-output" &&
+      targetHandle === "select-model-input"
+    );
+  }
+
+  // Model → Training connections
+  if (sourceNodeType === "model" && targetNodeType === "training") {
+    return (
+      sourceHandle === "select-model-output" &&
+      targetHandle === "training-config-input"
+    );
+  }
+
+  // All other combinations are invalid
+  return false;
+}
 
 // Validate if a tool call can be executed by the user
 function validateToolCallPermissions(
@@ -45,6 +76,80 @@ function validateToolCallPermissions(
       case "addNode":
         // Validate graph size limits
         return graphState.nodes.length < 50;
+
+      case "addConnection":
+        const addConnArgs = toolCall.args as {
+          sourceNodeId: string;
+          targetNodeId: string;
+          sourceHandle: string;
+          targetHandle: string;
+        };
+
+        // Check if both nodes exist
+        const sourceNode = graphState.nodes.find(
+          (node) => node.id === addConnArgs.sourceNodeId,
+        );
+        const targetNode = graphState.nodes.find(
+          (node) => node.id === addConnArgs.targetNodeId,
+        );
+
+        if (!sourceNode || !targetNode) return false;
+
+        // Validate node type compatibility based on handles
+        const isValidNodeTypeCombo = validateNodeTypeCompatibility(
+          sourceNode.type,
+          targetNode.type,
+          addConnArgs.sourceHandle,
+          addConnArgs.targetHandle,
+        );
+
+        if (!isValidNodeTypeCombo) return false;
+
+        // Use existing canvas validation logic
+        const connection = {
+          source: addConnArgs.sourceNodeId,
+          target: addConnArgs.targetNodeId,
+          sourceHandle: addConnArgs.sourceHandle,
+          targetHandle: addConnArgs.targetHandle,
+        };
+
+        // Check connection compatibility using existing utils
+        if (!isConnectionCompatible(connection)) return false;
+
+        // Check for duplicate connections using existing utils
+        if (isDuplicateConnection(connection, graphState.edges)) return false;
+
+        // Validate graph size limits
+        return graphState.edges.length < 100;
+
+      case "deleteConnection":
+        const deleteConnArgs = toolCall.args as {
+          connectionId?: string;
+          sourceNodeId?: string;
+          targetNodeId?: string;
+        };
+
+        if (deleteConnArgs.connectionId) {
+          // Validate by connection ID
+          return graphState.edges.some(
+            (edge) => edge.id === deleteConnArgs.connectionId,
+          );
+        } else if (deleteConnArgs.sourceNodeId && deleteConnArgs.targetNodeId) {
+          // Validate by source and target nodes
+          const sourceExists = graphState.nodes.some(
+            (node) => node.id === deleteConnArgs.sourceNodeId,
+          );
+          const targetExists = graphState.nodes.some(
+            (node) => node.id === deleteConnArgs.targetNodeId,
+          );
+          const connectionExists = graphState.edges.some(
+            (edge) =>
+              edge.source === deleteConnArgs.sourceNodeId &&
+              edge.target === deleteConnArgs.targetNodeId,
+          );
+          return sourceExists && targetExists && connectionExists;
+        }
+        return false;
 
       default:
         return false;

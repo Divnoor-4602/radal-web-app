@@ -23,6 +23,17 @@ export function processToolInvocations(
       projectId?: string,
     ) => void;
     onNodesChange: (changes: NodeChange[]) => void;
+    addConnection: (
+      sourceNodeId: string,
+      targetNodeId: string,
+      sourceHandle: string,
+      targetHandle: string,
+    ) => boolean;
+    deleteConnection: (args: {
+      connectionId?: string;
+      sourceNodeId?: string;
+      targetNodeId?: string;
+    }) => boolean;
   },
 ): {
   success: boolean;
@@ -54,6 +65,14 @@ export function processToolInvocations(
 
         case "deleteNode":
           processDeleteNode(args, graphState, graphActions, errors);
+          break;
+
+        case "addConnection":
+          processAddConnection(args, graphActions, errors);
+          break;
+
+        case "deleteConnection":
+          processDeleteConnection(args, graphActions, errors);
           break;
 
         default:
@@ -226,6 +245,101 @@ function processDeleteNode(
   console.log(`🗑️ Deleted node ${nodeId}`);
 }
 
+/**
+ * Processes addConnection tool invocation
+ */
+function processAddConnection(
+  args: unknown,
+  graphActions: {
+    addConnection: (
+      sourceNodeId: string,
+      targetNodeId: string,
+      sourceHandle: string,
+      targetHandle: string,
+    ) => boolean;
+  },
+  errors: string[],
+): void {
+  // Type guard for args
+  if (!isAddConnectionArgs(args)) {
+    errors.push("Invalid addConnection arguments");
+    return;
+  }
+
+  const { sourceNodeId, targetNodeId, sourceHandle, targetHandle } = args;
+
+  // Attempt to add the connection
+  const success = graphActions.addConnection(
+    sourceNodeId,
+    targetNodeId,
+    sourceHandle,
+    targetHandle,
+  );
+
+  if (success) {
+    console.log(
+      `🔗 Added connection from ${sourceNodeId} (${sourceHandle}) to ${targetNodeId} (${targetHandle})`,
+    );
+  } else {
+    errors.push(
+      `Failed to add connection from ${sourceNodeId} to ${targetNodeId}`,
+    );
+  }
+}
+
+/**
+ * Processes deleteConnection tool invocation
+ */
+function processDeleteConnection(
+  args: unknown,
+  graphActions: {
+    deleteConnection: (args: {
+      connectionId?: string;
+      sourceNodeId?: string;
+      targetNodeId?: string;
+    }) => boolean;
+  },
+  errors: string[],
+): void {
+  // Type guard for args
+  if (!isDeleteConnectionArgs(args)) {
+    errors.push("Invalid deleteConnection arguments");
+    return;
+  }
+
+  // Handle both deletion methods
+  const typedArgs = args as {
+    connectionId?: string;
+    sourceNodeId?: string;
+    targetNodeId?: string;
+  };
+
+  const deleteArgs: {
+    connectionId?: string;
+    sourceNodeId?: string;
+    targetNodeId?: string;
+  } = {
+    connectionId: typedArgs.connectionId,
+    sourceNodeId: typedArgs.sourceNodeId,
+    targetNodeId: typedArgs.targetNodeId,
+  };
+
+  // Attempt to delete the connection
+  const success = graphActions.deleteConnection(deleteArgs);
+
+  if (success) {
+    const identifier =
+      deleteArgs.connectionId ||
+      `${deleteArgs.sourceNodeId} → ${deleteArgs.targetNodeId}`;
+    console.log(`🗑️ Deleted connection ${identifier}`);
+  } else {
+    const identifier =
+      deleteArgs.connectionId ||
+      `${deleteArgs.sourceNodeId} → ${deleteArgs.targetNodeId}`;
+    errors.push(`Failed to delete connection ${identifier}`);
+  }
+}
+
 // Type guards for tool arguments
 function isUpdateNodePropertiesArgs(args: unknown): args is {
   nodeId: string;
@@ -271,4 +385,54 @@ function isDeleteNodeArgs(args: unknown): args is {
     "nodeId" in args &&
     typeof (args as Record<string, unknown>).nodeId === "string"
   );
+}
+
+function isAddConnectionArgs(args: unknown): args is {
+  sourceNodeId: string;
+  targetNodeId: string;
+  sourceHandle: string;
+  targetHandle: string;
+} {
+  return (
+    typeof args === "object" &&
+    args !== null &&
+    "sourceNodeId" in args &&
+    "targetNodeId" in args &&
+    "sourceHandle" in args &&
+    "targetHandle" in args &&
+    typeof (args as Record<string, unknown>).sourceNodeId === "string" &&
+    typeof (args as Record<string, unknown>).targetNodeId === "string" &&
+    typeof (args as Record<string, unknown>).sourceHandle === "string" &&
+    typeof (args as Record<string, unknown>).targetHandle === "string"
+  );
+}
+
+function isDeleteConnectionArgs(args: unknown): args is {
+  connectionId?: string;
+  sourceNodeId?: string;
+  targetNodeId?: string;
+} {
+  if (typeof args !== "object" || args === null) {
+    return false;
+  }
+
+  const argsObj = args as Record<string, unknown>;
+
+  // Check if it has connectionId
+  const hasConnectionId =
+    "connectionId" in argsObj &&
+    typeof argsObj.connectionId === "string" &&
+    argsObj.connectionId.length > 0;
+
+  // Check if it has both sourceNodeId and targetNodeId
+  const hasNodeIds =
+    "sourceNodeId" in argsObj &&
+    "targetNodeId" in argsObj &&
+    typeof argsObj.sourceNodeId === "string" &&
+    typeof argsObj.targetNodeId === "string" &&
+    argsObj.sourceNodeId.length > 0 &&
+    argsObj.targetNodeId.length > 0;
+
+  // Must have either connectionId OR both node IDs
+  return hasConnectionId || hasNodeIds;
 }

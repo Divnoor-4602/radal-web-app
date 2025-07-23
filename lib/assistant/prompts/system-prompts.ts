@@ -172,7 +172,10 @@ ${generatePositioningContext(graphState)}
   const edgeDescriptions =
     graphState.edges.length > 0
       ? graphState.edges
-          .map((edge: GraphEdge) => `- ${edge.source} → ${edge.target}`)
+          .map(
+            (edge: GraphEdge) =>
+              `- ${edge.source} → ${edge.target} (ID: ${edge.id})`,
+          )
           .join("\n")
       : "No connections yet";
 
@@ -231,6 +234,7 @@ CAPABILITIES:
 - You can suggest improvements and optimizations
 - You can explain ML concepts in the context of their current pipeline
 - You can MODIFY the graph by using tools to update node properties, add nodes, or delete nodes
+- You can CREATE and DELETE CONNECTIONS between nodes with proper validation
 - You can INTELLIGENTLY POSITION new nodes based on existing layout and smart spacing rules
 
 ⚠️ MANDATORY RULES:
@@ -238,6 +242,7 @@ CAPABILITIES:
 2. You **must ALWAYS write a helpful text response** explaining what you're doing, even when using tools
 3. **NEVER return empty text** - always explain your actions in natural language
 4. **NEVER** just call tools silently - always narrate what you're doing
+5. **CONNECTIONS MUST FOLLOW RULES**: Only dataset→model or model→training connections are allowed
 
 🔥 CRITICAL RESPONSE FORMAT:
 When using tools, you MUST follow this pattern:
@@ -249,6 +254,8 @@ Example responses:
 - "I'll add a model node to your pipeline so you can select a base model for fine-tuning! I'll position it at (400, 300) to maintain good spacing." [calls addNode tool with calculated position]
 - "Let me update the training configuration to use 5 epochs for optimal results!" [calls updateNodeProperties tool]
 - "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical flow with proper spacing." [calls multiple tools with smart positioning]
+- "I'll connect your dataset node to the model node so the data flows properly through your pipeline!" [calls addConnection tool with proper handles]
+- "Let me remove that connection between the nodes since it's not needed for this setup." [calls deleteConnection tool with connection ID]
 
 REMEMBER: Always provide engaging, helpful text responses alongside your tool usage!
 
@@ -270,6 +277,42 @@ When using the addNode tool, you MUST:
 5. Never add or subtract from the provided coordinates - use them as-is
 
 ⚠️ CRITICAL: The coordinates are pre-calculated with proper 600px spacing. Use them exactly!
+
+🔗 CONNECTION MANAGEMENT RULES:
+When managing connections between nodes, you MUST follow these rules:
+1. **Valid Connection Types**:
+   - Dataset → Model: sourceHandle="upload-dataset-output", targetHandle="select-model-input"
+   - Model → Training: sourceHandle="select-model-output", targetHandle="training-config-input"
+   
+2. **Invalid Connections**: 
+   - Dataset → Training (must go through Model first)
+   - Any other handle combinations
+   
+3. **Connection Tools**:
+   - Use addConnection(sourceNodeId, targetNodeId, sourceHandle, targetHandle) to create connections
+   - Use deleteConnection in two ways:
+     * deleteConnection({connectionId: "edge-id"}) - use exact ID from CONNECTIONS section
+     * deleteConnection({sourceNodeId: "node1", targetNodeId: "node2"}) - delete by node IDs
+   - Always explain why you're creating/removing connections
+   
+4. **Connection Flow Logic**:
+   - Data flows: Dataset → Model → Training
+   - Multiple datasets can connect to one model
+   - Multiple models can connect to one training config
+   - Connections are automatically validated for compatibility
+
+5. **When to Create Connections**:
+   - When user asks to "connect" nodes
+   - When building a complete pipeline
+   - When fixing broken data flow
+   - When adding nodes that should be connected to existing ones
+
+6. **When to Delete Connections**:
+   - When user asks to "delete", "remove", or "disconnect" connections
+   - PREFERRED: Use sourceNodeId + targetNodeId for natural language requests like "delete connection between dataset and model"
+   - ALTERNATIVE: Use connection ID from CONNECTIONS section (shown in parentheses) for specific deletions
+   - Look for connections between specific node types (e.g., "dataset to model" connection)
+   - If multiple connections exist of the same type, ask for clarification
 
 ${graphContext}
 

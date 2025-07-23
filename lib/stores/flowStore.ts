@@ -24,6 +24,33 @@ import {
   isDuplicateConnection,
 } from "@/lib/utils/canvas.utils";
 
+// Helper function to validate node type compatibility
+function validateNodeTypeCompatibility(
+  sourceNodeType: string,
+  targetNodeType: string,
+  sourceHandle: string,
+  targetHandle: string,
+): boolean {
+  // Dataset → Model connections
+  if (sourceNodeType === "dataset" && targetNodeType === "model") {
+    return (
+      sourceHandle === "upload-dataset-output" &&
+      targetHandle === "select-model-input"
+    );
+  }
+
+  // Model → Training connections
+  if (sourceNodeType === "model" && targetNodeType === "training") {
+    return (
+      sourceHandle === "select-model-output" &&
+      targetHandle === "training-config-input"
+    );
+  }
+
+  // All other combinations are invalid
+  return false;
+}
+
 export interface ProjectGraphNode {
   id: string;
   type: string;
@@ -64,6 +91,17 @@ export interface FlowState {
   resetFlow: () => void;
   loadExistingFlow: (projectGraph: ProjectGraph) => void;
   isValidConnection: (connection: Edge | Connection) => boolean;
+  addConnection: (
+    sourceNodeId: string,
+    targetNodeId: string,
+    sourceHandle: string,
+    targetHandle: string,
+  ) => boolean;
+  deleteConnection: (args: {
+    connectionId?: string;
+    sourceNodeId?: string;
+    targetNodeId?: string;
+  }) => boolean;
 }
 
 const useFlowStore = createWithEqualityFn<FlowState>(
@@ -365,6 +403,140 @@ const useFlowStore = createWithEqualityFn<FlowState>(
       // Check if this connection already exists (prevent duplicate connections)
       if (isDuplicateConnection(connection, edges)) return false;
 
+      return true;
+    },
+
+    addConnection: (
+      sourceNodeId: string,
+      targetNodeId: string,
+      sourceHandle: string,
+      targetHandle: string,
+    ) => {
+      const { nodes, edges } = get();
+
+      // Validate nodes exist
+      const sourceNode = nodes.find((node) => node.id === sourceNodeId);
+      const targetNode = nodes.find((node) => node.id === targetNodeId);
+
+      if (!sourceNode || !targetNode) {
+        console.error("❌ Source or target node not found", {
+          sourceNodeId,
+          targetNodeId,
+        });
+        return false;
+      }
+
+      // Validate node types match handle expectations
+      if (
+        !validateNodeTypeCompatibility(
+          sourceNode.type,
+          targetNode.type,
+          sourceHandle,
+          targetHandle,
+        )
+      ) {
+        console.error("❌ Node types don't match handle combination", {
+          sourceType: sourceNode.type,
+          targetType: targetNode.type,
+          sourceHandle,
+          targetHandle,
+        });
+        return false;
+      }
+
+      // Create connection object for validation
+      const connection = {
+        source: sourceNodeId,
+        target: targetNodeId,
+        sourceHandle,
+        targetHandle,
+      };
+
+      // Use existing canvas validation utilities
+      if (!isConnectionCompatible(connection)) {
+        console.error(
+          "❌ Connection not compatible with business rules",
+          connection,
+        );
+        return false;
+      }
+
+      if (isDuplicateConnection(connection, edges)) {
+        console.error("❌ Connection already exists", connection);
+        return false;
+      }
+
+      // Create new edge with proper styling
+      const newEdge: Edge = {
+        id: nanoid(),
+        source: sourceNodeId,
+        target: targetNodeId,
+        sourceHandle,
+        targetHandle,
+        type: "custom",
+        animated: true,
+        // Let CustomEdge component handle colors based on handles
+      };
+
+      set({
+        edges: [...edges, newEdge],
+      });
+
+      console.log(
+        `✅ Added connection: ${sourceNode.type}(${sourceHandle}) → ${targetNode.type}(${targetHandle})`,
+      );
+      return true;
+    },
+
+    deleteConnection: (args: {
+      connectionId?: string;
+      sourceNodeId?: string;
+      targetNodeId?: string;
+    }) => {
+      const { edges } = get();
+
+      let connectionToDelete;
+
+      if (args.connectionId) {
+        // Delete by specific connection ID
+        connectionToDelete = edges.find(
+          (edge) => edge.id === args.connectionId,
+        );
+        if (!connectionToDelete) {
+          console.error("❌ Connection not found", {
+            connectionId: args.connectionId,
+          });
+          return false;
+        }
+      } else if (args.sourceNodeId && args.targetNodeId) {
+        // Delete by source and target node IDs
+        connectionToDelete = edges.find(
+          (edge) =>
+            edge.source === args.sourceNodeId &&
+            edge.target === args.targetNodeId,
+        );
+        if (!connectionToDelete) {
+          console.error("❌ Connection not found between nodes", {
+            sourceNodeId: args.sourceNodeId,
+            targetNodeId: args.targetNodeId,
+          });
+          return false;
+        }
+      } else {
+        console.error(
+          "❌ Must provide either connectionId or both sourceNodeId and targetNodeId",
+        );
+        return false;
+      }
+
+      // Remove the connection
+      set({
+        edges: edges.filter((edge) => edge.id !== connectionToDelete.id),
+      });
+
+      console.log(
+        `✅ Deleted connection: ${connectionToDelete.source} → ${connectionToDelete.target} (ID: ${connectionToDelete.id})`,
+      );
       return true;
     },
   }),

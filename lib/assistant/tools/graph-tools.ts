@@ -6,6 +6,8 @@ import {
   UpdateNodePropertiesSchema,
   AddNodeSchema,
   DeleteNodeSchema,
+  AddConnectionSchema,
+  DeleteConnectionSchema,
 } from "@/lib/validations/assistant.schema";
 
 /**
@@ -36,6 +38,27 @@ export const deleteNodeTool = tool({
 });
 
 /**
+ * Tool for adding new connections between nodes
+ * Validates connection compatibility and prevents duplicates
+ * Valid connections: dataset→model or model→training
+ */
+export const addConnectionTool = tool({
+  description:
+    "Add a new connection between two nodes in the graph. Valid connections: dataset→model (upload-dataset-output to select-model-input) or model→training (select-model-output to training-config-input). Automatically validates compatibility and prevents duplicates.",
+  parameters: AddConnectionSchema,
+});
+
+/**
+ * Tool for deleting existing connections
+ * Validates connection exists before deletion
+ */
+export const deleteConnectionTool = tool({
+  description:
+    "Delete an existing connection from the graph by its connection ID",
+  parameters: DeleteConnectionSchema,
+});
+
+/**
  * Complete tools object for AI SDK
  * Exported for use in the AI service
  */
@@ -43,6 +66,8 @@ export const graphTools = {
   updateNodeProperties: updateNodePropertiesTool,
   addNode: addNodeTool,
   deleteNode: deleteNodeTool,
+  addConnection: addConnectionTool,
+  deleteConnection: deleteConnectionTool,
 };
 
 /**
@@ -52,6 +77,8 @@ export const TOOL_NAMES = {
   UPDATE_NODE_PROPERTIES: "updateNodeProperties",
   ADD_NODE: "addNode",
   DELETE_NODE: "deleteNode",
+  ADD_CONNECTION: "addConnection",
+  DELETE_CONNECTION: "deleteConnection",
 } as const;
 
 /**
@@ -83,6 +110,10 @@ export function getToolDescription(toolName: ToolName): string | null {
       return "Adds a new node to the ML pipeline";
     case TOOL_NAMES.DELETE_NODE:
       return "Removes a node from the ML pipeline";
+    case TOOL_NAMES.ADD_CONNECTION:
+      return "Creates a connection between two nodes in the ML pipeline";
+    case TOOL_NAMES.DELETE_CONNECTION:
+      return "Removes a connection between nodes in the ML pipeline";
     default:
       return null;
   }
@@ -95,5 +126,20 @@ export const TOOL_CONFIG = {
   maxToolsPerRequest: 10,
   maxNodesPerGraph: 50,
   maxEdgesPerGraph: 100,
+  maxConnectionsPerRequest: 5,
   allowedNodeTypes: ["dataset", "model", "training"] as const,
+  allowedConnections: [
+    {
+      from: "dataset",
+      to: "model",
+      sourceHandle: "upload-dataset-output",
+      targetHandle: "select-model-input",
+    },
+    {
+      from: "model",
+      to: "training",
+      sourceHandle: "select-model-output",
+      targetHandle: "training-config-input",
+    },
+  ] as const,
 } as const;
