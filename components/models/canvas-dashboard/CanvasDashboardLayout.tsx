@@ -4,6 +4,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -29,6 +30,9 @@ import { type TrainingSchemaDataServer } from "@/lib/validations/train.server.sc
 const CanvasTopbarWithActions = memo(() => {
   const router = useRouter();
   const params = useParams();
+
+  // use sidebar hook
+  const { setOpen: setSidebarOpen } = useSidebar();
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
@@ -101,6 +105,12 @@ const CanvasTopbarWithActions = memo(() => {
     }
   }, []); // No dependencies - stable reference
 
+  // Toggle the assistant window
+  const handleAssistantClick = useCallback(() => {
+    // collapse the sidebar to make space for the assistant
+    setSidebarOpen(false);
+  }, [setSidebarOpen]);
+
   // Memoize the back navigation handler
   const handleBackClick = useCallback(() => {
     router.back();
@@ -149,6 +159,7 @@ const CanvasTopbarWithActions = memo(() => {
           icon={<Sparkles className="size-4" strokeWidth={1.6} />}
           className="gap-1.5"
           variant="tertiary"
+          onClick={handleAssistantClick}
         />
         {/* Start training */}
         <CustomButton

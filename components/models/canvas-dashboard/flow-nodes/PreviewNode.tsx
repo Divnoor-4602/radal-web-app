@@ -29,7 +29,7 @@ export const PreviewNode: React.FC<PreviewNodeProps> = memo(
         <div
           draggable
           onDragStart={onDragStart}
-          className={`size-10 bg-gradient-to-t from-bg-100 to-bg-400 rounded-lg border border-border-default custom-project-card-drop-shadow flex items-center justify-center cursor-grab active:cursor-grabbing ${className}`}
+          className={`size-10 bg-gradient-to-t from-bg-100 to-bg-400 rounded-md border border-border-default custom-project-card-drop-shadow flex items-center justify-center cursor-grab active:cursor-grabbing ${className}`}
         >
           <Icon className="size-5 text-text-primary" strokeWidth={1.6} />
         </div>
