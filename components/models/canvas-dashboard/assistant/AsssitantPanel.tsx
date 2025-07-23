@@ -25,7 +25,7 @@ const AsssitantPanel = memo(() => {
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="text-center max-w-xl w-full flex flex-col items-center">
           {/* Title */}
-          <h2 className="text-2xl mb-6 font-text-primary tracking-tighter font-medium">
+          <h2 className="text-2xl mb-6 font-text-primary tracking-tight font-medium">
             How can I assist you?
           </h2>
 

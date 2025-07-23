@@ -23,7 +23,7 @@ const CanvasTopbarWithActions = memo(() => {
   }, [router]);
 
   return (
-    <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5 bg-bg-100 border-b border-border-default">
+    <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5  bg-bg-100 border-b border-border-default">
       {/* Sidebar and back arrow actions */}
       <div className="flex items-center gap-4">
         <Tooltip>

@@ -5,7 +5,6 @@ import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
-import { ModeToggle } from "@/components/ui/mode-toggle";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,9 +33,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="fixed top-4 right-4 z-50">
-            <ModeToggle />
-          </div>
           <Toaster />
           <ClerkProvider>
             <ConvexClientProvider>{children}</ConvexClientProvider>

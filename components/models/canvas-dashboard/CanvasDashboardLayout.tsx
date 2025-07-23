@@ -43,7 +43,9 @@ const CanvasDashboardLayout = memo(
             {/* Always present, but conditionally visible */}
             <ResizableHandle
               withHandle
-              className="border-border-default border-l"
+              className={
+                isAssistantOpen ? "border-border-default border-l" : "hidden"
+              }
             />
             <ResizablePanel
               defaultSize={40}
