@@ -169,7 +169,12 @@ const CanvasDashboardLayout = memo(
   ({ children }: { children: React.ReactNode }) => {
     return (
       <SidebarProvider
-        style={{ "--sidebar-width": "400px" } as React.CSSProperties}
+        style={
+          {
+            "--sidebar-width": "400px",
+            "--sidebar-width-icon": "5rem",
+          } as React.CSSProperties
+        }
       >
         <CanvasSidebar />
         <SidebarInset className="flex flex-col bg-white">

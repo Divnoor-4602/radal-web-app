@@ -1,6 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { GripVertical } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export interface PreviewNodeProps {
   icon: LucideIcon;
@@ -11,6 +12,9 @@ export interface PreviewNodeProps {
 
 export const PreviewNode: React.FC<PreviewNodeProps> = memo(
   ({ icon: Icon, title, nodeType, className = "" }) => {
+    const { state } = useSidebar();
+    const isCollapsed = state === "collapsed";
+
     // Memoize the drag start handler to prevent unnecessary re-renders
     const onDragStart = useCallback(
       (event: React.DragEvent) => {
@@ -19,6 +23,18 @@ export const PreviewNode: React.FC<PreviewNodeProps> = memo(
       },
       [nodeType],
     );
+
+    if (isCollapsed) {
+      return (
+        <div
+          draggable
+          onDragStart={onDragStart}
+          className={`size-10 bg-gradient-to-t from-bg-100 to-bg-400 rounded-lg border border-border-default custom-project-card-drop-shadow flex items-center justify-center cursor-grab active:cursor-grabbing ${className}`}
+        >
+          <Icon className="size-5 text-text-primary" strokeWidth={1.6} />
+        </div>
+      );
+    }
 
     return (
       <div

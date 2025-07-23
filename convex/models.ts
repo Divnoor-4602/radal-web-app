@@ -298,7 +298,7 @@ export const getModelsByUser = query({
 export const setModelMetadata = action({
   args: {
     trainingId: v.string(), // Accept string, will convert to Id internally (this is the model ID)
-    state: v.optional(
+    status: v.optional(
       v.union(
         v.literal("pending"),
         v.literal("training"),
@@ -319,7 +319,7 @@ export const setModelMetadata = action({
     // Call the internal mutation
     await ctx.runMutation(api.models.updateModelStatus, {
       modelId: modelId,
-      status: args.state || "pending",
+      status: args.status || "pending",
       errorMessage: args.error,
       repoId: args.repoId,
       modelDownloadUrl: args.modelUrl,
@@ -334,6 +334,15 @@ export const setModelUrl = action({
   args: {
     trainingId: v.string(), // This is the model ID
     modelUrl: v.string(),
+    status: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("training"),
+        v.literal("converting"),
+        v.literal("ready"),
+        v.literal("failed"),
+      ),
+    ),
   },
   returns: v.null(),
   handler: async (ctx, args): Promise<null> => {
@@ -343,7 +352,7 @@ export const setModelUrl = action({
     // Call the internal mutation to update the model download URL
     await ctx.runMutation(api.models.updateModelStatus, {
       modelId: modelId,
-      status: "ready", // Set status to ready when model URL is provided
+      status: args.status || "ready", // Default to ready if no status provided
       modelDownloadUrl: args.modelUrl,
     });
 
