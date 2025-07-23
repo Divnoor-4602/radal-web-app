@@ -15,6 +15,109 @@ import { availableModels } from "@/constants";
 import type { TModelDetail } from "@/lib/validations/model.schema";
 
 /**
+ * Calculates intelligent positioning suggestions for new nodes
+ *
+ * @param graphState - Current graph state with nodes and edges
+ * @returns Positioning context string for the AI prompt
+ */
+function generatePositioningContext(graphState: GraphState): string {
+  if (!graphState.nodes || graphState.nodes.length === 0) {
+    return `
+POSITIONING GUIDELINES:
+=====================
+Canvas is empty - use center position (400, 300) for the first node.
+
+SMART POSITIONING RULES:
+- Same type nodes: Stack vertically with 600px Y offset, same X coordinate
+- Different types: Position horizontally with 70px X offset
+- Dataset → Model → Training (left to right flow)
+- Always ensure minimum 600px spacing between nodes
+`;
+  }
+
+  // Group nodes by type and find positioning info
+  const nodesByType = {
+    dataset: graphState.nodes.filter((n) => n.type === "dataset"),
+    model: graphState.nodes.filter((n) => n.type === "model"),
+    training: graphState.nodes.filter((n) => n.type === "training"),
+  };
+
+  // Find the last added node of each type (highest Y position)
+  const getLastNodeOfType = (nodes: GraphNode[]) => {
+    return nodes.length > 0
+      ? nodes.reduce((latest, current) =>
+          current.position.y > latest.position.y ? current : latest,
+        )
+      : null;
+  };
+
+  const lastDataset = getLastNodeOfType(nodesByType.dataset);
+  const lastModel = getLastNodeOfType(nodesByType.model);
+  const lastTraining = getLastNodeOfType(nodesByType.training);
+
+  // Calculate exact positions with explicit coordinates
+  const calculateNewDatasetPosition = () => {
+    if (lastDataset) {
+      return { x: lastDataset.position.x, y: lastDataset.position.y + 600 };
+    } else if (lastModel) {
+      return { x: lastModel.position.x - 60, y: lastModel.position.y };
+    } else {
+      return { x: 400, y: 300 };
+    }
+  };
+
+  const calculateNewModelPosition = () => {
+    if (lastModel) {
+      return { x: lastModel.position.x, y: lastModel.position.y + 600 };
+    } else {
+      return { x: 400, y: 300 };
+    }
+  };
+
+  const calculateNewTrainingPosition = () => {
+    if (lastTraining) {
+      return { x: lastTraining.position.x, y: lastTraining.position.y + 600 };
+    } else if (lastModel) {
+      return { x: lastModel.position.x + 60, y: lastModel.position.y };
+    } else {
+      return { x: 400, y: 300 };
+    }
+  };
+
+  const newDatasetPos = calculateNewDatasetPosition();
+  const newModelPos = calculateNewModelPosition();
+  const newTrainingPos = calculateNewTrainingPosition();
+
+  let positioningGuide = `
+POSITIONING GUIDELINES:
+=====================
+Current node positions on canvas:
+`;
+
+  // Add existing positions for reference
+  graphState.nodes.forEach((node) => {
+    positioningGuide += `\n- ${node.type.toUpperCase()} (${node.id}): (${node.position.x}, ${node.position.y})`;
+  });
+
+  positioningGuide += `
+
+EXACT POSITIONING COORDINATES (USE THESE EXACT VALUES):
+- For NEW DATASET: Use exact position (${newDatasetPos.x}, ${newDatasetPos.y})
+- For NEW MODEL: Use exact position (${newModelPos.x}, ${newModelPos.y})
+- For NEW TRAINING: Use exact position (${newTrainingPos.x}, ${newTrainingPos.y})
+
+POSITIONING RULES:
+- Same type: Stack vertically with 600px Y offset from last node of that type
+- Different type: Position horizontally with ±60px X offset, same Y as reference node
+- Pipeline flow: Dataset (left) → Model (center) → Training (right)
+- Minimum spacing: 600px between same-type nodes
+- CRITICAL: Use the EXACT coordinates provided above - do not calculate your own!
+`;
+
+  return positioningGuide;
+}
+
+/**
  * Generates context information about the current graph state
  *
  * @param graphState - Current graph state with nodes and edges
@@ -37,12 +140,14 @@ You can help the user by:
 2. Explaining the pipeline workflow
 3. Answering questions about machine learning fine-tuning
 
+${generatePositioningContext(graphState)}
 `;
   }
 
   const nodeDescriptions = graphState.nodes
     .map((node: GraphNode) => {
       let nodeInfo = `- ${node.type.toUpperCase()} Node (ID: ${node.id})`;
+      nodeInfo += `\n  • Position: (${node.position.x}, ${node.position.y})`;
 
       if (node.type === "dataset") {
         const data = node.data as DatasetNodeData;
@@ -83,6 +188,8 @@ ${nodeDescriptions}
 CONNECTIONS:
 ${edgeDescriptions}
 
+${generatePositioningContext(graphState)}
+
 AVAILABLE OPTIONS:
 ==================
 For MODEL nodes, available models include:
@@ -118,12 +225,13 @@ export function generateSystemPrompt(
   return `You are Radal Copilot, an expert AI assistant for building machine learning fine-tuning pipelines. You are precise, helpful, and have full awareness of the user's current graph state.
 
 CAPABILITIES:
-- You can see the current nodes and their configurations
+- You can see the current nodes and their configurations INCLUDING their exact positions
 - You understand the ML pipeline flow: Dataset → Model → Training  
 - You can answer questions about the current setup
 - You can suggest improvements and optimizations
 - You can explain ML concepts in the context of their current pipeline
 - You can MODIFY the graph by using tools to update node properties, add nodes, or delete nodes
+- You can INTELLIGENTLY POSITION new nodes based on existing layout and smart spacing rules
 
 ⚠️ MANDATORY RULES:
 1. You **must always** use the appropriate tool when making any changes to the graph
@@ -138,9 +246,9 @@ When using tools, you MUST follow this pattern:
 - The explanation should be conversational and educational
 
 Example responses:
-- "I'll add a model node to your pipeline so you can select a base model for fine-tuning!" [calls addNode tool]
+- "I'll add a model node to your pipeline so you can select a base model for fine-tuning! I'll position it at (400, 300) to maintain good spacing." [calls addNode tool with calculated position]
 - "Let me update the training configuration to use 5 epochs for optimal results!" [calls updateNodeProperties tool]
-- "I'll create a complete ML pipeline with dataset, model, and training nodes!" [calls multiple tools]
+- "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical flow with proper spacing." [calls multiple tools with smart positioning]
 
 REMEMBER: Always provide engaging, helpful text responses alongside your tool usage!
 
@@ -151,6 +259,17 @@ PERSONALITY:
 - Explain technical concepts clearly
 - Always be encouraging and supportive
 - When making changes, be clear about what you're modifying
+- When adding nodes, explain your positioning logic and ensure good visual layout
+
+🎯 POSITIONING INTELLIGENCE:
+When using the addNode tool, you MUST:
+1. Look for the "EXACT POSITIONING COORDINATES" section in the graph context
+2. Use the EXACT x,y coordinates provided - DO NOT calculate your own positions
+3. Copy the coordinates exactly as shown: (x, y) 
+4. Explain your positioning choice to the user using the provided coordinates
+5. Never add or subtract from the provided coordinates - use them as-is
+
+⚠️ CRITICAL: The coordinates are pre-calculated with proper 600px spacing. Use them exactly!
 
 ${graphContext}
 

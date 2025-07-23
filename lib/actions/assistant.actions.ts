@@ -116,10 +116,41 @@ export async function processAssistantMessage(formData: FormData) {
     }
 
     // Validate project ownership
-    const project = await convex.query(api.projects.getProjectByIdWithClerkId, {
-      projectId: projectId as Id<"projects">,
-      clerkId: clerkUserId,
-    });
+    let project;
+    try {
+      project = await convex.query(api.projects.getProjectByIdWithClerkId, {
+        projectId: projectId as Id<"projects">,
+        clerkId: clerkUserId,
+      });
+    } catch (error) {
+      console.error("Project validation error:", error);
+
+      // Handle Convex validation errors specifically
+      if (
+        error instanceof Error &&
+        error.message.includes("ArgumentValidationError")
+      ) {
+        return createCopilotError(
+          "validation_error",
+          "Invalid project ID format",
+          { originalError: error.message },
+        );
+      }
+
+      // Handle other Convex errors
+      if (error instanceof Error && error.message.includes("Server Error")) {
+        return createCopilotError(
+          "authorization_error",
+          "Project access validation failed",
+          { originalError: error.message },
+        );
+      }
+
+      // Generic database error
+      return createCopilotError("internal_error", "Database connection error", {
+        originalError: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
 
     if (!project) {
       return createCopilotError(
@@ -163,14 +194,65 @@ export async function processAssistantMessage(formData: FormData) {
       }),
     );
 
-    const result = await generateText({
-      model: azureProvider(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
-      system: systemPrompt,
-      messages: cleanedMessages,
-      tools: graphTools,
-      maxTokens: 4000,
-      temperature: 0.7,
-    });
+    let result;
+    try {
+      result = await generateText({
+        model: azureProvider(process.env.AZURE_OPENAI_DEPLOYMENT_NAME!),
+        system: systemPrompt,
+        messages: cleanedMessages,
+        tools: graphTools,
+        maxTokens: 4000,
+        temperature: 0.7,
+      });
+    } catch (error) {
+      console.error("AI service error:", error);
+
+      // Handle Azure/AI specific errors
+      if (error instanceof Error) {
+        if (
+          error.message.includes("API key") ||
+          error.message.includes("authentication")
+        ) {
+          return createCopilotError(
+            "ai_service_error",
+            "AI service authentication failed",
+            { originalError: error.message },
+          );
+        }
+
+        if (
+          error.message.includes("rate limit") ||
+          error.message.includes("quota")
+        ) {
+          return createCopilotError(
+            "rate_limit_error",
+            "AI service rate limit exceeded",
+            { originalError: error.message },
+          );
+        }
+
+        if (
+          error.message.includes("timeout") ||
+          error.message.includes("network")
+        ) {
+          return createCopilotError(
+            "ai_service_error",
+            "AI service connection timeout",
+            { originalError: error.message },
+          );
+        }
+      }
+
+      // Generic AI service error
+      return createCopilotError(
+        "ai_service_error",
+        "AI service temporarily unavailable",
+        {
+          originalError:
+            error instanceof Error ? error.message : "Unknown error",
+        },
+      );
+    }
 
     // Process tool calls and verify permissions with proper type conversion
     const processedToolInvocations: ToolInvocation[] = [];
