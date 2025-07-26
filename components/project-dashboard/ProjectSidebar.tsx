@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { footerMenuItems } from "@/constants";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -27,6 +27,7 @@ import { Button } from "../ui/button";
 const ProjectSidebar = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Fetch models for this project
   const models = useQuery(api.models.getModelsByProject, {
@@ -104,7 +105,12 @@ const ProjectSidebar = () => {
               ) : models.length === 0 ? (
                 // Show empty state when no models exist
                 <SidebarMenuItem>
-                  <Button className="w-full cursor-pointer bg-bg-100 text-text-primary hover:bg-bg-400/50 border-bg-400 border flex items-center gap-1.5">
+                  <Button
+                    className="w-full cursor-pointer bg-bg-100 text-text-primary hover:bg-bg-400/50 border-bg-400 border flex items-center gap-1.5"
+                    onClick={() => {
+                      router.push(`/projects/${projectId}/models/new`);
+                    }}
+                  >
                     <Plus className="size-4" />
                     Create Model
                   </Button>
