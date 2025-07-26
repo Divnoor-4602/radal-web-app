@@ -18,9 +18,10 @@ import { Loader } from "lucide-react";
 
 type CreateProjectFormProps = {
   onSuccess?: () => void;
+  onCancel?: () => void;
 };
 
-const CreateProjectForm = ({ onSuccess }: CreateProjectFormProps) => {
+const CreateProjectForm = ({ onSuccess, onCancel }: CreateProjectFormProps) => {
   const createProject = useMutation(api.projects.createProject);
 
   const {
@@ -127,8 +128,9 @@ const CreateProjectForm = ({ onSuccess }: CreateProjectFormProps) => {
         </Button>
         <Button
           className="w-full cursor-pointer bg-bg-200 text-text-primary hover:bg-bg-400/50 border-bg-400 border"
-          type="submit"
           disabled={isSubmitting}
+          onClick={onCancel}
+          type="button"
         >
           Cancel
         </Button>

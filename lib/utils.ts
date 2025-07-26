@@ -94,3 +94,39 @@ export function formatDatasetPillText(title: string): string {
   if (title === "none") return "None";
   return title.length > 15 ? title.substring(0, 15) + "..." : title;
 }
+
+// User name utilities
+
+// Extract first word from user's name if it exists
+export function getFirstName(fullName: string | null | undefined): string {
+  if (!fullName) return "User";
+  return fullName.split(" ")[0];
+}
+
+// Get greeting based on time of day
+export function getTimeBasedGreeting(): string {
+  const hour = new Date().getHours();
+
+  if (hour >= 5 && hour < 12) {
+    return "Good Morning";
+  } else if (hour >= 12 && hour < 17) {
+    return "Good Afternoon";
+  } else if (hour >= 17 && hour < 22) {
+    return "Good Evening";
+  } else {
+    return "Good Night";
+  }
+}
+
+// Format current date as "Weekday, Month Day, Year"
+export function getCurrentFormattedDate(): string {
+  const now = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  };
+
+  return now.toLocaleDateString("en-US", options);
+}

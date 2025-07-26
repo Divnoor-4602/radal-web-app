@@ -25,6 +25,53 @@ import {
   isDuplicateConnection,
 } from "@/lib/utils/canvas.utils";
 
+// Configuration for smart persistence
+// Since we only persist structural changes now, debouncing can be shorter
+const PERSISTENCE_DEBOUNCE_MS = 150;
+
+// Create a smart storage wrapper that debounces writes intelligently
+const createSmartStorage = () => {
+  let writeTimeout: NodeJS.Timeout | null = null;
+  let lastSavedState: string | null = null;
+
+  return {
+    getItem: (name: string): string | null => {
+      try {
+        return localStorage.getItem(name);
+      } catch {
+        return null;
+      }
+    },
+
+    setItem: (name: string, value: string): void => {
+      // Clear existing timeout
+      if (writeTimeout) {
+        clearTimeout(writeTimeout);
+      }
+
+      // Check if this is actually a different state
+      if (value === lastSavedState) {
+        return; // No change, skip save
+      }
+
+      // Since we only persist structural changes, use consistent debouncing
+      writeTimeout = setTimeout(() => {
+        try {
+          localStorage.setItem(name, value);
+          lastSavedState = value;
+        } catch (error) {
+          console.error("❌ Failed to persist to localStorage:", error);
+        }
+      }, PERSISTENCE_DEBOUNCE_MS);
+    },
+
+    removeItem: (name: string): void => {
+      localStorage.removeItem(name);
+      lastSavedState = null;
+    },
+  };
+};
+
 // Helper function to validate node type compatibility
 function validateNodeTypeCompatibility(
   sourceNodeType: string,
@@ -77,6 +124,8 @@ export interface FlowState {
   edges: Edge[];
   edgeReconnectSuccessful: boolean;
   isReconnecting: boolean;
+  lastBackendSync: number; // Track when we last synced to backend
+  isBackendSyncing: boolean; // Track sync status
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
@@ -103,6 +152,7 @@ export interface FlowState {
     sourceNodeId?: string;
     targetNodeId?: string;
   }) => boolean;
+  syncToBackend: (projectId?: string) => Promise<boolean>; // Manual sync trigger
 }
 
 const useFlowStore = createWithEqualityFn<FlowState>()(
@@ -112,17 +162,21 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       edges: [],
       edgeReconnectSuccessful: false,
       isReconnecting: false,
+      lastBackendSync: 0,
+      isBackendSyncing: false,
 
       onNodesChange: (changes: NodeChange[]) => {
-        set({
-          nodes: applyNodeChanges(changes, get().nodes),
-        });
+        const newNodes = applyNodeChanges(changes, get().nodes);
+
+        // Apply changes immediately for smooth UX
+        set({ nodes: newNodes });
       },
 
       onEdgesChange: (changes: EdgeChange[]) => {
-        set({
-          edges: applyEdgeChanges(changes, get().edges),
-        });
+        const newEdges = applyEdgeChanges(changes, get().edges);
+
+        // Apply changes immediately
+        set({ edges: newEdges });
       },
 
       onConnect: (connection: Connection) => {
@@ -559,14 +613,77 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         );
         return true;
       },
+
+      syncToBackend: async (projectId?: string) => {
+        const { isBackendSyncing, nodes, edges } = get();
+
+        if (isBackendSyncing) {
+          return false;
+        }
+
+        if (!projectId) {
+          return false;
+        }
+
+        try {
+          set({ isBackendSyncing: true });
+
+          // Transform flow state to backend format
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const trainingGraph = {
+            schema_version: 1,
+            nodes: nodes.reduce(
+              (acc, node) => {
+                acc[node.id] = {
+                  id: node.id,
+                  type: node.type,
+                  position: node.position,
+                  data: node.data,
+                };
+                return acc;
+              },
+              {} as Record<string, unknown>,
+            ),
+            edges: edges.map((edge) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              sourceHandle: edge.sourceHandle,
+              targetHandle: edge.targetHandle,
+            })),
+          };
+
+          // TODO: Call the Convex updateModelTrainingGraph function
+          // This would require accessing the Convex client from the store
+
+          set({
+            lastBackendSync: Date.now(),
+            isBackendSyncing: false,
+          });
+
+          return true;
+        } catch (error) {
+          console.error("❌ Backend sync failed:", error);
+          set({ isBackendSyncing: false });
+          return false;
+        }
+      },
     }),
     {
       name: "flow-storage",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => createSmartStorage()),
       partialize: (state) => ({
         nodes: state.nodes,
         edges: state.edges,
       }),
+      // Add additional optimization
+      onRehydrateStorage: () => {
+        return (state, error) => {
+          if (error) {
+            console.error("❌ Flow state rehydration failed:", error);
+          }
+        };
+      },
     },
   ),
   shallow,

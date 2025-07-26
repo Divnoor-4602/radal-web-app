@@ -20,6 +20,10 @@ const CreateProjectSheet = () => {
     setIsOpen(false);
   };
 
+  const handleFormCancel = () => {
+    setIsOpen(false);
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
@@ -42,7 +46,10 @@ const CreateProjectSheet = () => {
         </div>
 
         <div className="flex-1 px-6 pb-6">
-          <CreateProjectForm onSuccess={handleFormSuccess} />
+          <CreateProjectForm
+            onSuccess={handleFormSuccess}
+            onCancel={handleFormCancel}
+          />
         </div>
       </SheetContent>
     </Sheet>
