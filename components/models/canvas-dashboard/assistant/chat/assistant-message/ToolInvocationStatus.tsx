@@ -45,7 +45,7 @@ const ToolInvocationStatus = memo(
     };
 
     return (
-      <div className="flex items-center gap-2 p-2 rounded-md border border-text-inactive/20 my-4 group hover:border-text-inactive">
+      <div className="flex items-center gap-2 p-2 rounded-md border border-text-inactive/20 my-4 group hover:border-text-inactive shadow-md">
         <div className="flex items-center gap-2">
           <div
             className={`text-text-inactive text-xs font-semibold group-hover:text-text-primary ${

@@ -115,24 +115,26 @@ const ActiveChat = memo(
           </div>
         </div>
 
-        {/* Blur/Shadow Overlay */}
-
         {/* Text area section - absolutely positioned at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 bg-bg-100">
           {/* Validation error display */}
           {validationError && (
-            <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-700 text-sm rounded-lg">
-              ⚠️ {validationError}
+            <div className="ml-1 text-red-800 text-xs rounded-lg mb-2">
+              {validationError}
             </div>
           )}
 
+          {/* Blur/Shadow Overlay */}
           <div className="pointer-events-none z-10 absolute -top-24 left-0 right-0 h-24">
             <div className="h-24 w-full bg-gradient-to-t from-bg-100 to-transparent" />
           </div>
 
           <div className="relative w-full">
+            {/* validation error */}
             <Textarea
-              className="w-full !outline-0 !ring-0 !focus:ring-0 !focus-visible:ring-0 !shadow-none !bg-[#1B1B1D] !border !border-stone-800 focus:!ring-0 focus:!ring-offset-0 focus:!border-border-default placeholder:text-text-inactive !min-h-20 text-sm pr-12 pb-12"
+              className={`w-full !outline-0 !ring-0 !focus:ring-0 !focus-visible:ring-0 !shadow-none !bg-[#1B1B1D] !border !border-stone-800 focus:!ring-0 focus:!ring-offset-0 focus:!border-border-default placeholder:text-text-inactive !min-h-20 text-sm pr-12 pb-12 ${
+                validationError ? "!border-red-800/50" : ""
+              }`}
               placeholder="Ask me anything..."
               value={input || ""}
               onChange={handleInputChange}
