@@ -62,6 +62,17 @@ const ActiveChat = memo(
       isUserNearBottomRef.current = checkIfNearBottom();
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const trimmedInput = input?.trim();
+        if (trimmedInput && onSendMessage && !isLoading) {
+          onSendMessage(trimmedInput);
+        }
+      }
+      // Shift+Enter will naturally create a new line due to default behavior
+    };
+
     // Check if there's a streaming message
     const hasStreamingMessage = messages.some(
       (message) => message.status === "streaming",
@@ -138,6 +149,7 @@ const ActiveChat = memo(
               placeholder="Ask me anything..."
               value={input || ""}
               onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
             />
             {/* send button */}
             <SendButton

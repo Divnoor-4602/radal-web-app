@@ -13,67 +13,80 @@ type TCustomButton = {
   disableShadow?: boolean;
 };
 
-const CustomButton = ({
-  text,
-  className,
-  icon,
-  onClick,
-  variant = "primary",
-  disableShadow = false,
-}: TCustomButton) => {
-  const getVariantStyles = () => {
-    switch (variant) {
-      case "secondary":
-        return {
-          button:
-            "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow",
-          shadow: "bg-[#0a0a0a] border border-[#141414]",
-        };
-      case "tertiary":
-        return {
-          button:
-            "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow hover:text-yellow-200",
-          shadow: "bg-white/20 border border-bg-300",
-        };
-      case "primary":
-      default:
-        return {
-          button:
-            "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow",
-          shadow:
-            "bg-violet-300 border border-primary custom-button-inner-shadow",
-        };
-    }
-  };
+const CustomButton = React.forwardRef<
+  HTMLButtonElement,
+  TCustomButton & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(
+  (
+    {
+      text,
+      className,
+      icon,
+      onClick,
+      variant = "primary",
+      disableShadow = false,
+      ...props
+    },
+    ref,
+  ) => {
+    const getVariantStyles = () => {
+      switch (variant) {
+        case "secondary":
+          return {
+            button:
+              "bg-bg-400 hover:bg-bg-400 border border-[#141414] text-text-primary custom-secondary-button-drop-shadow custom-secondary-button-inner-shadow",
+            shadow: "bg-[#0a0a0a] border border-[#141414]",
+          };
+        case "tertiary":
+          return {
+            button:
+              "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow hover:text-yellow-200",
+            shadow: "bg-white/20 border border-bg-300",
+          };
+        case "primary":
+        default:
+          return {
+            button:
+              "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow",
+            shadow:
+              "bg-violet-300 border border-primary custom-button-inner-shadow",
+          };
+      }
+    };
 
-  const styles = getVariantStyles();
+    const styles = getVariantStyles();
 
-  return (
-    <div className={cn("relative inline-block", className)}>
-      {/* Shadow/Bottom div */}
-      {!disableShadow && (
-        <motion.div
-          className={cn("absolute inset-0 rounded-[10px]", styles.shadow)}
-        />
-      )}
-
-      {/* Main button */}
-      <motion.button
-        className={cn(
-          "relative rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100 gap-1",
-          styles.button,
+    return (
+      <div className={cn("relative inline-block", className)}>
+        {/* Shadow/Bottom div */}
+        {!disableShadow && (
+          <motion.div
+            className={cn("absolute inset-0 rounded-[10px]", styles.shadow)}
+          />
         )}
-        onClick={onClick}
-        initial={{ y: 0 }}
-        whileHover={!disableShadow ? { y: -3 } : {}}
-        whileTap={{ y: 0 }}
-        transition={{ duration: 0.1, ease: "easeOut" }}
-      >
-        {icon}
-        {text}
-      </motion.button>
-    </div>
-  );
-};
+
+        {/* Main button */}
+        <motion.button
+          ref={ref}
+          className={cn(
+            "relative rounded-[10px] px-4 py-1.5 text-sm font-medium tracking-tight flex items-center justify-center cursor-pointer hover:opacity-100 gap-1",
+            styles.button,
+          )}
+          onClick={onClick}
+          initial={{ y: 0 }}
+          whileHover={!disableShadow ? { y: -3 } : {}}
+          whileTap={{ y: 0 }}
+          transition={{ duration: 0.1, ease: "easeOut" }}
+          {...props}
+        >
+          {icon}
+          {text}
+        </motion.button>
+      </div>
+    );
+  },
+);
+
+CustomButton.displayName = "CustomButton";
 
 export default CustomButton;

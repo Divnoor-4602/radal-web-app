@@ -40,6 +40,17 @@ const IntroChat = memo(
       }
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const trimmedInput = input?.trim();
+        if (trimmedInput && onSendMessage) {
+          onSendMessage(trimmedInput);
+        }
+      }
+      // Shift+Enter will naturally create a new line due to default behavior
+    };
+
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 h-full bg-bg-100">
         <div className="text-center max-w-xl w-full overflow-hidden flex flex-col items-center">
@@ -61,6 +72,7 @@ const IntroChat = memo(
                 placeholder="Ask me anything..."
                 value={input || ""}
                 onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
               />
               {/* send button */}
               <SendButton onSendMessage={onSendMessage} input={input} />
