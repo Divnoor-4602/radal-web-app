@@ -11,6 +11,7 @@ type TCustomButton = {
   onClick?: () => void;
   variant?: "primary" | "secondary" | "tertiary";
   disableShadow?: boolean;
+  isActive?: boolean;
 };
 
 const CustomButton = React.forwardRef<
@@ -25,6 +26,7 @@ const CustomButton = React.forwardRef<
       onClick,
       variant = "primary",
       disableShadow = false,
+      isActive = false,
       ...props
     },
     ref,
@@ -39,8 +41,7 @@ const CustomButton = React.forwardRef<
           };
         case "tertiary":
           return {
-            button:
-              "bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 text-text-primary custom-tertiary-button-inner-shadow hover:text-yellow-200",
+            button: `bg-[#1C1717] hover:bg-[#1C1717] border border-bg-300 ${isActive ? "text-yellow-200" : "text-text-primary"} custom-tertiary-button-inner-shadow hover:text-yellow-200`,
             shadow: "bg-white/20 border border-bg-300",
           };
         case "primary":
@@ -74,7 +75,7 @@ const CustomButton = React.forwardRef<
           )}
           onClick={onClick}
           initial={{ y: 0 }}
-          whileHover={!disableShadow ? { y: -3 } : {}}
+          whileHover={!disableShadow && !isActive ? { y: -3 } : {}}
           whileTap={{ y: 0 }}
           transition={{ duration: 0.1, ease: "easeOut" }}
           {...props}

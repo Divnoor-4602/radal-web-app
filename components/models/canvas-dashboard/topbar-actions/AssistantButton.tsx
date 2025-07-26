@@ -17,7 +17,7 @@ const AssistantButton = memo(() => {
   const { setOpen: setSidebarOpen } = useSidebar();
 
   // Assistant state subscription - only actions, no re-render causing subscriptions
-  const { toggleAssistant } = useAssistantStore();
+  const { toggleAssistant, isOpen: isAssistantOpen } = useAssistantStore();
 
   // Toggle the assistant window
   const handleAssistantClick = useCallback(() => {
@@ -37,6 +37,7 @@ const AssistantButton = memo(() => {
           className="gap-1.5"
           variant="tertiary"
           onClick={handleAssistantClick}
+          isActive={isAssistantOpen}
         />
       </TooltipTrigger>
       <TooltipContent
