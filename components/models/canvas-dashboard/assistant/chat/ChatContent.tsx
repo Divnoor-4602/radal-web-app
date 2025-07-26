@@ -126,56 +126,57 @@ const ChatContent = memo(() => {
   );
 
   // Use chat hook for streaming with AI SDK tool handling
-  const { messages, input, handleInputChange, isLoading, append } = useChat({
-    api: "/api/assistant",
-    body: {
-      graphState,
-      projectId: projectId as string,
-    },
+  const { messages, input, handleInputChange, isLoading, append, setInput } =
+    useChat({
+      api: "/api/assistant",
+      body: {
+        graphState,
+        projectId: projectId as string,
+      },
 
-    onFinish: (message) => {
-      console.log("🎯 Message finished:", message);
-    },
+      onFinish: (message) => {
+        console.log("🎯 Message finished:", message);
+      },
 
-    onError: (error) => {
-      console.error("❌ Chat error:", error);
-      setValidationError("Failed to send message. Please try again.");
-    },
+      onError: (error) => {
+        console.error("❌ Chat error:", error);
+        setValidationError("Failed to send message. Please try again.");
+      },
 
-    // Handle tool calls during streaming
-    onToolCall: async ({ toolCall }) => {
-      console.log("🔧 Tool call received:", toolCall.toolName);
+      // Handle tool calls during streaming
+      onToolCall: async ({ toolCall }) => {
+        console.log("🔧 Tool call received:", toolCall.toolName);
 
-      // Execute the tool call on the actual graph
-      try {
-        // Type assertion for tool invocation
-        const toolInvocation = {
-          toolName: toolCall.toolName,
-          args: toolCall.args,
-        } as ToolInvocation;
+        // Execute the tool call on the actual graph
+        try {
+          // Type assertion for tool invocation
+          const toolInvocation = {
+            toolName: toolCall.toolName,
+            args: toolCall.args,
+          } as ToolInvocation;
 
-        const executionResult = processToolInvocations(
-          [toolInvocation],
-          graphState,
-          graphActions,
-        );
+          const executionResult = processToolInvocations(
+            [toolInvocation],
+            graphState,
+            graphActions,
+          );
 
-        if (executionResult.success) {
-          console.log("✅ Tool executed successfully:", toolCall.toolName);
-          return `Successfully executed ${toolCall.toolName}`;
-        } else {
-          console.error("❌ Tool execution failed:", executionResult.errors);
-          return `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
+          if (executionResult.success) {
+            console.log("✅ Tool executed successfully:", toolCall.toolName);
+            return `Successfully executed ${toolCall.toolName}`;
+          } else {
+            console.error("❌ Tool execution failed:", executionResult.errors);
+            return `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
+          }
+        } catch (error) {
+          console.error("❌ Tool execution error:", error);
+          return `Error executing ${toolCall.toolName}: ${error instanceof Error ? error.message : "Unknown error"}`;
         }
-      } catch (error) {
-        console.error("❌ Tool execution error:", error);
-        return `Error executing ${toolCall.toolName}: ${error instanceof Error ? error.message : "Unknown error"}`;
-      }
-    },
+      },
 
-    // experimental throttle
-    experimental_throttle: 50,
-  });
+      // experimental throttle
+      experimental_throttle: 50,
+    });
 
   // Sync input with chat store
   useEffect(() => {
@@ -210,13 +211,16 @@ const ChatContent = memo(() => {
           role: "user",
           content: content.trim(),
         });
+
+        // Clear the input after successful send
+        setInput("");
         console.log("✅ Message sent successfully");
       } catch (error) {
         console.error("❌ Failed to send message:", error);
         setValidationError("Failed to send message. Please try again.");
       }
     },
-    [append, validateMessage, validateRequest],
+    [append, setInput, validateMessage, validateRequest],
   );
 
   // Use messages from useChat directly for streaming

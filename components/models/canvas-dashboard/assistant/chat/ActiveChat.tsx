@@ -4,11 +4,8 @@ import React, { memo, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import SendButton from "../SendButton";
 import UserMessage from "./UserMessage";
-import AssistantMessage from "./assistant-message/AssistantMessage";
+import AssistantMessage, { type MessageStatus } from "./assistant-message";
 import type { UIMessage } from "ai";
-
-// Message status type for AI SDK v5 compatibility
-type MessageStatus = "streaming" | "completed" | "error";
 
 // Display message type that matches AI SDK v5 patterns
 type DisplayMessage = UIMessage & {
@@ -120,10 +117,6 @@ const ActiveChat = memo(
 
         {/* Blur/Shadow Overlay */}
 
-        <div className="pointer-events-none z-10 absolute bottom-32 left-0 right-0 h-24">
-          <div className="h-24 w-full bg-gradient-to-t from-bg-100 to-transparent" />
-        </div>
-
         {/* Text area section - absolutely positioned at bottom */}
         <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 bg-bg-100">
           {/* Validation error display */}
@@ -132,6 +125,10 @@ const ActiveChat = memo(
               ⚠️ {validationError}
             </div>
           )}
+
+          <div className="pointer-events-none z-10 absolute -top-24 left-0 right-0 h-24">
+            <div className="h-24 w-full bg-gradient-to-t from-bg-100 to-transparent" />
+          </div>
 
           <div className="relative w-full">
             <Textarea
