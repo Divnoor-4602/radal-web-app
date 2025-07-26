@@ -1,3 +1,5 @@
+"use client";
+
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -14,9 +16,27 @@ import {
 } from "@/components/ui/breadcrumb";
 import React from "react";
 import ProjectSidebar from "@/components/project-dashboard/ProjectSidebar";
+import { useParams, usePathname } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Extract the topbar/breadcrumb into a component
 const ProjectTopbarWithBreadcrumb = () => {
+  const { projectId, modelId } = useParams<{
+    projectId: string;
+    modelId?: string;
+  }>();
+  const pathname = usePathname();
+
+  // Fetch project data
+  const project = useQuery(api.projects.getProjectById, {
+    projectId: projectId as Id<"projects">,
+  });
+
+  // Determine current page type
+  const isModelPage = pathname.includes("/models/") && modelId;
+
   return (
     <header className="flex h-16 shrink-0 items-center gap-2 px-4">
       <SidebarTrigger className="-ml-1 text-text-muted" />
@@ -27,14 +47,40 @@ const ProjectTopbarWithBreadcrumb = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink href="#" className="text-text-inactive">
-              Building Your Application
+            <BreadcrumbLink href="/dashboard" className="text-text-inactive">
+              Dashboard
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
-            <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+            {isModelPage ? (
+              <BreadcrumbLink
+                href={`/dashboard/${projectId}`}
+                className="text-text-inactive"
+              >
+                {project?.name || "Loading..."}
+              </BreadcrumbLink>
+            ) : (
+              <BreadcrumbPage>{project?.name || "Loading..."}</BreadcrumbPage>
+            )}
           </BreadcrumbItem>
+          {isModelPage && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  href={`/dashboard/${projectId}/models`}
+                  className="text-text-inactive"
+                >
+                  Models
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Model {modelId}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     </header>

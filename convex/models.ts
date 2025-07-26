@@ -293,6 +293,84 @@ export const getModelsByUser = query({
   },
 });
 
+// Get model stats for project dashboard (count and latest status)
+export const getModelStatsForProject = query({
+  args: { projectId: v.id("projects") },
+  returns: v.object({
+    totalCount: v.number(),
+    latestModelStatus: v.union(
+      v.literal("pending"),
+      v.literal("training"),
+      v.literal("converting"),
+      v.literal("ready"),
+      v.literal("failed"),
+      v.literal("none"),
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const models = await ctx.db
+      .query("models")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .order("desc")
+      .collect();
+
+    const totalCount = models.length;
+
+    if (totalCount === 0) {
+      return {
+        totalCount: 0,
+        latestModelStatus: "none" as const,
+      };
+    }
+
+    // Get the latest model (first in desc order)
+    const latestModel = models[0];
+
+    return {
+      totalCount,
+      latestModelStatus: latestModel.status,
+    };
+  },
+});
+
+// Get recent model for project dashboard (for currently training card)
+export const getRecentModelForProject = query({
+  args: { projectId: v.id("projects") },
+  returns: v.union(
+    v.object({
+      modelName: v.string(),
+      status: v.union(
+        v.literal("pending"),
+        v.literal("training"),
+        v.literal("converting"),
+        v.literal("ready"),
+        v.literal("failed"),
+      ),
+      title: v.string(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const models = await ctx.db
+      .query("models")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .order("desc")
+      .take(1);
+
+    if (models.length === 0) {
+      return null;
+    }
+
+    const recentModel = models[0];
+
+    return {
+      modelName: recentModel.baseModelDetails.displayName,
+      status: recentModel.status,
+      title: recentModel.title,
+    };
+  },
+});
+
 // ACTION WRAPPER: External HTTP API endpoint for updating model status => JOB REPLACEMENT
 // This wraps the updateModelStatus mutation so it can be called via /api/setModelMetadata
 export const setModelMetadata = action({

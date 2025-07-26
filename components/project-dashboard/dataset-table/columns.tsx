@@ -11,17 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DatasetTableRow } from "@/lib/validations/dataset.schema";
 
-// This type defines the shape of our dataset data
-export type Dataset = {
-  id: string;
-  dataset: string;
-  size: string;
-  model: string;
-  date: string;
-};
+// Export the type for backward compatibility
+export type Dataset = DatasetTableRow;
 
-export const columns: ColumnDef<Dataset>[] = [
+export const columns: ColumnDef<DatasetTableRow>[] = [
   {
     accessorKey: "dataset",
     header: ({ column }) => {

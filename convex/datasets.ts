@@ -252,3 +252,36 @@ export const getProjectDatasets = query({
     );
   },
 });
+
+// Get dataset stats for project dashboard (count and latest title)
+export const getDatasetStatsForProject = query({
+  args: { projectId: v.id("projects") },
+  returns: v.object({
+    totalCount: v.number(),
+    latestDatasetTitle: v.union(v.string(), v.literal("none")),
+  }),
+  handler: async (ctx, args) => {
+    const datasets = await ctx.db
+      .query("datasets")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .order("desc")
+      .collect();
+
+    const totalCount = datasets.length;
+
+    if (totalCount === 0) {
+      return {
+        totalCount: 0,
+        latestDatasetTitle: "none" as const,
+      };
+    }
+
+    // Get the latest dataset (first in desc order)
+    const latestDataset = datasets[0];
+
+    return {
+      totalCount,
+      latestDatasetTitle: latestDataset.title,
+    };
+  },
+});

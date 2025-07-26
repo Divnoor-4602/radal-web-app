@@ -6,18 +6,55 @@ import React from "react";
 type ProjectCardProps = {
   cardTitle: string;
   date: string;
-  pillType: "success" | "error" | "info";
   pillText: string;
-  progressValue: number;
 };
 
-const ProjectCard = ({
-  cardTitle,
-  date,
-  pillType,
-  pillText,
-  progressValue,
-}: ProjectCardProps) => {
+const ProjectCard = ({ cardTitle, date, pillText }: ProjectCardProps) => {
+  const getPillType = (status: string) => {
+    switch (status) {
+      case "valid":
+        return "success";
+      case "training":
+        return "info";
+      case "ready":
+        return "success";
+      case "error":
+        return "error";
+      default:
+        return "info";
+    }
+  };
+
+  const getProgressValue = (status: string) => {
+    switch (status) {
+      case "valid":
+        return 25;
+      case "training":
+        return 50;
+      case "ready":
+        return 100;
+      case "error":
+        return 100;
+      default:
+        return 0;
+    }
+  };
+
+  const getPillText = (status: string) => {
+    switch (status) {
+      case "valid":
+        return "Valid";
+      case "training":
+        return "Training";
+      case "ready":
+        return "Ready";
+      case "error":
+        return "Error";
+      default:
+        return "Info";
+    }
+  };
+
   return (
     <div className="relative">
       {/* Background div with highlight border */}
@@ -37,11 +74,16 @@ const ProjectCard = ({
               </p>
             </div>
           </div>
-          <CustomPills variant={pillType}>{pillText}</CustomPills>
+          <CustomPills variant={getPillType(pillText)}>
+            {getPillText(pillText)}
+          </CustomPills>
         </div>
         {/* project content */}
         <div className="flex items-center px-4 mt-5">
-          <Progress value={progressValue} className="w-full h-1 bg-[#333333]" />
+          <Progress
+            value={getProgressValue(pillText)}
+            className="w-full h-1 bg-[#333333]"
+          />
         </div>
       </div>
     </div>

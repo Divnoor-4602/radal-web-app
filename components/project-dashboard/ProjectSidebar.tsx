@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import {
@@ -12,9 +14,58 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { menuItems, footerMenuItems } from "@/constants";
+import { footerMenuItems } from "@/constants";
+import { useParams, usePathname } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { Gauge, Brain } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import ProjectSidebarLoading from "@/components/shared/loading/ProjectSidebarLoading";
 
 const ProjectSidebar = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const pathname = usePathname();
+
+  // Fetch models for this project
+  const models = useQuery(api.models.getModelsByProject, {
+    projectId: projectId as Id<"projects">,
+  });
+
+  // Fetch current user data
+  const currentUser = useQuery(api.users.current);
+
+  // Create dynamic menu items
+  const menuItems = React.useMemo(() => {
+    const items = [
+      {
+        title: "Dashboard",
+        url: `/dashboard/${projectId}`,
+        icon: Gauge,
+        isActive: pathname === `/dashboard/${projectId}`,
+      },
+    ];
+
+    // Add model items if available
+    if (models) {
+      models.forEach((model) => {
+        items.push({
+          title: model.title,
+          url: `/dashboard/${projectId}/models/${model._id}`,
+          icon: Brain,
+          isActive: pathname === `/dashboard/${projectId}/models/${model._id}`,
+        });
+      });
+    }
+
+    return items;
+  }, [models, projectId, pathname]);
+
+  // Show loading skeleton while data is being fetched
+  if (models === undefined || currentUser === undefined) {
+    return <ProjectSidebarLoading />;
+  }
+
   return (
     <Sidebar className="bg-bg-100 border-r border-[#262626] py-4 min-h-screen px-5">
       <SidebarHeader className="mb-4.5">
@@ -111,19 +162,19 @@ const ProjectSidebar = () => {
         </SidebarMenu>
         {/* settings and avatar */}
         <div className="flex gap-3 items-center mt-9">
-          <Avatar className="size-10">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              className="rounded-full"
-            />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "size-10",
+              },
+            }}
+          />
           <div className="flex flex-col">
             <p className="text-text-primary text-base font-medium tracking-tight">
-              Div
+              {currentUser?.name}
             </p>
             <p className="text-text-inactive text-sm tracking-tight">
-              div@gmail.com
+              {currentUser?.email}
             </p>
           </div>
         </div>

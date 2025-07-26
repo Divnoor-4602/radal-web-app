@@ -67,6 +67,12 @@ export const getUserProjects = query({
       name: v.string(),
       description: v.string(),
       createdAt: v.number(),
+      status: v.union(
+        v.literal("valid"),
+        v.literal("training"),
+        v.literal("ready"),
+        v.literal("error"),
+      ),
       _creationTime: v.number(),
     }),
   ),
@@ -100,6 +106,7 @@ export const getUserProjects = query({
       name: project.name,
       description: project.description,
       createdAt: project.createdAt,
+      status: project.status,
       _creationTime: project._creationTime,
     }));
   },
