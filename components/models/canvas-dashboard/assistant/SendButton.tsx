@@ -2,7 +2,7 @@
 
 import { ArrowUp, CornerDownLeft, Loader } from "lucide-react";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
@@ -27,7 +27,6 @@ const SendButton = ({
   disabled = false,
 }: SendButtonProps) => {
   const { projectId } = useParams();
-  const [error, setError] = useState<string | null>(null);
 
   // Get graph state for validation
   const graphState = useFlowStore(
@@ -50,23 +49,11 @@ const SendButton = ({
   }, [projectId, disabled, isLoading, input, graphState]);
 
   const handleClick = useCallback(() => {
-    // Reset error state
-    setError(null);
-
-    // Validate before sending
-    if (!canSend) {
-      setError("Cannot send message - invalid state or empty input");
-      return;
+    // Send the current input if callback is provided
+    if (onSendMessage) {
+      onSendMessage(input);
     }
-
-    if (!onSendMessage) {
-      setError("No send function provided");
-      return;
-    }
-
-    // Send the current input
-    onSendMessage(input);
-  }, [canSend, onSendMessage, input]);
+  }, [onSendMessage, input]);
 
   return (
     <Tooltip>
