@@ -73,7 +73,9 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
           <div className="bg-border-default w-full h-[1px] my-5" />
           {/* Card content */}
           <div className="flex flex-col mt-5 mb-6.5 px-5">
-            {/* Model selector  */}
+            {/* dataset selector  */}
+            {/* Todo: Implement existing dataset node */}
+            {/* <SelectExisitingDatasetNode /> */}
             <div className="flex flex-col gap-2.5">
               {/* label and tooltip */}
               <div className="flex items-center gap-2">
@@ -91,6 +93,7 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
                   </TooltipContent>
                 </Tooltip>
               </div>
+
               {/* file input - react dropzone implementation */}
               <DropzoneArea
                 nodeId={id}

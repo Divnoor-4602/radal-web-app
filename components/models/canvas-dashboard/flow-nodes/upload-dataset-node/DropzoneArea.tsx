@@ -186,7 +186,9 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
         const formData = new FormData();
         formData.append("file", file);
         formData.append("projectId", projectId);
-        formData.append("title", title);
+        // Use filename without extension as the title for the dataset, not the node title
+        const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+        formData.append("title", fileNameWithoutExtension);
         if (description) {
           formData.append("description", description);
         }
@@ -365,8 +367,10 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
 
         // File is valid, start upload process
         // Update flow store with the file immediately after validation
+        const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
         updateNodeData(nodeId, {
           file: file.name,
+          title: fileNameWithoutExtension,
         });
 
         // Set the state to uploading and the uploaded file

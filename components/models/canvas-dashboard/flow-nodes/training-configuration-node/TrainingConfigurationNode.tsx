@@ -116,7 +116,7 @@ export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps>
               {/* Epochs Custom Slider */}
               <SelectEpochSlider
                 labelText="Epochs"
-                tooltipText="Number of training epochs (1-10)"
+                tooltipText="Number of training epochs (1-5)"
                 selectedEpochs={currentData?.epochs || 1}
                 onEpochsChange={handleEpochsChange}
               />

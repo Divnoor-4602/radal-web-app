@@ -34,7 +34,7 @@ export default function SliderWithStickyLabel({
       <SliderPrimitive.Root
         value={localValue}
         min={1}
-        max={10}
+        max={5}
         step={1}
         onValueChange={handleValueChange}
         onValueCommit={handleValueCommit}
