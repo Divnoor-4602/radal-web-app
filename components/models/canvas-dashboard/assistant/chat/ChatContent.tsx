@@ -159,6 +159,7 @@ const ChatContent = memo(() => {
             [toolInvocation],
             graphState,
             graphActions,
+            projectId as string, // Pass projectId for dataset nodes
           );
 
           if (executionResult.success) {

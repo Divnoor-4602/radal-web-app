@@ -11,6 +11,7 @@ import type { Node, Edge, NodeChange } from "@xyflow/react";
  * @param toolInvocations - Array of tool invocations from the AI response
  * @param graphState - Current graph state with nodes and edges
  * @param graphActions - Graph manipulation functions from the flow store
+ * @param projectId - The current project ID for context
  */
 export function processToolInvocations(
   toolInvocations: ToolInvocation[],
@@ -35,6 +36,7 @@ export function processToolInvocations(
       targetNodeId?: string;
     }) => boolean;
   },
+  projectId?: string,
 ): {
   success: boolean;
   processedCount: number;
@@ -60,7 +62,7 @@ export function processToolInvocations(
           break;
 
         case "addNode":
-          processAddNode(args, graphActions, errors);
+          processAddNode(args, graphActions, errors, projectId);
           break;
 
         case "deleteNode":
@@ -189,6 +191,7 @@ function processAddNode(
     ) => void;
   },
   errors: string[],
+  projectId?: string,
 ): void {
   // Type guard for args
   if (!isAddNodeArgs(args)) {
@@ -210,7 +213,7 @@ function processAddNode(
     return;
   }
 
-  graphActions.addNode(nodeType, position);
+  graphActions.addNode(nodeType, position, projectId);
   console.log(
     `➕ Added ${nodeType} node at position (${position.x}, ${position.y})`,
   );
