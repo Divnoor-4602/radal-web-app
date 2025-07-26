@@ -86,7 +86,7 @@ const TrainButton = memo(() => {
     } catch (error) {
       console.error("Training failed:", error);
     }
-  }, []); // No dependencies - stable reference
+  }, [params.projectId]); // Include params.projectId as dependency
 
   return (
     <CustomButton

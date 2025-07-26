@@ -16,7 +16,16 @@ type TCustomButton = {
 
 const CustomButton = React.forwardRef<
   HTMLButtonElement,
-  TCustomButton & React.ButtonHTMLAttributes<HTMLButtonElement>
+  TCustomButton &
+    Omit<
+      React.ButtonHTMLAttributes<HTMLButtonElement>,
+      | "onDrag"
+      | "onDragStart"
+      | "onDragEnd"
+      | "onAnimationStart"
+      | "onAnimationEnd"
+      | "onAnimationIteration"
+    >
 >(
   (
     {

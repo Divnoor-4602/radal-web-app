@@ -8,7 +8,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { getAuthToken } from "@/lib/actions/auth.actions";
 
 type PageProps = {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 };
 
 const ProjectPage = async ({ params }: PageProps) => {
