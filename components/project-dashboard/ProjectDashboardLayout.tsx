@@ -55,7 +55,7 @@ const ProjectTopbarWithBreadcrumb = () => {
           <BreadcrumbItem>
             {isModelPage ? (
               <BreadcrumbLink
-                href={`/dashboard/${projectId}`}
+                href={`/projects/${projectId}`}
                 className="text-text-inactive"
               >
                 {project?.name || "Loading..."}
@@ -69,7 +69,7 @@ const ProjectTopbarWithBreadcrumb = () => {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  href={`/dashboard/${projectId}/models`}
+                  href={`/projects/${projectId}/models`}
                   className="text-text-inactive"
                 >
                   Models

@@ -6,37 +6,22 @@ import { Files, Filter, Ghost } from "lucide-react";
 import MetricCardIcon from "./MetricCardIcon";
 import { DataTable } from "@/components/project-dashboard/dataset-table/data-table";
 import { columns } from "@/components/project-dashboard/dataset-table/columns";
-import { Id } from "@/convex/_generated/dataModel";
 import { transformDatasetsToTableRows } from "@/lib/validations/dataset.schema";
-import DatasetUploadMetricCardLoading from "@/components/shared/loading/DatasetUploadMetricCardLoading";
-
-type Dataset = {
-  _id: Id<"datasets">;
-  title: string;
-  description: string | undefined;
-  originalFilename: string;
-  fileSize: number;
-  rowCount: number | undefined;
-  columnCount: number | undefined;
-  headers: string[] | undefined;
-  createdAt: number;
-  storageUrl: string | undefined;
-};
+import { Preloaded, usePreloadedQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 type DatasetUploadMetricCardProps = {
-  datasets: Dataset[] | undefined;
-  isLoading?: boolean;
+  datasets: Preloaded<typeof api.datasets.getProjectDatasets>;
 };
 
 const DatasetUploadMetricCard = ({
   datasets,
-  isLoading = false,
 }: DatasetUploadMetricCardProps) => {
-  if (isLoading) {
-    return <DatasetUploadMetricCardLoading />;
-  }
+  // Use preloaded query - data is instantly available
+  const datasetsData = usePreloadedQuery(datasets);
+
   // Transform the data for the table
-  const tableData = datasets ? transformDatasetsToTableRows(datasets) : [];
+  const tableData = transformDatasetsToTableRows(datasetsData);
 
   return (
     <div className="mt-6 flex-1 min-h-0 flex flex-col">
@@ -48,35 +33,36 @@ const DatasetUploadMetricCard = ({
           <div className="flex justify-between items-center mb-3 flex-shrink-0">
             <div className="flex items-center gap-3">
               <MetricCardIcon icon={<Files />} />
-              <h2 className="text-2xl font-medium tracking-tighter text-text-primary">
-                Dataset Uploaded
-              </h2>
+              <h3 className="text-xl font-semibold text-text-primary">
+                Datasets Uploaded
+              </h3>
             </div>
-            {/* Secondary Button */}
-            <CustomButton
-              text="Filter"
-              variant="secondary"
-              className="gap-2"
-              icon={<Filter className="size-4" />}
-              disableShadow={true}
-            />
+            <div className="flex items-center gap-2">
+              <CustomButton
+                icon={<Filter className="size-4" />}
+                text="Filter"
+                variant="secondary"
+              />
+            </div>
           </div>
-          {/* Data Table */}
-          <div className="pb-4 flex-1 flex flex-col min-h-0">
-            {tableData.length > 0 ? (
+
+          {/* Content area with flex-1 to fill remaining space */}
+          <div className="flex-1 min-h-0 pb-4">
+            {datasetsData.length > 0 ? (
               <DataTable columns={columns} data={tableData} />
             ) : (
-              <div className="flex-1 flex items-center justify-center text-text-secondary">
-                <div className="text-center">
-                  <Ghost className="size-8 text-text-inactive mx-auto mb-2" />
-                  <h3 className="text-xl font-medium mb-3">
-                    No datasets uploaded
-                  </h3>
-                  <p className="text-base text-text-inactive max-w-md">
-                    Upload your first dataset to get started with training
-                    models. Your datasets will appear here once uploaded.
-                  </p>
-                </div>
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <Ghost
+                  className="size-12 text-text-muted mb-4"
+                  strokeWidth={1.5}
+                />
+                <h4 className="text-lg font-medium text-text-muted mb-2">
+                  No datasets uploaded
+                </h4>
+                <p className="text-sm text-text-inactive max-w-md">
+                  Upload your first dataset to start training models and
+                  analyzing your data.
+                </p>
               </div>
             )}
           </div>

@@ -1,26 +1,23 @@
-"use client";
-
 import MaxWidthWrapper from "@/components/shared/MaxWidthWrapper";
 import FoldersCustomIcon from "@/components/app-dashboard/FoldersCustomIcon";
-import ProjectCard from "@/components/app-dashboard/ProjectCard";
 import Topbar from "@/components/app-dashboard/Topbar";
-
 import React from "react";
-import { useQuery } from "convex/react";
+import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
-import ProjectDashboardLoading from "@/components/shared/loading/ProjectDashboardLoading";
-import { formatRelativeTime } from "@/lib/utils";
+import { getAuthToken } from "@/lib/actions/auth.actions";
+import ProjectSection from "@/components/app-dashboard/ProjectSection";
 import CreateProjectSheet from "@/components/app-dashboard/CreateProjectSheet";
-import Link from "next/link";
 
-const DashboardPage = () => {
-  // Fetch projects using the client-side query
-  const projects = useQuery(api.projects.getUserProjects);
+const DashboardPage = async () => {
+  const token = await getAuthToken();
 
-  // Show loading state while Convex query is fetching data
-  if (projects === undefined) {
-    return <ProjectDashboardLoading />;
-  }
+  const projects = await preloadQuery(
+    api.projects.getUserProjects,
+    {},
+    {
+      token,
+    },
+  );
 
   return (
     <main className="bg-bg-200 min-h-screen">
@@ -43,32 +40,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Project card grid */}
-        <div className="grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 justify-start">
-          {/* Render actual projects from the database */}
-          {projects.map((project) => (
-            <Link
-              href={`/dashboard/${project._id}`}
-              key={project._id}
-              className="cursor-pointer"
-            >
-              <ProjectCard
-                key={project._id}
-                cardTitle={project.name}
-                date={formatRelativeTime(project.createdAt)}
-                pillText={project.status}
-              />
-            </Link>
-          ))}
-
-          {/* Show message if no projects */}
-          {projects.length === 0 && (
-            <div className="col-span-full text-center py-16">
-              <div className="text-text-secondary text-lg">
-                No projects yet. Create your first project to get started!
-              </div>
-            </div>
-          )}
-        </div>
+        <ProjectSection projects={projects} />
       </MaxWidthWrapper>
     </main>
   );

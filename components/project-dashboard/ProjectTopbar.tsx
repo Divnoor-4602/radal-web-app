@@ -7,19 +7,13 @@ import { useRouter } from "next/navigation";
 
 interface ProjectTopbarProps {
   projectId: string;
-  isLoading?: boolean;
 }
 
-const ProjectTopbar = ({
-  projectId,
-  isLoading = false,
-}: ProjectTopbarProps) => {
+const ProjectTopbar = ({ projectId }: ProjectTopbarProps) => {
   const router = useRouter();
 
   const handleCreateModel = () => {
-    if (!isLoading) {
-      router.push(`/dashboard/${projectId}/models/new/canvas`);
-    }
+    router.push(`/dashboard/${projectId}/models/new/canvas`);
   };
 
   return (
@@ -30,10 +24,9 @@ const ProjectTopbar = ({
         </h1>
         <CustomButton
           icon={<Plus className="size-4" />}
-          className={`gap-1.5 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+          className="gap-1.5"
           text="Create Model"
           onClick={handleCreateModel}
-          disabled={isLoading}
         />
       </div>
     </div>

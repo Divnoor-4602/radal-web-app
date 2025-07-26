@@ -3,7 +3,8 @@
 import { Brain, File, Sparkles } from "lucide-react";
 import React from "react";
 import MetricCard from "./MetricCard";
-import MetricCardSectionLoading from "@/components/shared/loading/MetricCardSectionLoading";
+import { Preloaded, usePreloadedQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   getStatusPillType,
   getDatasetPillType,
@@ -13,81 +14,76 @@ import {
   formatDatasetPillText,
 } from "@/lib/utils";
 
-type ModelStats = {
-  totalCount: number;
-  latestModelStatus:
-    | "none"
-    | "training"
-    | "ready"
-    | "pending"
-    | "converting"
-    | "failed";
-};
-
-type DatasetStats = {
-  totalCount: number;
-  latestDatasetTitle: string | null;
-};
-
-type RecentModel = {
-  modelName: string;
-  status: "training" | "ready" | "pending" | "converting" | "failed";
-} | null;
-
 interface MetricCardSectionProps {
-  modelStats: ModelStats;
-  datasetStats: DatasetStats;
-  recentModel: RecentModel;
-  isLoading?: boolean;
+  modelStats: Preloaded<typeof api.models.getModelStatsForProject>;
+  datasetStats: Preloaded<typeof api.datasets.getDatasetStatsForProject>;
+  recentModel: Preloaded<typeof api.models.getRecentModelForProject>;
 }
 
 const MetricCardSection = ({
   modelStats,
   datasetStats,
   recentModel,
-  isLoading = false,
 }: MetricCardSectionProps) => {
-  if (isLoading) {
-    return <MetricCardSectionLoading />;
-  }
+  // Use preloaded queries - data is instantly available
+  const modelStatsData = usePreloadedQuery(modelStats);
+  const datasetStatsData = usePreloadedQuery(datasetStats);
+  const recentModelData = usePreloadedQuery(recentModel);
 
   return (
-    <div className="mt-12 grid grid-cols-1 2xl:grid-cols-3 gap-4">
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Model Analytics Card */}
       <MetricCard
         icon={<Brain />}
         title="Total Models"
-        contentValue={modelStats.totalCount.toString()}
+        contentValue={modelStatsData.totalCount.toString()}
         contentDescription="models"
-        pillText={formatStatusText(modelStats.latestModelStatus)}
-        pillType={getStatusPillType(modelStats.latestModelStatus)}
+        pillText={formatStatusText(modelStatsData.latestModelStatus)}
+        pillType={getStatusPillType(modelStatsData.latestModelStatus)}
       />
+
+      {/* Dataset Analytics Card */}
       <MetricCard
         icon={<File />}
         title="Total Datasets"
-        contentValue={datasetStats.totalCount.toString()}
+        contentValue={datasetStatsData.totalCount.toString()}
         contentDescription="datasets"
-        pillText={formatDatasetPillText(datasetStats.latestDatasetTitle || "")}
-        pillType={getDatasetPillType(datasetStats.latestDatasetTitle || "")}
+        pillText={formatDatasetPillText(
+          datasetStatsData.latestDatasetTitle || "none",
+        )}
+        pillType={getDatasetPillType(
+          datasetStatsData.latestDatasetTitle || "none",
+        )}
       />
+
+      {/* Training Analytics Card */}
       <MetricCard
         icon={
           <Sparkles
             className={
-              shouldShowAnimation(recentModel?.status || null)
+              shouldShowAnimation(recentModelData?.status || null)
                 ? "animate-pulse"
                 : ""
             }
           />
         }
-        title={getTrainingCardTitle(recentModel?.status || null)}
-        contentValue={recentModel?.modelName || "None"}
-        contentValueClassName={`text-text-primary text-[30px] font-bold tracking-tighter mt-3 mb-[3px] ${shouldShowAnimation(recentModel?.status || null) ? "animate-pulse" : ""}`}
-        contentDescription={recentModel?.status || ""}
+        title={getTrainingCardTitle(recentModelData?.status || null)}
+        contentValue={recentModelData?.modelName || "None"}
+        contentValueClassName={`text-text-primary text-[30px] font-bold tracking-tighter mt-3 mb-[3px] ${
+          shouldShowAnimation(recentModelData?.status || null)
+            ? "animate-pulse"
+            : ""
+        }`}
+        contentDescription={recentModelData?.status || ""}
         pillText={
-          recentModel?.status ? formatStatusText(recentModel.status) : "None"
+          recentModelData?.status
+            ? formatStatusText(recentModelData.status)
+            : "None"
         }
         pillType={
-          recentModel?.status ? getStatusPillType(recentModel.status) : "error"
+          recentModelData?.status
+            ? getStatusPillType(recentModelData.status)
+            : "error"
         }
       />
     </div>
