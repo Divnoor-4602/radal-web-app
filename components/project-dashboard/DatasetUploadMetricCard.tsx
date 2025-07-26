@@ -1,14 +1,15 @@
 "use client";
 
 import React from "react";
-import CustomButton from "@/components/shared/CustomButton";
-import { Files, Filter, Ghost } from "lucide-react";
+import { Files, Ghost } from "lucide-react";
 import MetricCardIcon from "./MetricCardIcon";
 import { DataTable } from "@/components/project-dashboard/dataset-table/data-table";
 import { columns } from "@/components/project-dashboard/dataset-table/columns";
 import { transformDatasetsToTableRows } from "@/lib/validations/dataset.schema";
 import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 type DatasetUploadMetricCardProps = {
   datasets: Preloaded<typeof api.datasets.getProjectDatasets>;
@@ -19,6 +20,9 @@ const DatasetUploadMetricCard = ({
 }: DatasetUploadMetricCardProps) => {
   // Use preloaded query - data is instantly available
   const datasetsData = usePreloadedQuery(datasets);
+
+  // Filter state
+  const [modelFilter, setModelFilter] = React.useState("");
 
   // Transform the data for the table
   const tableData = transformDatasetsToTableRows(datasetsData);
@@ -38,10 +42,13 @@ const DatasetUploadMetricCard = ({
               </h3>
             </div>
             <div className="flex items-center gap-2">
-              <CustomButton
-                icon={<Filter className="size-4" />}
-                text="Filter"
-                variant="secondary"
+              <Input
+                placeholder="Filter models..."
+                value={modelFilter}
+                onChange={(event) => setModelFilter(event.target.value)}
+                className={cn(
+                  "w-56 bg-[#1C1717] focus:ring-0 focus:ring-offset-0 focus:outline-none placeholder:text-sm placeholder:tracking-tight placeholder:text-[#666666] text-text-primary border-border-default focus:border-[#999999]",
+                )}
               />
             </div>
           </div>
@@ -49,7 +56,11 @@ const DatasetUploadMetricCard = ({
           {/* Content area with flex-1 to fill remaining space */}
           <div className="flex-1 min-h-0 pb-4">
             {datasetsData.length > 0 ? (
-              <DataTable columns={columns} data={tableData} />
+              <DataTable
+                columns={columns}
+                data={tableData}
+                modelFilter={modelFilter}
+              />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <Ghost

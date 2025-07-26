@@ -68,7 +68,7 @@ export const SelectModel: React.FC<SelectModelProps> = memo(
               <SelectItem
                 key={index}
                 value={model.model_id}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between hover:bg-[#1C1717] focus:bg-[#1C1717]"
               >
                 <div className="flex items-center gap-1">
                   {model.providerIcon && (

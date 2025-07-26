@@ -286,3 +286,117 @@ export const getDatasetStatsForProject = query({
     };
   },
 });
+
+// Get a single dataset by ID
+export const getDatasetById = query({
+  args: { datasetId: v.id("datasets") },
+  returns: v.union(
+    v.object({
+      _id: v.id("datasets"),
+      title: v.string(),
+      description: v.optional(v.string()),
+      originalFilename: v.string(),
+      fileSize: v.number(),
+      rowCount: v.optional(v.number()),
+      columnCount: v.optional(v.number()),
+      headers: v.optional(v.array(v.string())),
+      createdAt: v.number(),
+      storageUrl: v.optional(v.string()),
+      azureUrl: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    // Get the authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Find the user in our database
+    const user = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the dataset
+    const dataset = await ctx.db.get(args.datasetId);
+    if (!dataset) {
+      return null;
+    }
+
+    // Verify the dataset belongs to the user
+    if (dataset.userId !== user._id) {
+      throw new Error("Dataset access denied");
+    }
+
+    return {
+      _id: dataset._id,
+      title: dataset.title,
+      description: dataset.description,
+      originalFilename: dataset.originalFilename,
+      fileSize: dataset.fileSize,
+      rowCount: dataset.rowCount,
+      columnCount: dataset.columnCount,
+      headers: dataset.headers,
+      createdAt: dataset.createdAt,
+      storageUrl: dataset.azureUrl,
+      azureUrl: dataset.azureUrl,
+    };
+  },
+});
+
+// Delete a dataset
+export const deleteDataset = mutation({
+  args: { datasetId: v.id("datasets") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Get the authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Find the user in our database
+    const user = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the dataset
+    const dataset = await ctx.db.get(args.datasetId);
+    if (!dataset) {
+      throw new Error("Dataset not found");
+    }
+
+    // Verify the dataset belongs to the user
+    if (dataset.userId !== user._id) {
+      throw new Error("Dataset access denied");
+    }
+
+    // Check if dataset is being used by any models
+    const modelsUsingDataset = await ctx.db
+      .query("models")
+      .withIndex("byDataset", (q) => q.eq("datasetIds", [args.datasetId]))
+      .collect();
+
+    if (modelsUsingDataset.length > 0) {
+      throw new Error(
+        "Cannot delete dataset: it is being used by one or more models",
+      );
+    }
+
+    // Delete the dataset record
+    await ctx.db.delete(args.datasetId);
+
+    return null;
+  },
+});
