@@ -104,7 +104,7 @@ const ProjectSidebar = () => {
               ) : models.length === 0 ? (
                 // Show empty state when no models exist
                 <SidebarMenuItem>
-                  <Button className="w-full cursor-pointer bg-bg-200 text-text-primary hover:bg-bg-400/50 border-bg-400 border flex items-center gap-1.5">
+                  <Button className="w-full cursor-pointer bg-bg-100 text-text-primary hover:bg-bg-400/50 border-bg-400 border flex items-center gap-1.5">
                     <Plus className="size-4" />
                     Create Model
                   </Button>
