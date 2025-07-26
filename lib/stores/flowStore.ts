@@ -390,7 +390,7 @@ const useFlowStore = createWithEqualityFn<FlowState>(
     },
 
     isValidConnection: (connection: Edge | Connection) => {
-      const { nodes, edges } = get();
+      const { nodes, edges, isReconnecting } = get();
       const sourceNode = nodes.find((node) => node.id === connection.source);
       const targetNode = nodes.find((node) => node.id === connection.target);
 
@@ -400,8 +400,13 @@ const useFlowStore = createWithEqualityFn<FlowState>(
       // Check if connection is compatible based on business rules
       if (!isConnectionCompatible(connection)) return false;
 
-      // Check if this connection already exists (prevent duplicate connections)
-      if (isDuplicateConnection(connection, edges)) return false;
+      // During reconnection, we need to be more permissive about duplicates
+      // because the old edge still exists in the edges array
+      if (!isReconnecting) {
+        // Normal connection - check for duplicates
+        if (isDuplicateConnection(connection, edges)) return false;
+      }
+      // During reconnection, skip duplicate check since onReconnect handles it
 
       return true;
     },
@@ -422,6 +427,15 @@ const useFlowStore = createWithEqualityFn<FlowState>(
         console.error("❌ Source or target node not found", {
           sourceNodeId,
           targetNodeId,
+        });
+        return false;
+      }
+
+      // Ensure node types are defined
+      if (!sourceNode.type || !targetNode.type) {
+        console.error("❌ Node types are undefined", {
+          sourceNodeType: sourceNode.type,
+          targetNodeType: targetNode.type,
         });
         return false;
       }

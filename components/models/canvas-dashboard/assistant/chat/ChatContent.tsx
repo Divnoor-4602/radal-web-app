@@ -14,6 +14,17 @@ import {
   type ToolInvocation,
 } from "@/lib/validations/assistant.schema";
 import { processToolInvocations } from "@/lib/utils/assistant.utils";
+import type { UIMessage } from "ai";
+
+// Simple message types for AI SDK integration
+type MessageStatus = "streaming" | "completed" | "error";
+
+type DisplayMessage = UIMessage & {
+  status: MessageStatus;
+  timestamp: number;
+  toolCalls?: unknown[];
+  error?: string;
+};
 
 // Chat content component - memoized to prevent unnecessary re-renders
 const ChatContent = memo(() => {
@@ -39,33 +50,13 @@ const ChatContent = memo(() => {
     ),
   );
 
-  // Chat store state - only for persistence
-  const {
-    completeStreaming,
-    errorStreaming,
-    addToolCall,
-    updateToolCall,
-    setCurrentInput,
-    initializeSession,
-  } = useChatStore();
+  // Chat store state - only for input persistence
+  const { setCurrentInput, initializeSession } = useChatStore();
 
   // Initialize chat session on mount
   useEffect(() => {
     initializeSession();
   }, [initializeSession]);
-
-  // Monitor graph changes for testing tool execution
-  useEffect(() => {
-    console.log("📊 Graph state changed:");
-    console.log("- Nodes:", graphState.nodes.length);
-    console.log("- Edges:", graphState.edges.length);
-    if (graphState.nodes.length > 0) {
-      console.log(
-        "- Node types:",
-        graphState.nodes.map((n) => `${n.type}(${n.id})`),
-      );
-    }
-  }, [graphState.nodes.length, graphState.edges.length]);
 
   // Validate message content before sending
   const validateMessage = useCallback(
@@ -134,110 +125,56 @@ const ChatContent = memo(() => {
     [graphState, projectId],
   );
 
-  // Use chat hook for streaming
-  const {
-    messages: aiMessages,
-    input,
-    isLoading,
-    append,
-  } = useChat({
+  // Use chat hook for streaming with AI SDK tool handling
+  const { messages, input, handleInputChange, isLoading, append } = useChat({
     api: "/api/assistant",
     body: {
       graphState,
       projectId: projectId as string,
     },
 
-    // Sync AI SDK messages with chat store for persistence
     onFinish: (message) => {
       console.log("🎯 Message finished:", message);
-      completeStreaming();
     },
 
     onError: (error) => {
       console.error("❌ Chat error:", error);
-      errorStreaming(error.message);
       setValidationError("Failed to send message. Please try again.");
     },
 
-    // Handle tool calls
+    // Handle tool calls during streaming
     onToolCall: async ({ toolCall }) => {
-      console.log("🔧 Tool call received:", toolCall);
-      console.log("🔍 Tool call details:", {
-        toolCallId: toolCall.toolCallId,
-        toolName: toolCall.toolName,
-        args: toolCall.args,
-      });
+      console.log("🔧 Tool call received:", toolCall.toolName);
 
-      // Track tool calls in store for persistence
-      const currentAssistantMessage = aiMessages
-        .filter((msg) => msg.role === "assistant")
-        .pop();
-
-      console.log("🔍 Current assistant message:", currentAssistantMessage?.id);
-
-      if (currentAssistantMessage) {
-        console.log("📝 Adding tool call to store...");
-        addToolCall(currentAssistantMessage.id, {
+      // Execute the tool call on the actual graph
+      try {
+        // Type assertion for tool invocation
+        const toolInvocation = {
           toolName: toolCall.toolName,
-          args: toolCall.args as Record<string, unknown>,
-          status: "executing",
-        });
+          args: toolCall.args,
+        } as ToolInvocation;
 
-        // Execute the tool call on the actual graph
-        try {
-          console.log("🚀 Starting tool execution...");
+        const executionResult = processToolInvocations(
+          [toolInvocation],
+          graphState,
+          graphActions,
+        );
 
-          // Type assertion needed because AI SDK toolCall args are runtime-validated
-          const toolInvocation = {
-            toolName: toolCall.toolName,
-            args: toolCall.args,
-          } as ToolInvocation;
-
-          console.log("🔧 Calling processToolInvocations with:", {
-            toolInvocation,
-            graphStateNodes: graphState.nodes.length,
-            graphStateEdges: graphState.edges.length,
-          });
-
-          const executionResult = processToolInvocations(
-            [toolInvocation],
-            graphState,
-            graphActions,
-          );
-
-          console.log("📋 Tool execution result:", executionResult);
-
-          if (executionResult.success) {
-            console.log("✅ Tool executed successfully:", toolCall.toolName);
-            console.log("📊 Post-execution graph state:");
-            console.log("- Nodes:", graphState.nodes.length);
-            console.log(
-              "- Latest node added:",
-              graphState.nodes[graphState.nodes.length - 1],
-            );
-
-            updateToolCall(currentAssistantMessage.id, toolCall.toolCallId, {
-              status: "completed",
-              result: `Successfully ${toolCall.toolName}`,
-            });
-          } else {
-            console.error("❌ Tool execution failed:", executionResult.errors);
-            updateToolCall(currentAssistantMessage.id, toolCall.toolCallId, {
-              status: "failed",
-              error: executionResult.errors.join(", "),
-            });
-          }
-        } catch (error) {
-          console.error("❌ Tool execution error:", error);
-          updateToolCall(currentAssistantMessage.id, toolCall.toolCallId, {
-            status: "failed",
-            error: error instanceof Error ? error.message : "Unknown error",
-          });
+        if (executionResult.success) {
+          console.log("✅ Tool executed successfully:", toolCall.toolName);
+          return `Successfully executed ${toolCall.toolName}`;
+        } else {
+          console.error("❌ Tool execution failed:", executionResult.errors);
+          return `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
         }
+      } catch (error) {
+        console.error("❌ Tool execution error:", error);
+        return `Error executing ${toolCall.toolName}: ${error instanceof Error ? error.message : "Unknown error"}`;
       }
-
-      return "Tool call processed";
     },
+
+    // experimental throttle
+    experimental_throttle: 50,
   });
 
   // Sync input with chat store
@@ -282,92 +219,40 @@ const ChatContent = memo(() => {
     [append, validateMessage, validateRequest],
   );
 
-  // Use aiMessages from useChat instead of store messages for real streaming
-  const hasMessages = aiMessages.length > 0;
+  // Use messages from useChat directly for streaming
+  const hasMessages = messages.length > 0;
 
-  // Convert aiMessages to ExtendedMessage format for our components
-  const displayMessages = aiMessages.map((msg) => ({
+  // Convert AI SDK messages to DisplayMessage format
+  const displayMessages: DisplayMessage[] = messages.map((msg) => ({
     ...msg,
     status:
       isLoading &&
-      msg.role === "assistant" &&
-      msg === aiMessages[aiMessages.length - 1]
+      msg === messages[messages.length - 1] &&
+      msg.role === "assistant"
         ? ("streaming" as const)
         : ("completed" as const),
     timestamp: Date.now(),
-    toolCalls: [], // Tool calls will be handled by useChat internally
+    toolCalls: [],
   }));
 
   // Conditionally render intro or active chat
-  return (
-    <div className="relative">
-      {/* Test button for Add Node tool calling */}
-      <button
-        onClick={() => testAddNodeTool()}
-        className="absolute top-2 left-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 z-50"
-      >
-        🧪 Test Add Node Tool
-      </button>
-
-      {hasMessages ? (
-        <ActiveChat
-          messages={displayMessages}
-          input={input}
-          isLoading={isLoading}
-          validationError={validationError}
-        />
-      ) : (
-        <IntroChat
-          onSendMessage={handleSendMessage}
-          validationError={validationError}
-        />
-      )}
-    </div>
+  return hasMessages ? (
+    <ActiveChat
+      messages={displayMessages}
+      input={input}
+      handleInputChange={handleInputChange}
+      isLoading={isLoading}
+      validationError={validationError}
+      onSendMessage={handleSendMessage}
+    />
+  ) : (
+    <IntroChat
+      onSendMessage={handleSendMessage}
+      input={input}
+      handleInputChange={handleInputChange}
+      validationError={validationError}
+    />
   );
-
-  // Test function for Add Node tool calling
-  function testAddNodeTool() {
-    console.log("🧪 Testing Add Node Tool Calling...");
-    console.log("📊 Initial graph state:");
-    console.log("- Nodes:", graphState.nodes.length);
-    console.log("- Edges:", graphState.edges.length);
-
-    // Test processToolInvocations function directly
-    console.log("🔧 Testing processToolInvocations function...");
-    try {
-      const testToolInvocation = {
-        toolName: "addNode" as const,
-        args: {
-          nodeType: "model" as const,
-          position: { x: 400, y: 300 },
-        },
-      } as ToolInvocation;
-
-      console.log("🧪 Direct tool execution test:", testToolInvocation);
-      const directResult = processToolInvocations(
-        [testToolInvocation],
-        graphState,
-        graphActions,
-      );
-      console.log("🧪 Direct execution result:", directResult);
-    } catch (error) {
-      console.error("❌ Direct tool execution failed:", error);
-    }
-
-    // Send a message that should trigger the addNode tool
-    const testMessage =
-      "Add a model node to my pipeline at position (400, 300)";
-    console.log("📤 Sending test message:", testMessage);
-
-    handleSendMessage(testMessage);
-
-    // Log expectations
-    console.log("🎯 Expected behavior:");
-    console.log("1. AI should generate an addNode tool call");
-    console.log("2. Tool should be executed and modify the graph");
-    console.log("3. New model node should appear on canvas");
-    console.log("4. Tool execution status should show in chat");
-  }
 });
 
 ChatContent.displayName = "ChatContent";

@@ -25,13 +25,13 @@ function generatePositioningContext(graphState: GraphState): string {
     return `
 POSITIONING GUIDELINES:
 =====================
-Canvas is empty - use center position (400, 300) for the first node.
+Canvas is empty - use the center position for the first node.
 
 SMART POSITIONING RULES:
-- Same type nodes: Stack vertically with 600px Y offset, same X coordinate
-- Different types: Position horizontally with 70px X offset
+- Same type nodes: Stack vertically
+- Different types: Position horizontally
 - Dataset → Model → Training (left to right flow)
-- Always ensure minimum 600px spacing between nodes
+- Ensure adequate spacing between nodes
 `;
   }
 
@@ -60,7 +60,7 @@ SMART POSITIONING RULES:
     if (lastDataset) {
       return { x: lastDataset.position.x, y: lastDataset.position.y + 600 };
     } else if (lastModel) {
-      return { x: lastModel.position.x - 60, y: lastModel.position.y };
+      return { x: lastModel.position.x - 600, y: lastModel.position.y };
     } else {
       return { x: 400, y: 300 };
     }
@@ -78,7 +78,7 @@ SMART POSITIONING RULES:
     if (lastTraining) {
       return { x: lastTraining.position.x, y: lastTraining.position.y + 600 };
     } else if (lastModel) {
-      return { x: lastModel.position.x + 60, y: lastModel.position.y };
+      return { x: lastModel.position.x + 600, y: lastModel.position.y };
     } else {
       return { x: 400, y: 300 };
     }
@@ -96,22 +96,21 @@ Current node positions on canvas:
 
   // Add existing positions for reference
   graphState.nodes.forEach((node) => {
-    positioningGuide += `\n- ${node.type.toUpperCase()} (${node.id}): (${node.position.x}, ${node.position.y})`;
+    positioningGuide += `\n- ${node.type.toUpperCase()} (${node.id}): Positioned at a strategic location.`;
   });
 
   positioningGuide += `
 
-EXACT POSITIONING COORDINATES (USE THESE EXACT VALUES):
+EXACT POSITIONING COORDINATES (INTERNAL USE ONLY):
 - For NEW DATASET: Use exact position (${newDatasetPos.x}, ${newDatasetPos.y})
 - For NEW MODEL: Use exact position (${newModelPos.x}, ${newModelPos.y})
 - For NEW TRAINING: Use exact position (${newTrainingPos.x}, ${newTrainingPos.y})
 
 POSITIONING RULES:
-- Same type: Stack vertically with 600px Y offset from last node of that type
-- Different type: Position horizontally with ±60px X offset, same Y as reference node
+- Same type: Stack vertically
+- Different type: Position horizontally
 - Pipeline flow: Dataset (left) → Model (center) → Training (right)
-- Minimum spacing: 600px between same-type nodes
-- CRITICAL: Use the EXACT coordinates provided above - do not calculate your own!
+- Ensure adequate spacing between nodes
 `;
 
   return positioningGuide;
@@ -251,9 +250,10 @@ When using tools, you MUST follow this pattern:
 - The explanation should be conversational and educational
 
 Example responses:
-- "I'll add a model node to your pipeline so you can select a base model for fine-tuning! I'll position it at (400, 300) to maintain good spacing." [calls addNode tool with calculated position]
+- "I'll add a model node to your pipeline so you can select a base model for fine-tuning! I'll position it in the center to maintain good spacing." [calls addNode tool with exact coordinates]
 - "Let me update the training configuration to use 5 epochs for optimal results!" [calls updateNodeProperties tool]
-- "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical flow with proper spacing." [calls multiple tools with smart positioning]
+- "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical left-to-right flow." [calls multiple tools with exact positioning]
+- "I'll add a dataset node to the left of your model node for a clean pipeline flow!" [calls addNode tool with exact coordinates]
 - "I'll connect your dataset node to the model node so the data flows properly through your pipeline!" [calls addConnection tool with proper handles]
 - "Let me remove that connection between the nodes since it's not needed for this setup." [calls deleteConnection tool with connection ID]
 
@@ -273,10 +273,11 @@ When using the addNode tool, you MUST:
 1. Look for the "EXACT POSITIONING COORDINATES" section in the graph context
 2. Use the EXACT x,y coordinates provided - DO NOT calculate your own positions
 3. Copy the coordinates exactly as shown: (x, y) 
-4. Explain your positioning choice to the user using the provided coordinates
+4. Explain your positioning choice to the user using NATURAL LANGUAGE (e.g., "to the left of", "to the right of", "above", "below", "in the center") - NEVER mention specific coordinates to the user
 5. Never add or subtract from the provided coordinates - use them as-is
 
 ⚠️ CRITICAL: The coordinates are pre-calculated with proper 600px spacing. Use them exactly!
+📍 USER COMMUNICATION: Always use descriptive positioning language (left, right, center, above, below) instead of coordinates when explaining to users.
 
 🔗 CONNECTION MANAGEMENT RULES:
 When managing connections between nodes, you MUST follow these rules:

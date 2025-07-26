@@ -16,9 +16,7 @@ const UserMessage = memo(({ content }: UserMessageProps) => {
           <AvatarImage src="https://github.com/shadcn.png" />
           <AvatarFallback>CN</AvatarFallback>
         </Avatar>
-        <div className="text-text-primary text-sm font-medium tracking-tight">
-          {content}
-        </div>
+        <div className="text-text-primary text-sm font-semibold">{content}</div>
       </div>
     </div>
   );

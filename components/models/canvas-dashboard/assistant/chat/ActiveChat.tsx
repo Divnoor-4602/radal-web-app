@@ -1,37 +1,101 @@
 "use client";
 
-import React, { memo } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import SendButton from "../SendButton";
 import UserMessage from "./UserMessage";
-import AssistantMessage from "./AssistantMessage";
+import AssistantMessage from "./assistant-message/AssistantMessage";
 import type { UIMessage } from "ai";
-import type { MessageStatus, ToolCall } from "@/lib/stores/chatStore";
 
-// Create the same type used in AssistantMessage for consistency
+// Message status type for AI SDK v5 compatibility
+type MessageStatus = "streaming" | "completed" | "error";
+
+// Display message type that matches AI SDK v5 patterns
 type DisplayMessage = UIMessage & {
-  status: MessageStatus;
-  timestamp: number;
-  toolCalls?: ToolCall[];
+  status?: MessageStatus;
+  timestamp?: number;
   error?: string;
 };
 
 type ActiveChatProps = {
   messages: DisplayMessage[];
   input?: string;
+  handleInputChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   isLoading?: boolean;
   validationError?: string | null;
+  onSendMessage?: (content: string) => void;
 };
 
 // Active chat component for when conversation is ongoing
 const ActiveChat = memo(
-  ({ messages, input, isLoading, validationError }: ActiveChatProps) => {
+  ({
+    messages,
+    input,
+    handleInputChange,
+    isLoading,
+    validationError,
+    onSendMessage,
+  }: ActiveChatProps) => {
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
+    const isUserNearBottomRef = useRef(true);
+
+    // Function to check if user is near the bottom of the chat
+    const checkIfNearBottom = () => {
+      const container = messagesContainerRef.current;
+      if (!container) return false;
+
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const threshold = 100; // pixels from bottom
+      return scrollHeight - scrollTop - clientHeight < threshold;
+    };
+
+    // Function to scroll to bottom smoothly
+    const scrollToBottom = () => {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    };
+
+    // Handle scroll events to track user position
+    const handleScroll = () => {
+      isUserNearBottomRef.current = checkIfNearBottom();
+    };
+
+    // Check if there's a streaming message
+    const hasStreamingMessage = messages.some(
+      (message) => message.status === "streaming",
+    );
+
+    // Auto-scroll logic
+    useEffect(() => {
+      if (messages.length > 0) {
+        // Always scroll to bottom if there's a streaming message (new content being generated)
+        // Or if user is near bottom (normal chat behavior)
+        if (hasStreamingMessage || isUserNearBottomRef.current) {
+          scrollToBottom();
+        }
+      }
+    }, [messages, hasStreamingMessage]);
+
+    // Scroll to bottom on initial load
+    useEffect(() => {
+      scrollToBottom();
+    }, []);
+
     return (
-      <div className="w-full h-full flex flex-col px-6 bg-bg-100">
-        {/* Messages section - scrollable */}
-        <div className="flex-1 overflow-y-auto">
+      <div className="w-full h-full relative bg-bg-100">
+        {/* Messages section - scrollable, positioned to leave space for text area */}
+        <div
+          ref={messagesContainerRef}
+          className="absolute top-0 left-0 right-0 bottom-32 overflow-y-auto px-6"
+          onScroll={handleScroll}
+        >
           <div className="py-4">
-            <div className="flex flex-col space-y-6">
+            <div className="flex flex-col space-y-4">
               {messages.length > 0 ? (
                 messages.map((message) => (
                   <div key={message.id}>
@@ -54,8 +118,14 @@ const ActiveChat = memo(
           </div>
         </div>
 
-        {/* Text area section - fixed at bottom */}
-        <div className="pb-6">
+        {/* Blur/Shadow Overlay */}
+
+        <div className="pointer-events-none z-10 absolute bottom-32 left-0 right-0 h-24">
+          <div className="h-24 w-full bg-gradient-to-t from-bg-100 to-transparent" />
+        </div>
+
+        {/* Text area section - absolutely positioned at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 px-6 pb-6 bg-bg-100">
           {/* Validation error display */}
           {validationError && (
             <div className="mb-3 p-3 bg-red-100 border border-red-300 text-red-700 text-sm rounded-lg">
@@ -68,10 +138,14 @@ const ActiveChat = memo(
               className="w-full !outline-0 !ring-0 !focus:ring-0 !focus-visible:ring-0 !shadow-none !bg-[#1B1B1D] !border !border-stone-800 focus:!ring-0 focus:!ring-offset-0 focus:!border-border-default placeholder:text-text-inactive !min-h-20 text-sm pr-12 pb-12"
               placeholder="Ask me anything..."
               value={input || ""}
-              readOnly
+              onChange={handleInputChange}
             />
             {/* send button */}
-            <SendButton input={input} isLoading={isLoading} />
+            <SendButton
+              input={input}
+              isLoading={isLoading}
+              onSendMessage={onSendMessage}
+            />
           </div>
         </div>
       </div>
