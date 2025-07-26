@@ -108,7 +108,7 @@ const ProjectSidebar = () => {
                   <Button
                     className="w-full cursor-pointer bg-bg-100 text-text-primary hover:bg-bg-400/50 border-bg-400 border flex items-center gap-1.5"
                     onClick={() => {
-                      router.push(`/projects/${projectId}/models/new`);
+                      router.push(`/projects/${projectId}/models/new/canvas`);
                     }}
                   >
                     <Plus className="size-4" />

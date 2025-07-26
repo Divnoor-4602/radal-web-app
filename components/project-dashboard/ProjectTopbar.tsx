@@ -13,7 +13,7 @@ const ProjectTopbar = ({ projectId }: ProjectTopbarProps) => {
   const router = useRouter();
 
   const handleCreateModel = () => {
-    router.push(`/dashboard/${projectId}/models/new/canvas`);
+    router.push(`/projects/${projectId}/models/new/canvas`);
   };
 
   return (

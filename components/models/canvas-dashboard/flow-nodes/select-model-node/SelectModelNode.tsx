@@ -10,6 +10,7 @@ import SelectModel from "./SelectModel";
 import useFlowStore from "@/lib/stores/flowStore";
 import { Position } from "@xyflow/react";
 import CustomHandle from "../../handles/CustomHandle";
+import Link from "next/link";
 
 type TSelectModelNodeProps = {
   id: string;
@@ -120,7 +121,9 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
                   priority
                   className={`${!currentNodeData?.selectedModel ? "image-muted" : ""}`}
                 />
-                <div
+                <Link
+                  href={`https://huggingface.co/${selectedModelDetails?.model_id}`}
+                  target="_blank"
                   className={`text-sm tracking-tighter font-medium ${
                     !currentNodeData?.selectedModel
                       ? "text-text-inactive"
@@ -128,7 +131,7 @@ export const SelectModelNode: React.FC<TSelectModelNodeProps> = memo(
                   }`}
                 >
                   View on Hugging Face
-                </div>
+                </Link>
               </div>
             </div>
             {/* Seperator */}

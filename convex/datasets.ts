@@ -234,7 +234,8 @@ export const getProjectDatasets = query({
     // Return datasets with storage URLs
     return Promise.all(
       datasets.map(async (dataset) => {
-        const storageUrl = await ctx.storage.getUrl(dataset.storageId);
+        // Use Azure URL since datasets are stored in Azure Blob Storage
+        const storageUrl = dataset.azureUrl;
 
         return {
           _id: dataset._id,
