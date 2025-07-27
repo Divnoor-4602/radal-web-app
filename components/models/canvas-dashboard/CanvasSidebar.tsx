@@ -100,13 +100,9 @@ const CanvasSidebar = memo(() => {
           className={`flex flex-col mt-2 ${isCollapsed ? "gap-4 items-center" : "gap-4"}`}
         >
           {nodeItems.map((item) => (
-            <Collapsible
-              key={item.nodeType}
-              defaultOpen={item.isActive && !isCollapsed}
-              className="group/collapsible w-full"
-            >
-              <CollapsibleTrigger asChild>
-                <div className={isCollapsed ? "flex justify-center" : ""}>
+            <div key={item.nodeType} className="w-full">
+              {isCollapsed ? (
+                <div className="flex justify-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
@@ -117,20 +113,31 @@ const CanvasSidebar = memo(() => {
                         />
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent
-                      side="right"
-                      align="center"
-                      className={isCollapsed ? "" : "hidden"}
-                    >
+                    <TooltipContent side="right" align="center">
                       {item.title}
                     </TooltipContent>
                   </Tooltip>
                 </div>
-              </CollapsibleTrigger>
-              <CollapsibleContent className={isCollapsed ? "mt-1" : ""}>
-                {/* Content is empty when collapsed since the trigger itself is the preview node */}
-              </CollapsibleContent>
-            </Collapsible>
+              ) : (
+                <Collapsible
+                  defaultOpen={item.isActive}
+                  className="group/collapsible w-full"
+                >
+                  <CollapsibleTrigger asChild>
+                    <div>
+                      <PreviewNode
+                        icon={item.icon}
+                        title={item.title}
+                        nodeType={item.nodeType}
+                      />
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {/* Content is empty when collapsed since the trigger itself is the preview node */}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
           ))}
         </div>
       </SidebarContent>

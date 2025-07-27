@@ -127,8 +127,10 @@ const ProjectTopbarWithBreadcrumb = () => {
 // Main project dashboard layout
 const ProjectDashboardLayout = ({
   children,
+  hideTopbar = false,
 }: {
   children: React.ReactNode;
+  hideTopbar?: boolean;
 }) => {
   return (
     <SidebarProvider
@@ -136,8 +138,10 @@ const ProjectDashboardLayout = ({
     >
       <ProjectSidebar />
       <SidebarInset className="flex flex-col">
-        <ProjectTopbarWithBreadcrumb />
-        <main className="p-6 flex-1 min-h-0">{children}</main>
+        {!hideTopbar && <ProjectTopbarWithBreadcrumb />}
+        <main className={`flex-1 min-h-0 ${hideTopbar ? "p-0" : "p-6"}`}>
+          {children}
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

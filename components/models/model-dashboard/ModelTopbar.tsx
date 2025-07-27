@@ -9,16 +9,17 @@ import {
 import React, { useCallback, memo, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useSidebar } from "@/components/ui/sidebar";
 import TrainButton from "@/components/models/canvas-dashboard/topbar-actions/Trainbutton";
 import AssistantButton from "@/components/models/canvas-dashboard/topbar-actions/AssistantButton";
 import useAssistantStore from "@/lib/stores/assistantStore";
 
-// Canvas specific topbar/breadcrumb - memoized to prevent unnecessary re-renders
-const CanvasTopbarWithActions = memo(() => {
+type ModelTopbarProps = {
+  additionalMenuItems?: React.ReactNode;
+};
+
+// Simplified canvas topbar that doesn't use SidebarProvider context
+const ModelTopbar = memo(({ additionalMenuItems }: ModelTopbarProps) => {
   const router = useRouter();
-  const { setOpen: setSidebarOpen } = useSidebar();
   const { toggleAssistant } = useAssistantStore();
 
   // Memoize the back navigation handler
@@ -28,11 +29,8 @@ const CanvasTopbarWithActions = memo(() => {
 
   // Memoize the assistant toggle handler
   const handleAssistantToggle = useCallback(() => {
-    // collapse the sidebar to make space for the assistant (only for canvas)
-    setSidebarOpen(false);
-    // toggle the assistant window
     toggleAssistant();
-  }, [setSidebarOpen, toggleAssistant]);
+  }, [toggleAssistant]);
 
   // Add keyboard shortcut for assistant toggle (Cmd+I on macOS, Ctrl+I on Windows)
   useEffect(() => {
@@ -54,24 +52,9 @@ const CanvasTopbarWithActions = memo(() => {
   }, [handleAssistantToggle]);
 
   return (
-    <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5  bg-bg-100 border-b border-border-default">
-      {/* Sidebar and back arrow actions */}
+    <header className="flex justify-between shrink-0 items-center gap-2 px-6 py-5 bg-bg-100 border-b border-border-default">
+      {/* Back arrow and additional menu items */}
       <div className="flex items-center gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <SidebarTrigger className="-ml-1 text-text-muted hover:text-text-primary cursor-pointer" />
-          </TooltipTrigger>
-          <TooltipContent
-            className="bg-bg-400"
-            arrowClassName="bg-bg-400 fill-bg-400"
-          >
-            Toggle sidebar
-          </TooltipContent>
-        </Tooltip>
-        <Separator
-          orientation="vertical"
-          className="data-[orientation=vertical]:h-4 bg-border-default"
-        />
         {/* Go back to the previous page */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -87,12 +70,23 @@ const CanvasTopbarWithActions = memo(() => {
             Go back to previous page
           </TooltipContent>
         </Tooltip>
+
+        {/* Additional menu items */}
+        {additionalMenuItems && (
+          <>
+            <Separator
+              orientation="vertical"
+              className="data-[orientation=vertical]:h-4 bg-border-default"
+            />
+            {additionalMenuItems}
+          </>
+        )}
       </div>
 
       {/* Train and Assistant actions */}
       <div className="flex items-center gap-3">
         {/* Open assistant tab */}
-        <AssistantButton />
+        <AssistantButton collapseSidebarOnOpen={false} />
 
         {/* Start training */}
         <TrainButton />
@@ -101,6 +95,6 @@ const CanvasTopbarWithActions = memo(() => {
   );
 });
 
-CanvasTopbarWithActions.displayName = "CanvasTopbarWithActions";
+ModelTopbar.displayName = "ModelTopbar";
 
-export default CanvasTopbarWithActions;
+export default ModelTopbar;
