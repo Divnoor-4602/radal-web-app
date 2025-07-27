@@ -5,6 +5,7 @@ import ConvexClientProvider from "@/components/providers/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { dark } from "@clerk/themes";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,8 +35,12 @@ export default function RootLayout({
           disableTransitionOnChange
           forcedTheme="dark"
         >
-          <Toaster />
-          <ClerkProvider>
+          <Toaster richColors />
+          <ClerkProvider
+            appearance={{
+              baseTheme: dark,
+            }}
+          >
             <ConvexClientProvider>{children}</ConvexClientProvider>
           </ClerkProvider>
         </ThemeProvider>
