@@ -2,20 +2,28 @@
 
 import React from "react";
 import MetricCard from "./MetricCard";
-import { Database, Brain, TrendingUp } from "lucide-react";
+import { File, Brain, Sparkles } from "lucide-react";
+import MetricCardSectionLoading from "./MetricCardSectionLoading";
+import {
+  formatStatusText,
+  getStatusPillType,
+  formatDatasetPillText,
+  getDatasetPillType,
+  shouldShowAnimation,
+  getTrainingCardTitle,
+} from "@/lib/utils";
 
-// Types for direct query results instead of Preloaded types
-type ModelStatsData =
-  | { totalCount: number; latestModelStatus: "none" }
-  | {
-      totalCount: number;
-      latestModelStatus:
-        | "training"
-        | "ready"
-        | "pending"
-        | "converting"
-        | "failed";
-    };
+// Types for the actual query results
+type ModelStatsData = {
+  totalCount: number;
+  latestModelStatus:
+    | "pending"
+    | "training"
+    | "converting"
+    | "ready"
+    | "failed"
+    | "none";
+};
 
 type DatasetStatsData = {
   totalCount: number;
@@ -24,7 +32,7 @@ type DatasetStatsData = {
 
 type RecentModelData = {
   modelName: string;
-  status: "training" | "ready" | "pending" | "converting" | "failed";
+  status: "pending" | "training" | "converting" | "ready" | "failed";
   title: string;
 } | null;
 
@@ -32,90 +40,80 @@ interface MetricCardSectionProps {
   modelStats: ModelStatsData | undefined;
   datasetStats: DatasetStatsData | undefined;
   recentModel: RecentModelData | undefined;
+  isLoading?: boolean;
 }
 
 const MetricCardSection = ({
   modelStats,
   datasetStats,
   recentModel,
+  isLoading = false,
 }: MetricCardSectionProps) => {
-  // Data is already available as direct query results
+  // Check if data is available
+  if (isLoading || !modelStats || !datasetStats) {
+    return <MetricCardSectionLoading />;
+  }
+
   const modelStatsData = modelStats;
   const datasetStatsData = datasetStats;
   const recentModelData = recentModel;
 
   return (
-    <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Total Models */}
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+      {/* Model Analytics Card */}
       <MetricCard
-        icon={<Brain className="size-6" strokeWidth={1.5} />}
+        icon={<Brain />}
         title="Total Models"
-        contentValue={modelStatsData?.totalCount ?? 0}
-        contentDescription="Models created"
-        pillText={
-          modelStatsData?.latestModelStatus === "none"
-            ? "No models"
-            : modelStatsData?.latestModelStatus === "training"
-              ? "Training"
-              : modelStatsData?.latestModelStatus === "ready"
-                ? "Ready"
-                : modelStatsData?.latestModelStatus === "pending"
-                  ? "Pending"
-                  : modelStatsData?.latestModelStatus === "converting"
-                    ? "Converting"
-                    : modelStatsData?.latestModelStatus === "failed"
-                      ? "Failed"
-                      : "Unknown"
-        }
-        pillType={
-          modelStatsData?.latestModelStatus === "ready"
-            ? "success"
-            : modelStatsData?.latestModelStatus === "failed"
-              ? "error"
-              : "info"
-        }
+        contentValue={modelStatsData.totalCount.toString()}
+        contentDescription="models"
+        pillText={formatStatusText(modelStatsData.latestModelStatus)}
+        pillType={getStatusPillType(modelStatsData.latestModelStatus)}
       />
 
-      {/* Total Datasets */}
+      {/* Dataset Analytics Card */}
       <MetricCard
-        icon={<Database className="size-6" strokeWidth={1.5} />}
+        icon={<File />}
         title="Total Datasets"
-        contentValue={datasetStatsData?.totalCount ?? 0}
-        contentDescription="Datasets uploaded"
-        pillText={
-          datasetStatsData?.totalCount === 0
-            ? "No datasets"
-            : (datasetStatsData?.latestDatasetTitle ?? "Latest dataset")
-        }
-        pillType={datasetStatsData?.totalCount === 0 ? "info" : "success"}
+        contentValue={datasetStatsData.totalCount.toString()}
+        contentDescription="datasets"
+        pillText={formatDatasetPillText(
+          datasetStatsData.latestDatasetTitle || "none",
+        )}
+        pillType={getDatasetPillType(
+          datasetStatsData.latestDatasetTitle || "none",
+        )}
       />
 
-      {/* Latest Model */}
+      {/* Training Analytics Card */}
       <MetricCard
-        icon={<TrendingUp className="size-6" strokeWidth={1.5} />}
-        title="Latest Model"
-        contentValue={recentModelData?.title ?? "No model"}
-        contentDescription="Most recent creation"
+        icon={
+          <Sparkles
+            className={
+              shouldShowAnimation(recentModelData?.status || null)
+                ? "animate-pulse"
+                : ""
+            }
+          />
+        }
+        title={getTrainingCardTitle(recentModelData?.status || null)}
+        contentValue={recentModelData?.modelName || "None"}
+        contentValueClassName={`text-text-primary text-[30px] font-bold tracking-tighter mt-3 mb-[3px] ${
+          shouldShowAnimation(recentModelData?.status || null)
+            ? "animate-pulse"
+            : ""
+        }`}
+        contentDescription={recentModelData?.status || ""}
         pillText={
-          recentModelData?.status === "training"
-            ? "Training"
-            : recentModelData?.status === "ready"
-              ? "Ready"
-              : recentModelData?.status === "pending"
-                ? "Pending"
-                : recentModelData?.status === "converting"
-                  ? "Converting"
-                  : recentModelData?.status === "failed"
-                    ? "Failed"
-                    : "None"
+          recentModelData?.status
+            ? formatStatusText(recentModelData.status)
+            : "None"
         }
         pillType={
-          recentModelData?.status === "ready"
-            ? "success"
-            : recentModelData?.status === "failed"
-              ? "error"
-              : "info"
+          recentModelData?.status
+            ? getStatusPillType(recentModelData.status)
+            : "error"
         }
+        className="lg:col-span-2 2xl:col-span-1"
       />
     </div>
   );

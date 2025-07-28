@@ -137,6 +137,7 @@ export interface FlowState {
     position: { x: number; y: number },
     projectId?: string,
   ) => void;
+  deleteNode: (nodeId: string) => void;
   updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => void;
   resetFlow: () => void;
   loadExistingFlow: (projectGraph: ProjectGraph) => void;
@@ -385,6 +386,27 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         set({
           nodes: newNodes,
           edges: newEdges,
+        });
+      },
+
+      deleteNode: (nodeId: string) => {
+        const { nodes, edges } = get();
+
+        // Remove the node from nodes array
+        const filteredNodes = nodes.filter((node) => node.id !== nodeId);
+
+        // Remove all edges connected to this node (both as source and target)
+        const filteredEdges = edges.filter(
+          (edge) => edge.source !== nodeId && edge.target !== nodeId,
+        );
+
+        console.log(
+          `🗑️ Deleting node ${nodeId} and ${edges.length - filteredEdges.length} connected edges`,
+        );
+
+        set({
+          nodes: filteredNodes,
+          edges: filteredEdges,
         });
       },
 

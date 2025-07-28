@@ -42,6 +42,7 @@ const ChatContent = memo(() => {
       (state) => ({
         updateNodeData: state.updateNodeData,
         addNode: state.addNode,
+        deleteNode: state.deleteNode,
         onNodesChange: state.onNodesChange,
         addConnection: state.addConnection,
         deleteConnection: state.deleteConnection,

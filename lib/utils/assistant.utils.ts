@@ -3,7 +3,7 @@
 
 import { availableModels } from "@/constants";
 import type { ToolInvocation } from "@/lib/validations/assistant.schema";
-import type { Node, Edge, NodeChange } from "@xyflow/react";
+import type { Node, Edge } from "@xyflow/react";
 
 /**
  * Processes tool invocations from the AI assistant and updates the graph state
@@ -23,6 +23,7 @@ export function processToolInvocations(
       position: { x: number; y: number },
       projectId?: string,
     ) => void;
+    deleteNode: (nodeId: string) => void;
     onNodesChange: (changes: NodeChange[]) => void;
     addConnection: (
       sourceNodeId: string,
@@ -225,7 +226,7 @@ function processAddNode(
 function processDeleteNode(
   args: unknown,
   graphState: { nodes: Node[]; edges: Edge[] },
-  graphActions: { onNodesChange: (changes: NodeChange[]) => void },
+  graphActions: { deleteNode: (nodeId: string) => void },
   errors: string[],
 ): void {
   // Type guard for args
@@ -243,9 +244,9 @@ function processDeleteNode(
     return;
   }
 
-  // Use React Flow's node change system for proper cleanup
-  graphActions.onNodesChange([{ type: "remove", id: nodeId }]);
-  console.log(`🗑️ Deleted node ${nodeId}`);
+  // Use our custom deleteNode function that properly cleans up edges
+  graphActions.deleteNode(nodeId);
+  console.log(`🗑️ Deleted node ${nodeId} with proper edge cleanup`);
 }
 
 /**

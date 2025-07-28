@@ -77,7 +77,13 @@ const DashboardPage = () => {
         </div>
 
         <Authenticated>
-          <div className="grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 justify-start">
+          <div
+            className={`grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 ${
+              projects === undefined || projects.length > 0
+                ? "justify-start"
+                : "justify-center"
+            }`}
+          >
             {projects === undefined ? (
               // Loading state
               [...Array(3)].map((_, i) => (
@@ -114,7 +120,7 @@ const DashboardPage = () => {
         </Authenticated>
 
         <Unauthenticated>
-          <div className="grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 justify-start">
+          <div className="grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 justify-center">
             <div className="col-span-full text-center py-16 flex flex-col items-center justify-center gap-4">
               <UserIcon
                 className="w-10 h-10 text-text-inactive"
