@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useCallback, memo, useState } from "react";
+import React, { useCallback, memo, useState, useMemo } from "react";
 import { BrainCircuit, Loader2 } from "lucide-react";
 import CustomButton from "@/components/shared/CustomButton";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
   validateTrainingFlow,
@@ -18,8 +18,27 @@ import { useRouter } from "next/navigation";
 // Train button component - memoized to prevent unnecessary re-renders
 const TrainButton = memo(() => {
   const params = useParams();
+  const pathname = usePathname();
   const router = useRouter();
   const [isTraining, setIsTraining] = useState(false);
+
+  // Generate flow key (same logic as CanvasContent)
+  const { projectId, modelId } = params as {
+    projectId: string;
+    modelId?: string;
+  };
+  const flowKey = useMemo(() => {
+    if (modelId) {
+      return `model-flow-${modelId}`;
+    } else if (projectId) {
+      const isNewCanvasPage = pathname?.includes("/models/new/canvas");
+      if (isNewCanvasPage) {
+        return `project-canvas-${projectId}`;
+      }
+      return `project-flow-${projectId}`;
+    }
+    return "default-flow";
+  }, [projectId, modelId, pathname]);
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
@@ -94,7 +113,7 @@ const TrainButton = memo(() => {
         });
 
         // Clear the canvas state from both memory and localStorage since training has started
-        useFlowStore.getState().clearPersistedState();
+        useFlowStore.getState().clearPersistedState(flowKey);
 
         router.push(`/projects/${projectId}`);
       }
