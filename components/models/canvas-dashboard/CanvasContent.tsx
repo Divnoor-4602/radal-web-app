@@ -94,36 +94,32 @@ const CanvasContent = ({}) => {
   console.log("modelId", modelId);
   console.log("projectId", projectId);
 
-  // Reset flow only when project or model IDs actually change
+  // Reset flow when project or model IDs change (including first mount)
   useEffect(() => {
-    // Skip reset on first mount (page load), but reset on subsequent changes
-    if (isFirstMount.current) {
-      // Only mark as "not first mount" if we have valid projectId
-      // This prevents issues with stale/undefined params in production SSR
-      if (projectId && projectId !== "undefined") {
-        console.log("✅ First mount with valid projectId:", projectId);
-        isFirstMount.current = false;
-        // Reset auto-restore tracking when switching contexts
-        hasAutoRestored.current = null;
-        setIsResetting(false);
-      } else {
-        console.log(
-          "⏳ First mount waiting for valid projectId, current:",
-          projectId,
-        );
-        // Keep isFirstMount.current = true until we get valid params
-      }
-    } else {
-      console.log("🔄 Resetting flow for project/model change");
+    // Only proceed with valid projectId to prevent SSR issues
+    if (projectId && projectId !== "undefined") {
+      console.log("🔄 Resetting flow for project/model:", {
+        projectId,
+        modelId,
+        isFirstMount: isFirstMount.current,
+      });
+
       setIsResetting(true);
       resetFlow();
       // Reset auto-restore tracking when switching contexts
       hasAutoRestored.current = null;
 
+      // Mark first mount as complete if this is the first time
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+      }
+
       // Mark reset as complete after a short delay
       setTimeout(() => {
         setIsResetting(false);
       }, 10);
+    } else {
+      console.log("⏳ Reset waiting for valid projectId, current:", projectId);
     }
   }, [projectId, modelId, resetFlow]);
 
