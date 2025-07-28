@@ -64,7 +64,9 @@ const CanvasContent = ({}) => {
     // Skip reset on first mount (page load), but reset on subsequent changes
     if (isFirstMount.current) {
       isFirstMount.current = false;
+      console.log("🔄 Resetting flow");
     } else {
+      console.log("🔄 Resetting flow");
       resetFlow();
     }
   }, [projectId, modelId, resetFlow]);
