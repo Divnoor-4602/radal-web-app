@@ -8,6 +8,9 @@ import { getAuthToken } from "@/lib/actions/auth.actions";
 import ProjectSection from "@/components/app-dashboard/ProjectSection";
 import CreateProjectSheet from "@/components/app-dashboard/CreateProjectSheet";
 
+// Force dynamic rendering since we're using authentication
+export const dynamic = "force-dynamic";
+
 const DashboardPage = async () => {
   const token = await getAuthToken();
 
