@@ -8,7 +8,7 @@ import {
   NodeTypes,
   BackgroundVariant,
 } from "@xyflow/react";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
@@ -40,7 +40,7 @@ const edgeTypes = {
 // };
 
 const CanvasContent = ({}) => {
-  const { projectId } = useParams();
+  const { projectId, modelId } = useParams();
   const {
     nodes,
     edges,
@@ -52,8 +52,14 @@ const CanvasContent = ({}) => {
     onReconnectEnd,
     addNode,
     isValidConnection,
+    resetFlow,
   } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
+
+  // Reset flow when project or model changes
+  useEffect(() => {
+    resetFlow();
+  }, [projectId, modelId, resetFlow]);
 
   // Use preloaded data
   // const modelData = usePreloadedQuery(preloadedModelData);

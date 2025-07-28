@@ -36,7 +36,6 @@ const TrainButton = memo(() => {
       const validation = validateTrainingFlow(nodes, edges);
 
       if (!validation.isValid) {
-        console.error("Invalid training flow:", validation.errors);
         toast.error(
           "Invalid training flow. Please check your model configuration.",
         );
@@ -47,7 +46,6 @@ const TrainButton = memo(() => {
       const connectedNodes = getConnectedTrainingNodes(nodes, edges);
 
       if (!connectedNodes.isValid) {
-        console.error("Invalid connected nodes:", connectedNodes.errors);
         toast.error(
           "Invalid training setup. Please ensure all required nodes are properly connected.",
         );
@@ -56,25 +54,16 @@ const TrainButton = memo(() => {
 
       // Transform to training schema format
       const transformResult = transformFlowToTrainingSchema(nodes, edges);
-      console.log("Training schema transformation:", transformResult);
 
       if (!transformResult.success) {
-        console.error(
-          "Failed to transform training schema:",
-          transformResult.errors,
-        );
         toast.error(
           "Failed to prepare training data. Please check your configuration.",
         );
         return;
       }
 
-      console.log("✅ Successfully transformed to training schema!");
-      console.log("Training schema data:", transformResult.data);
-
       // Ensure we have the transformed data
       if (!transformResult.data) {
-        console.error("No transformed data available");
         toast.error("Training data preparation failed. Please try again.");
         return;
       }
@@ -82,15 +71,9 @@ const TrainButton = memo(() => {
       // Extract projectId from URL params
       const projectId = params.projectId as string;
       if (!projectId) {
-        console.error("Project ID not found in URL params");
         toast.error("Project not found. Please refresh and try again.");
         return;
       }
-
-      console.log("🚀 Starting training with:", {
-        projectId,
-        datasetCount: transformResult.data.datasetNodes.length,
-      });
 
       // Show loading toast
       toast.loading("Starting model training...");
@@ -113,9 +96,7 @@ const TrainButton = memo(() => {
         // Clear the canvas state from both memory and localStorage since training has started
         useFlowStore.getState().clearPersistedState();
 
-        const modelId = result.data.modelId;
-        // route to the new model page
-        router.push(`/projects/${projectId}/models/${modelId}`);
+        router.push(`/projects/${projectId}`);
       }
     } catch (error) {
       console.error("Training failed:", error);

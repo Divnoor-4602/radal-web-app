@@ -83,7 +83,7 @@ const SelectQuantization = memo<SelectQuantizationProps>(
                 <SelectItem
                   key={quantisation}
                   value={quantisation}
-                  className="flex item-center gap-1"
+                  className="flex item-center gap-1 hover:bg-[#1C1717] focus:bg-[#1C1717]"
                 >
                   <CpuIcon className="size-4" strokeWidth={1.5} />
                   {quantisation}

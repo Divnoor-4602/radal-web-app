@@ -31,7 +31,7 @@ const MetricCardSection = ({
   const recentModelData = usePreloadedQuery(recentModel);
 
   return (
-    <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
       {/* Model Analytics Card */}
       <MetricCard
         icon={<Brain />}
@@ -58,6 +58,7 @@ const MetricCardSection = ({
 
       {/* Training Analytics Card */}
       <MetricCard
+        className="col-span-1 lg:col-span-2 2xl:col-span-1"
         icon={
           <Sparkles
             className={
@@ -69,12 +70,12 @@ const MetricCardSection = ({
         }
         title={getTrainingCardTitle(recentModelData?.status || null)}
         contentValue={recentModelData?.modelName || "None"}
-        contentValueClassName={`text-text-primary text-[30px] font-bold tracking-tighter mt-3 mb-[3px] ${
+        contentValueClassName={`text-text-primary text-[24px] font-bold tracking-tighter mt-3 mb-[12px] ${
           shouldShowAnimation(recentModelData?.status || null)
             ? "animate-pulse"
             : ""
         }`}
-        contentDescription={recentModelData?.status || ""}
+        contentDescription={""}
         pillText={
           recentModelData?.status
             ? formatStatusText(recentModelData.status)

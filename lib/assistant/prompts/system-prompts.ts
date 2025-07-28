@@ -203,8 +203,8 @@ ${Object.values(availableModels)
   .join("\n")}
 
 For TRAINING nodes, valid options:
-- Epochs: 1-10
-- Batch Size: "512" or "1024" 
+- Epochs: 1-5
+- Batch Size: Always set to "4" (not configurable)
 - Quantization: "int4" or "int8"
 - Download Quant: "int4" or "int8"
 
@@ -344,8 +344,8 @@ ${modelDescriptions}`;
  */
 export function generateTrainingOptionsContext(): string {
   return `Training Configuration Options:
-- Epochs: 1-10 (number of training iterations)
-- Batch Size: "512" or "1024" (training batch size)
+- Epochs: 1-5 (number of training iterations)
+- Batch Size: Always "4" (fixed, not configurable)
 - Quantization: "int4" or "int8" (model quantization level)
 - Download Quant: "int4" or "int8" (download quantization level)`;
 }

@@ -27,9 +27,9 @@ export const ServerTrainingNodeSchema = z.object({
     errorMap: () => ({ message: "Training ID must be 't1'" }),
   }),
   nodeId: z.string().min(1, "Node ID is required"),
-  epochs: z.number().int().min(1).max(10, "Epochs must be between 1 and 10"),
-  batchSize: z.enum(["512", "1024"], {
-    errorMap: () => ({ message: "Batch size must be '512' or '1024'" }),
+  epochs: z.number().int().min(1).max(5, "Epochs must be between 1 and 5"),
+  batchSize: z.literal("4", {
+    errorMap: () => ({ message: "Batch size must be '4'" }),
   }),
   trainQuant: z.enum(["int4", "int8"], {
     errorMap: () => ({
@@ -170,7 +170,7 @@ export const BaseModelDetailsSchema = z.object({
 
 // Validate training configuration for model creation
 export const TrainingConfigSchema = z.object({
-  epochs: z.number().int().min(1).max(10, "Epochs must be between 1 and 10"),
+  epochs: z.number().int().min(1).max(5, "Epochs must be between 1 and 5"),
   batch_size: z.number().int().positive("Batch size must be positive"),
   train_quant: z.enum(["int4", "int8"]),
   download_quant: z.enum(["int4", "int8"]),

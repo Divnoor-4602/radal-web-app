@@ -8,14 +8,12 @@ export const QuantizationSchema = z.enum(["int4", "int8"], {
 });
 
 // Epochs schema
-export const EpochsSchema = z.number().min(1).max(10, {
-  message: "Epochs must be between 1 and 10",
+export const EpochsSchema = z.number().min(1).max(5, {
+  message: "Epochs must be between 1 and 5",
 });
 
-// Batch size schema -> 1024 or 512
-export const BatchSizeSchema = z.enum(["512", "1024"], {
-  errorMap: () => ({ message: "Batch size must be 512 or 1024" }),
-});
+// Batch size schema -> always defaults to 4
+export const BatchSizeSchema = z.literal("4").default("4");
 
 // Download quant schema
 export const DownloadQuantSchema = z.enum(["int4", "int8"], {

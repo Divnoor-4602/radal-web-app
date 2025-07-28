@@ -318,7 +318,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
             title: "Training Configuration",
             description: "Configure training parameters",
             epochs: 5,
-            batchSize: "512",
+            batchSize: "4",
             quantization: "int8",
             downloadQuant: "int8",
           } as TrainingNodeData;

@@ -6,12 +6,10 @@ import useFlowStore from "@/lib/stores/flowStore";
 import SelectQuantization from "./SelectQuantization";
 import { availableQuantisations } from "@/constants";
 import {
-  TBatchSizeSchema,
   TQuantizationSchema,
   TEpochsSchema,
 } from "@/lib/validations/training.schema";
 import SelectEpochSlider from "./SelectEpochSlider";
-import SelectBatchSize from "./SelectBatchSize";
 import { Position } from "@xyflow/react";
 import CustomHandle from "../../handles/CustomHandle";
 
@@ -39,14 +37,6 @@ export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps>
         } else if (type === "download") {
           updateNodeData(id, { downloadQuant: quantization });
         }
-      },
-      [updateNodeData, id],
-    );
-
-    // Memoized function to handle the batch size selection
-    const handleBatchSizeChange = useCallback(
-      (batchSize: TBatchSizeSchema) => {
-        updateNodeData(id, { batchSize });
       },
       [updateNodeData, id],
     );
@@ -97,7 +87,7 @@ export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps>
               {/* Card description */}
               <div className="text-text-muted text-xs mt-4">
                 Train with the default settings or customize them, then select
-                the model download format.
+                the model download format. Batch size is automatically set to 4.
               </div>
             </div>
             {/* Seperator */}
@@ -119,13 +109,6 @@ export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps>
                 tooltipText="Number of training epochs (1-5)"
                 selectedEpochs={currentData?.epochs || 1}
                 onEpochsChange={handleEpochsChange}
-              />
-              {/* Batch Size Custom Slider */}
-              <SelectBatchSize
-                labelText="Batch Size"
-                tooltipText="Select the batch size for your model."
-                onBatchSizeChange={handleBatchSizeChange}
-                selectedBatchSize={currentData?.batchSize}
               />
               {/* Download Quantization Select */}
               <SelectQuantization

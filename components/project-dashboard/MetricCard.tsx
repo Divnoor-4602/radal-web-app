@@ -11,6 +11,7 @@ interface MetricCardProps {
   pillType: "success" | "error" | "info";
   pillIcon?: React.ReactElement;
   contentValueClassName?: string;
+  className?: string;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -22,9 +23,10 @@ const MetricCard: React.FC<MetricCardProps> = ({
   pillType,
   pillIcon,
   contentValueClassName,
+  className,
 }) => {
   return (
-    <div className="relative">
+    <div className={`relative ${className || ""}`}>
       {/* Background div with highlight border */}
       <div className="absolute inset-0 rounded-2xl border border-border-highlight"></div>
       {/* Main card with precise positioning */}
@@ -32,7 +34,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         {/* Card header */}
         <div className="flex items-center gap-3">
           <MetricCardIcon icon={icon} />
-          <h2 className="text-xl font-medium tracking-tighter text-text-primary">
+          <h2 className="text-lg font-medium tracking-tighter text-text-primary">
             {title}
           </h2>
         </div>
