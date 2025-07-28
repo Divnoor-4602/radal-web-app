@@ -3,7 +3,7 @@
 
 import { availableModels } from "@/constants";
 import type { ToolInvocation } from "@/lib/validations/assistant.schema";
-import type { Node, Edge } from "@xyflow/react";
+import type { Node, Edge, NodeChange } from "@xyflow/react";
 
 /**
  * Processes tool invocations from the AI assistant and updates the graph state
