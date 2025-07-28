@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Download } from "lucide-react";
@@ -24,11 +24,13 @@ import TrainingStatus from "./TrainingStatus";
 
 const MenuItems = () => {
   const { modelId } = useParams();
+  const { isAuthenticated } = useConvexAuth();
 
-  // Fetch model data using the modelId from URL params
-  const modelData = useQuery(api.models.getModelById, {
-    modelId: modelId as Id<"models">,
-  });
+  // Fetch model data using the modelId from URL params only when authenticated
+  const modelData = useQuery(
+    api.models.getModelById,
+    isAuthenticated ? { modelId: modelId as Id<"models"> } : "skip",
+  );
 
   // Helper function to truncate text
   const truncateText = (text: string, maxLength: number = 15) => {
@@ -197,7 +199,12 @@ const DatasetItem = ({
   datasetId: Id<"datasets">;
   truncateText: (text: string, maxLength?: number) => string;
 }) => {
-  const dataset = useQuery(api.datasets.getDatasetById, { datasetId });
+  const { isAuthenticated } = useConvexAuth();
+
+  const dataset = useQuery(
+    api.datasets.getDatasetById,
+    isAuthenticated ? { datasetId } : "skip",
+  );
 
   return (
     <div className="flex items-center justify-between gap-2">

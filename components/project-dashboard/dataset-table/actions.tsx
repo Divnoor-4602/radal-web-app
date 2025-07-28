@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -23,9 +23,12 @@ type DatasetActionsProps = {
 export const DatasetActions: React.FC<DatasetActionsProps> = ({
   datasetId,
 }) => {
-  const dataset = useQuery(api.datasets.getDatasetById, {
-    datasetId: datasetId as Id<"datasets">,
-  });
+  const { isAuthenticated } = useConvexAuth();
+
+  const dataset = useQuery(
+    api.datasets.getDatasetById,
+    isAuthenticated ? { datasetId: datasetId as Id<"datasets"> } : "skip",
+  );
   const deleteDataset = useMutation(api.datasets.deleteDataset);
 
   const handleCopyId = async () => {

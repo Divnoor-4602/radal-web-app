@@ -479,7 +479,7 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
               Drag & drop your CSV file here
             </p>
             <p className="text-text-muted text-[10px] tracking-tight font-medium">
-              Must have exactly 2 columns
+              Must have exactly 2 columns and 500-10,000 rows
             </p>
           </div>
         )}

@@ -207,6 +207,25 @@ export async function POST(request: NextRequest) {
       const originalHeaders = rows[0];
       const originalDataRows = rows.slice(1);
 
+      // Validate row count early (before processing)
+      if (originalDataRows.length < 500) {
+        yield createStateUpdate(
+          "error",
+          undefined,
+          `CSV must contain at least 500 data rows. Found ${originalDataRows.length} rows.`,
+        );
+        return;
+      }
+
+      if (originalDataRows.length > 10000) {
+        yield createStateUpdate(
+          "error",
+          undefined,
+          `CSV cannot exceed 10,000 data rows. Found ${originalDataRows.length} rows.`,
+        );
+        return;
+      }
+
       // Identify and remove numeric index columns
       const columnsToKeep: number[] = [];
       const headersToKeep: string[] = [];

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +27,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserButton } from "@clerk/nextjs";
+import { api } from "@/convex/_generated/api";
+import { useQuery } from "convex/react";
 
 const nodeItems: {
   title: string;
@@ -55,6 +61,9 @@ const nodeItems: {
 const CanvasSidebar = memo(() => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  // Fetch current user data
+  const currentUser = useQuery(api.users.current);
 
   return (
     <Sidebar
@@ -143,26 +152,34 @@ const CanvasSidebar = memo(() => {
       </SidebarContent>
       {/* Sidebar footer */}
       <SidebarFooter>
-        <div
-          className={`flex items-center mt-9 ${isCollapsed ? "justify-center" : "gap-3"}`}
-        >
-          <Avatar className="size-10">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              className="rounded-full"
-            />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <p className="text-text-primary text-base font-medium tracking-tight">
-                Div
-              </p>
-              <p className="text-text-inactive text-sm tracking-tight">
-                div@gmail.com
-              </p>
-            </div>
-          )}
+        {/* settings and avatar */}
+        <div className="flex gap-3 items-center mt-9">
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "size-10",
+              },
+            }}
+          />
+          <div className="flex flex-col">
+            {currentUser === undefined ? (
+              // Show skeleton for user info while loading
+              <>
+                <Skeleton className="w-20 h-4 bg-bg-200 mb-1" />
+                <Skeleton className="w-32 h-3 bg-bg-200" />
+              </>
+            ) : (
+              // Show actual user info
+              <>
+                <p className="text-text-primary text-base font-medium tracking-tight">
+                  {currentUser?.name}
+                </p>
+                <p className="text-text-inactive text-sm tracking-tight">
+                  {currentUser?.email}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>

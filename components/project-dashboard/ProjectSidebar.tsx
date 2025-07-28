@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Gauge, Brain, Plus } from "lucide-react";
@@ -27,11 +27,13 @@ const ProjectSidebar = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated } = useConvexAuth();
 
-  // Fetch models for this project
-  const models = useQuery(api.models.getModelsByProject, {
-    projectId: projectId as Id<"projects">,
-  });
+  // Fetch models for this project only when authenticated
+  const models = useQuery(
+    api.models.getModelsByProject,
+    isAuthenticated ? { projectId: projectId as Id<"projects"> } : "skip",
+  );
 
   // Fetch current user data
   const currentUser = useQuery(api.users.current);

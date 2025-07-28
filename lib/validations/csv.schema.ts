@@ -48,9 +48,9 @@ export const ParsedCSVSchema = z
     headers: CSVHeaderSchema,
     rows: z
       .array(CSVRowSchema)
-      .min(1, "CSV must contain at least one data row")
-      .max(100000, "CSV cannot exceed 100,000 rows"),
-    totalRows: z.number().min(1).max(100000),
+      .min(500, "CSV must contain at least 500 data rows")
+      .max(10000, "CSV cannot exceed 10,000 rows"),
+    totalRows: z.number().min(500).max(10000),
     totalColumns: z.literal(2, { message: "CSV must have exactly 2 columns" }),
   })
   .refine(

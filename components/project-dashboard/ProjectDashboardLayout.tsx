@@ -17,7 +17,7 @@ import {
 import React, { useCallback } from "react";
 import ProjectSidebar from "@/components/project-dashboard/ProjectSidebar";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import {
@@ -35,10 +35,13 @@ const ProjectTopbarWithBreadcrumb = () => {
   }>();
   const pathname = usePathname();
   const router = useRouter();
-  // Fetch project data
-  const project = useQuery(api.projects.getProjectById, {
-    projectId: projectId as Id<"projects">,
-  });
+  const { isAuthenticated } = useConvexAuth();
+
+  // Fetch project data only when authenticated
+  const project = useQuery(
+    api.projects.getProjectById,
+    isAuthenticated ? { projectId: projectId as Id<"projects"> } : "skip",
+  );
 
   // Determine current page type
   const isModelPage = pathname.includes("/models/") && modelId;
