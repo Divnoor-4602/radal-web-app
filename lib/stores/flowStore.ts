@@ -126,6 +126,7 @@ export interface FlowState {
   isReconnecting: boolean;
   lastBackendSync: number; // Track when we last synced to backend
   isBackendSyncing: boolean; // Track sync status
+  hasHydrated: boolean; // Track hydration status
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
@@ -187,6 +188,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       isReconnecting: false,
       lastBackendSync: 0,
       isBackendSyncing: false,
+      hasHydrated: false,
 
       onNodesChange: (changes: NodeChange[]) => {
         const newNodes = applyNodeChanges(changes, get().nodes);
@@ -436,6 +438,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           isReconnecting: false,
           lastBackendSync: 0,
           isBackendSyncing: false,
+          hasHydrated: false,
         });
 
         // Clear localStorage persistence
@@ -784,16 +787,33 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     }),
     {
       name: "flow-storage",
-      storage: createJSONStorage(() => createSmartStorage()),
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined"
+          ? createSmartStorage()
+          : {
+              getItem: () => null,
+              setItem: () => {},
+              removeItem: () => {},
+            },
+      ),
       partialize: (state) => ({
         nodes: state.nodes,
         edges: state.edges,
+      }),
+      // Add merge function for better SSR compatibility
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...(persistedState as FlowState),
+        hasHydrated: true,
       }),
       // Add additional optimization
       onRehydrateStorage: () => {
         return (state, error) => {
           if (error) {
             console.error("❌ Flow state rehydration failed:", error);
+          } else if (state) {
+            // Mark as hydrated when rehydration completes successfully
+            state.hasHydrated = true;
           }
         };
       },

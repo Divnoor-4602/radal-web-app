@@ -18,6 +18,7 @@ import {
 } from "@/components/models/canvas-dashboard/flow-nodes";
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
+import { useHydration } from "@/hooks/use-hydration";
 // import { Preloaded, usePreloadedQuery } from "convex/react";
 // import { api } from "@/convex/_generated/api";
 // import { Preloaded } from "convex/react";
@@ -41,6 +42,7 @@ const edgeTypes = {
 
 const CanvasContent = ({}) => {
   const { projectId, modelId } = useParams();
+  const hasHydrated = useHydration();
   const {
     nodes,
     edges,
@@ -109,6 +111,18 @@ const CanvasContent = ({}) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
+
+  // Show loading state until hydration is complete
+  if (!hasHydrated) {
+    return (
+      <div
+        style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}
+        className="flex items-center justify-center"
+      >
+        <div className="text-white">Loading canvas...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: "100%", width: "100%", backgroundColor: "#090707" }}>
