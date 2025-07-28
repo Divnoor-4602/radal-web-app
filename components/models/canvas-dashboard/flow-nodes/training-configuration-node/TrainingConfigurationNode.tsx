@@ -87,7 +87,7 @@ export const TrainingConfigurationNode: React.FC<TrainingConfigurationNodeProps>
               {/* Card description */}
               <div className="text-text-muted text-xs mt-4">
                 Train with the default settings or customize them, then select
-                the model download format. Batch size is automatically set to 4.
+                the model download format.
               </div>
             </div>
             {/* Seperator */}

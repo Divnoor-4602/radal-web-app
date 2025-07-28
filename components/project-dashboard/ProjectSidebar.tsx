@@ -12,6 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,8 @@ const ProjectSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   // Fetch models for this project only when authenticated
   const models = useQuery(
@@ -175,25 +178,27 @@ const ProjectSidebar = () => {
               },
             }}
           />
-          <div className="flex flex-col">
-            {currentUser === undefined ? (
-              // Show skeleton for user info while loading
-              <>
-                <Skeleton className="w-20 h-4 bg-bg-200 mb-1" />
-                <Skeleton className="w-32 h-3 bg-bg-200" />
-              </>
-            ) : (
-              // Show actual user info
-              <>
-                <p className="text-text-primary text-base font-medium tracking-tight">
-                  {currentUser?.name}
-                </p>
-                <p className="text-text-inactive text-sm tracking-tight">
-                  {currentUser?.email}
-                </p>
-              </>
-            )}
-          </div>
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              {currentUser === undefined ? (
+                // Show skeleton for user info while loading
+                <>
+                  <Skeleton className="w-20 h-4 bg-bg-200 mb-1" />
+                  <Skeleton className="w-32 h-3 bg-bg-200" />
+                </>
+              ) : (
+                // Show actual user info
+                <>
+                  <p className="text-text-primary text-base font-medium tracking-tight">
+                    {currentUser?.name}
+                  </p>
+                  <p className="text-text-inactive text-sm tracking-tight">
+                    {currentUser?.email}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>
