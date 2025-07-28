@@ -70,6 +70,8 @@ const CanvasContent = ({}) => {
   const isFirstMount = useRef(true);
   // Track if we've already auto-restored for this flow key
   const hasAutoRestored = useRef<string | null>(null);
+  // Track if we're currently resetting to prevent premature auto-restore
+  const [isResetting, setIsResetting] = useState(false);
 
   // Generate flow key based on project and model IDs
   const flowKey = useMemo(() => {
@@ -86,6 +88,11 @@ const CanvasContent = ({}) => {
     return "default-flow";
   }, [projectId, modelId, pathname]);
 
+  console.log("flowKey", flowKey);
+  console.log("pathname", pathname);
+  console.log("modelId", modelId);
+  console.log("projectId", projectId);
+
   // Reset flow only when project or model IDs actually change
   useEffect(() => {
     // Skip reset on first mount (page load), but reset on subsequent changes
@@ -93,17 +100,29 @@ const CanvasContent = ({}) => {
       isFirstMount.current = false;
       // Reset auto-restore tracking when switching contexts
       hasAutoRestored.current = null;
+      setIsResetting(false);
     } else {
-      console.log("🔄 Resetting flow");
+      console.log("🔄 Resetting flow for project/model change");
+      setIsResetting(true);
       resetFlow();
       // Reset auto-restore tracking when switching contexts
       hasAutoRestored.current = null;
+
+      // Mark reset as complete after a short delay
+      setTimeout(() => {
+        setIsResetting(false);
+      }, 10);
     }
   }, [projectId, modelId, resetFlow]);
 
   // Auto-restore when React Flow instance is ready
   useEffect(() => {
-    if (rfInstance && flowKey && hasAutoRestored.current !== flowKey) {
+    if (
+      rfInstance &&
+      flowKey &&
+      hasAutoRestored.current !== flowKey &&
+      !isResetting
+    ) {
       try {
         const savedFlow = localStorage.getItem(flowKey);
         if (savedFlow) {
@@ -133,7 +152,7 @@ const CanvasContent = ({}) => {
         console.error("❌ Failed to auto-restore flow:", error);
       }
     }
-  }, [rfInstance, flowKey, restoreFlow, setViewport]);
+  }, [rfInstance, flowKey, restoreFlow, setViewport, isResetting]);
 
   // Enhanced save function that includes viewport information
   const onSave = useCallback(() => {
