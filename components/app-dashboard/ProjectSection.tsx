@@ -3,17 +3,25 @@
 import { formatRelativeTime } from "@/lib/utils";
 import React from "react";
 import ProjectCard from "./ProjectCard";
-import { Preloaded, usePreloadedQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { GhostIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+// Type for direct query result instead of Preloaded type
+type ProjectData = {
+  _id: string;
+  name: string;
+  description: string;
+  createdAt: number;
+  status: "valid" | "training" | "ready" | "error";
+  _creationTime: number;
+}[];
+
 type ProjectSectionProps = {
-  projects: Preloaded<typeof api.projects.getUserProjects>;
+  projects: ProjectData | undefined;
 };
 
 const ProjectSection = ({ projects }: ProjectSectionProps) => {
-  const projectData = usePreloadedQuery(projects);
+  const projectData = projects ?? [];
   const router = useRouter();
 
   const handleProjectClick = (projectId: string) => {

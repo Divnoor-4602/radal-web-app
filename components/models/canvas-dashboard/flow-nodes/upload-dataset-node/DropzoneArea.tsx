@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useEffect, useState, memo } from "react";
+import React, { FC, useEffect, useState, memo, useCallback } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
 import { validateCSVFileAndContent } from "@/lib/validations/csv.schema";
 import { File } from "lucide-react";
@@ -87,84 +87,87 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
     // Get the scope and animate from the use animate hook
     const [scope, animate] = useAnimate();
 
-    // Animation orchestration
-    const animations = {
-      // uploading -> this is shown till the client side validation and file prepartion goes on
-      clientSideValidating: async () => {
-        // disable hover effects for the animated images
-      },
+    // Memoize animation functions to avoid dependency issues
+    const animations = useCallback(
+      () => ({
+        // uploading -> this is shown till the client side validation and file prepartion goes on
+        clientSideValidating: async () => {
+          // disable hover effects for the animated images
+        },
 
-      // server side upload flow -> All the steps from validating to saving are handled here
-      serverSideUploadFlow: async () => {
-        // translate the animated images out of the view
-        await animate(
-          ".animated-images",
-          {
-            y: -150,
-          },
-          { duration: 0.4, ease: "easeOut" },
-        );
-        // bring the state list in view
-        await animate(
-          ".animated-content",
-          {
-            y: 0,
-            opacity: 1,
-          },
-          { duration: 0.4, ease: "easeOut" },
-        );
-      },
+        // server side upload flow -> All the steps from validating to saving are handled here
+        serverSideUploadFlow: async () => {
+          // translate the animated images out of the view
+          await animate(
+            ".animated-images",
+            {
+              y: -150,
+            },
+            { duration: 0.4, ease: "easeOut" },
+          );
+          // bring the state list in view
+          await animate(
+            ".animated-content",
+            {
+              y: 0,
+              opacity: 1,
+            },
+            { duration: 0.4, ease: "easeOut" },
+          );
+        },
 
-      // uploaded -> this is shown after the server side upload flow is complete (success flow)
-      uploaded: async () => {
-        // Hide state list first
-        await animate(
-          ".animated-content",
-          { opacity: 0, y: 200 },
-          {
-            duration: 0.3,
-            ease: "easeOut",
-          },
-        );
+        // uploaded -> this is shown after the server side upload flow is complete (success flow)
+        uploaded: async () => {
+          // Hide state list first
+          await animate(
+            ".animated-content",
+            { opacity: 0, y: 200 },
+            {
+              duration: 0.3,
+              ease: "easeOut",
+            },
+          );
 
-        // Bring images back
-        await animate(
-          ".animated-images",
-          { y: 0 },
-          {
-            duration: 0.3,
-            ease: "easeOut",
-          },
-        );
-      },
+          // Bring images back
+          await animate(
+            ".animated-images",
+            { y: 0 },
+            {
+              duration: 0.3,
+              ease: "easeOut",
+            },
+          );
+        },
 
-      // error -> this is shown after the server side upload flow is complete
-      error: async () => {
-        // Hide state list first
-        await animate(
-          ".animated-content",
-          { opacity: 0, y: 200 },
-          { duration: 0.3, ease: "easeOut" },
-        );
+        // error -> this is shown after the server side upload flow is complete
+        error: async () => {
+          // Hide state list first
+          await animate(
+            ".animated-content",
+            { opacity: 0, y: 200 },
+            { duration: 0.3, ease: "easeOut" },
+          );
 
-        // Bring images back
-        await animate(
-          ".animated-images",
-          { y: 0 },
-          { duration: 0.3, ease: "easeOut" },
-        );
+          // Bring images back
+          await animate(
+            ".animated-images",
+            { y: 0 },
+            { duration: 0.3, ease: "easeOut" },
+          );
 
-        // Add shake animation for error feedback
-        await animate(
-          ".animated-images",
-          {
-            x: [0, -3, 4, -2, 3, -1, 2, 0],
-            rotate: [0, -2, 2, -1, 1, 0],
-          },
-          { duration: 0.3, ease: "linear" },
-        );
-      },
-    };
+          // Add shake animation for error feedback
+          await animate(
+            ".animated-images",
+            {
+              x: [0, -3, 4, -2, 3, -1, 2, 0],
+              rotate: [0, -2, 2, -1, 1, 0],
+            },
+            { duration: 0.3, ease: "linear" },
+          );
+        },
+      }),
+      [animate],
+    );
 
     const handleStreamingUpload = async (fileToUpload?: File) => {
       try {
@@ -302,23 +305,24 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
 
     useEffect(() => {
       const triggerAnimation = async () => {
+        const animationFunctions = animations();
         switch (uploadStatus.state) {
           case "uploading":
-            await animations.serverSideUploadFlow();
+            await animationFunctions.serverSideUploadFlow();
             break;
           case "uploaded":
             // success flow state
-            await animations.uploaded();
+            await animationFunctions.uploaded();
             break;
           case "error":
             // Show error state
-            await animations.error();
+            await animationFunctions.error();
             break;
         }
       };
 
       triggerAnimation();
-    }, [uploadStatus.state, animate]);
+    }, [uploadStatus.state, animations]);
 
     const onDrop = async (
       acceptedFiles: File[],

@@ -3,29 +3,50 @@
 import React from "react";
 import { Files, Ghost } from "lucide-react";
 import MetricCardIcon from "./MetricCardIcon";
-import { DataTable } from "@/components/project-dashboard/dataset-table/data-table";
-import { columns } from "@/components/project-dashboard/dataset-table/columns";
-import { transformDatasetsToTableRows } from "@/lib/validations/dataset.schema";
-import { Preloaded, usePreloadedQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { DataTable } from "./dataset-table/data-table";
+import { columns } from "./dataset-table/columns";
+import {
+  transformDatasetsToTableRows,
+  ConvexDataset,
+} from "@/lib/validations/dataset.schema";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+// Type for direct query result instead of Preloaded type
+type DatasetData = {
+  _id: Id<"datasets">;
+  title: string;
+  description: string | undefined;
+  originalFilename: string;
+  fileSize: number;
+  rowCount: number | undefined;
+  columnCount: number | undefined;
+  headers: string[] | undefined;
+  createdAt: number;
+  storageUrl: string | undefined;
+}[];
+
 type DatasetUploadMetricCardProps = {
-  datasets: Preloaded<typeof api.datasets.getProjectDatasets>;
+  datasets: DatasetData | undefined;
 };
 
 const DatasetUploadMetricCard = ({
   datasets,
 }: DatasetUploadMetricCardProps) => {
-  // Use preloaded query - data is instantly available
-  const datasetsData = usePreloadedQuery(datasets);
+  // Data is already available as direct query result
+  const datasetsData = datasets ?? [];
 
   // Filter state
   const [modelFilter, setModelFilter] = React.useState("");
 
-  // Transform the data for the table
-  const tableData = transformDatasetsToTableRows(datasetsData);
+  // Transform the data for the table (convert from Id<"datasets"> to string)
+  const tableData = transformDatasetsToTableRows(
+    datasetsData.map((dataset) => ({
+      ...dataset,
+      _id: dataset._id as string,
+    })) as ConvexDataset[],
+  );
 
   return (
     <div className="mt-6 flex-1 min-h-0 flex flex-col">

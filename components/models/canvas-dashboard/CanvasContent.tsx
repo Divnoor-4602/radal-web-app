@@ -8,7 +8,7 @@ import {
   NodeTypes,
   BackgroundVariant,
 } from "@xyflow/react";
-import React, { useCallback, useMemo, useEffect } from "react";
+import React, { useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
@@ -56,9 +56,17 @@ const CanvasContent = ({}) => {
   } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
 
-  // Reset flow when project or model changes
+  // Track if this is the first mount
+  const isFirstMount = useRef(true);
+
+  // Reset flow only when project or model IDs actually change
   useEffect(() => {
-    resetFlow();
+    // Skip reset on first mount (page load), but reset on subsequent changes
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+    } else {
+      resetFlow();
+    }
   }, [projectId, modelId, resetFlow]);
 
   // Use preloaded data

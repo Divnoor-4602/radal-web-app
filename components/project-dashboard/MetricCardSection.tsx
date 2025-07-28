@@ -1,23 +1,37 @@
 "use client";
 
-import { Brain, File, Sparkles } from "lucide-react";
 import React from "react";
 import MetricCard from "./MetricCard";
-import { Preloaded, usePreloadedQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import {
-  getStatusPillType,
-  getDatasetPillType,
-  getTrainingCardTitle,
-  shouldShowAnimation,
-  formatStatusText,
-  formatDatasetPillText,
-} from "@/lib/utils";
+import { Database, Brain, TrendingUp } from "lucide-react";
+
+// Types for direct query results instead of Preloaded types
+type ModelStatsData =
+  | { totalCount: number; latestModelStatus: "none" }
+  | {
+      totalCount: number;
+      latestModelStatus:
+        | "training"
+        | "ready"
+        | "pending"
+        | "converting"
+        | "failed";
+    };
+
+type DatasetStatsData = {
+  totalCount: number;
+  latestDatasetTitle: string;
+};
+
+type RecentModelData = {
+  modelName: string;
+  status: "training" | "ready" | "pending" | "converting" | "failed";
+  title: string;
+} | null;
 
 interface MetricCardSectionProps {
-  modelStats: Preloaded<typeof api.models.getModelStatsForProject>;
-  datasetStats: Preloaded<typeof api.datasets.getDatasetStatsForProject>;
-  recentModel: Preloaded<typeof api.models.getRecentModelForProject>;
+  modelStats: ModelStatsData | undefined;
+  datasetStats: DatasetStatsData | undefined;
+  recentModel: RecentModelData | undefined;
 }
 
 const MetricCardSection = ({
@@ -25,66 +39,82 @@ const MetricCardSection = ({
   datasetStats,
   recentModel,
 }: MetricCardSectionProps) => {
-  // Use preloaded queries - data is instantly available
-  const modelStatsData = usePreloadedQuery(modelStats);
-  const datasetStatsData = usePreloadedQuery(datasetStats);
-  const recentModelData = usePreloadedQuery(recentModel);
+  // Data is already available as direct query results
+  const modelStatsData = modelStats;
+  const datasetStatsData = datasetStats;
+  const recentModelData = recentModel;
 
   return (
-    <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
-      {/* Model Analytics Card */}
+    <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Total Models */}
       <MetricCard
-        icon={<Brain />}
+        icon={<Brain className="size-6" strokeWidth={1.5} />}
         title="Total Models"
-        contentValue={modelStatsData.totalCount.toString()}
-        contentDescription="models"
-        pillText={formatStatusText(modelStatsData.latestModelStatus)}
-        pillType={getStatusPillType(modelStatsData.latestModelStatus)}
-      />
-
-      {/* Dataset Analytics Card */}
-      <MetricCard
-        icon={<File />}
-        title="Total Datasets"
-        contentValue={datasetStatsData.totalCount.toString()}
-        contentDescription="datasets"
-        pillText={formatDatasetPillText(
-          datasetStatsData.latestDatasetTitle || "none",
-        )}
-        pillType={getDatasetPillType(
-          datasetStatsData.latestDatasetTitle || "none",
-        )}
-      />
-
-      {/* Training Analytics Card */}
-      <MetricCard
-        className="col-span-1 lg:col-span-2 2xl:col-span-1"
-        icon={
-          <Sparkles
-            className={
-              shouldShowAnimation(recentModelData?.status || null)
-                ? "animate-pulse"
-                : ""
-            }
-          />
-        }
-        title={getTrainingCardTitle(recentModelData?.status || null)}
-        contentValue={recentModelData?.modelName || "None"}
-        contentValueClassName={`text-text-primary text-[24px] font-bold tracking-tighter mt-3 mb-[12px] ${
-          shouldShowAnimation(recentModelData?.status || null)
-            ? "animate-pulse"
-            : ""
-        }`}
-        contentDescription={""}
+        contentValue={modelStatsData?.totalCount ?? 0}
+        contentDescription="Models created"
         pillText={
-          recentModelData?.status
-            ? formatStatusText(recentModelData.status)
-            : "None"
+          modelStatsData?.latestModelStatus === "none"
+            ? "No models"
+            : modelStatsData?.latestModelStatus === "training"
+              ? "Training"
+              : modelStatsData?.latestModelStatus === "ready"
+                ? "Ready"
+                : modelStatsData?.latestModelStatus === "pending"
+                  ? "Pending"
+                  : modelStatsData?.latestModelStatus === "converting"
+                    ? "Converting"
+                    : modelStatsData?.latestModelStatus === "failed"
+                      ? "Failed"
+                      : "Unknown"
         }
         pillType={
-          recentModelData?.status
-            ? getStatusPillType(recentModelData.status)
-            : "error"
+          modelStatsData?.latestModelStatus === "ready"
+            ? "success"
+            : modelStatsData?.latestModelStatus === "failed"
+              ? "error"
+              : "info"
+        }
+      />
+
+      {/* Total Datasets */}
+      <MetricCard
+        icon={<Database className="size-6" strokeWidth={1.5} />}
+        title="Total Datasets"
+        contentValue={datasetStatsData?.totalCount ?? 0}
+        contentDescription="Datasets uploaded"
+        pillText={
+          datasetStatsData?.totalCount === 0
+            ? "No datasets"
+            : (datasetStatsData?.latestDatasetTitle ?? "Latest dataset")
+        }
+        pillType={datasetStatsData?.totalCount === 0 ? "info" : "success"}
+      />
+
+      {/* Latest Model */}
+      <MetricCard
+        icon={<TrendingUp className="size-6" strokeWidth={1.5} />}
+        title="Latest Model"
+        contentValue={recentModelData?.title ?? "No model"}
+        contentDescription="Most recent creation"
+        pillText={
+          recentModelData?.status === "training"
+            ? "Training"
+            : recentModelData?.status === "ready"
+              ? "Ready"
+              : recentModelData?.status === "pending"
+                ? "Pending"
+                : recentModelData?.status === "converting"
+                  ? "Converting"
+                  : recentModelData?.status === "failed"
+                    ? "Failed"
+                    : "None"
+        }
+        pillType={
+          recentModelData?.status === "ready"
+            ? "success"
+            : recentModelData?.status === "failed"
+              ? "error"
+              : "info"
         }
       />
     </div>
