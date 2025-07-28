@@ -78,7 +78,7 @@ export default defineSchema({
 
     // Training configuration used for the model.
     trainingConfig: v.object({
-      epochs: v.number(), // 1-10
+      epochs: v.number(), // 1-5
       batch_size: v.number(), // 1, 2, 4, 8
       train_quant: v.union(v.literal("int4"), v.literal("int8")),
       download_quant: v.union(v.literal("int4"), v.literal("int8")),

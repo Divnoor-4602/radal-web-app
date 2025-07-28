@@ -18,6 +18,9 @@ import {
 } from "@/components/models/canvas-dashboard/flow-nodes";
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
+// import { Preloaded, usePreloadedQuery } from "convex/react";
+// import { api } from "@/convex/_generated/api";
+// import { Preloaded } from "convex/react";
 
 // Node types mapping - memoized outside component for stable reference
 const nodeTypes: NodeTypes = {
@@ -31,7 +34,12 @@ const edgeTypes = {
   custom: CustomEdge,
 };
 
-const CanvasContent = () => {
+// type CanvasContentProps = {
+//   modelData?: Preloaded<typeof api.models.getModelById>;
+//   datasets?: Preloaded<typeof api.datasets.getDatasetsByProject>;
+// };
+
+const CanvasContent = ({}) => {
   const { projectId } = useParams();
   const {
     nodes,
@@ -46,6 +54,17 @@ const CanvasContent = () => {
     isValidConnection,
   } = useFlowStore();
   const { screenToFlowPosition } = useReactFlow();
+
+  // Use preloaded data
+  // const modelData = usePreloadedQuery(preloadedModelData);
+  // const datasets = usePreloadedQuery(preloadedDatasets);
+
+  // Load the canvas with model data when component mounts
+  // useEffect(() => {
+  //   if (modelData && datasets) {
+  //     loadModelCanvas(modelData);
+  //   }
+  // }, [modelData, datasets, loadModelCanvas]);
 
   // Memoize style object to prevent unnecessary re-renders
   const canvasStyle = useMemo(() => ({ backgroundColor: "#090707" }), []);

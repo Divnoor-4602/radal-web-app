@@ -34,6 +34,13 @@ export const getModelsByProject = query({
       }),
       modelDownloadUrl: v.optional(v.string()),
       repoId: v.optional(v.string()),
+      trainingGraph: v.optional(
+        v.object({
+          schema_version: v.optional(v.number()),
+          nodes: v.record(v.string(), v.any()),
+          edges: v.array(v.any()),
+        }),
+      ),
       status: v.union(
         v.literal("pending"),
         v.literal("training"),

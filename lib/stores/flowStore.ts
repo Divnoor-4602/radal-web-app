@@ -153,6 +153,28 @@ export interface FlowState {
     targetNodeId?: string;
   }) => boolean;
   syncToBackend: (projectId?: string) => Promise<boolean>; // Manual sync trigger
+  clearPersistedState: () => void;
+  loadModelCanvas: (modelData: {
+    _id: string;
+    trainingGraph?: {
+      schema_version?: number;
+      nodes: Record<string, unknown>;
+      edges: unknown[];
+    };
+    baseModelDetails: {
+      modelId: string;
+      displayName: string;
+      provider: string;
+      parameters: string;
+    };
+    datasetIds: string[];
+    trainingConfig: {
+      epochs: number;
+      batch_size: number;
+      train_quant: string;
+      download_quant: string;
+    };
+  }) => void; // New function for loading model canvas data
 }
 
 const useFlowStore = createWithEqualityFn<FlowState>()(
@@ -381,6 +403,29 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           nodes: [],
           edges: [],
         });
+      },
+
+      clearPersistedState: () => {
+        // Clear in-memory state
+        set({
+          nodes: [],
+          edges: [],
+          edgeReconnectSuccessful: false,
+          isReconnecting: false,
+          lastBackendSync: 0,
+          isBackendSyncing: false,
+        });
+
+        // Clear localStorage persistence
+        try {
+          localStorage.removeItem("flow-storage");
+          console.log("✅ Canvas state cleared from localStorage");
+        } catch (error) {
+          console.error(
+            "❌ Failed to clear canvas state from localStorage:",
+            error,
+          );
+        }
       },
 
       loadExistingFlow: (projectGraph: ProjectGraph) => {
@@ -667,6 +712,52 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           set({ isBackendSyncing: false });
           return false;
         }
+      },
+
+      loadModelCanvas: (modelData: {
+        _id: string;
+        trainingGraph?: {
+          schema_version?: number;
+          nodes: Record<string, unknown>;
+          edges: unknown[];
+        };
+        baseModelDetails: {
+          modelId: string;
+          displayName: string;
+          provider: string;
+          parameters: string;
+        };
+        datasetIds: string[];
+        trainingConfig: {
+          epochs: number;
+          batch_size: number;
+          train_quant: string;
+          download_quant: string;
+        };
+      }) => {
+        console.log("🎨 Loading model canvas with data:", modelData);
+
+        // Log what we have in the training graph
+        if (modelData.trainingGraph) {
+          console.log("📊 Training graph exists:", modelData.trainingGraph);
+          console.log(
+            "📊 Training graph nodes:",
+            modelData.trainingGraph.nodes,
+          );
+          console.log(
+            "📊 Training graph edges:",
+            modelData.trainingGraph.edges,
+          );
+        } else {
+          console.log("❌ No training graph found in model data");
+        }
+
+        // For now, reset to empty canvas - we'll build a better approach
+        console.log("🔄 Resetting to empty canvas for investigation");
+        set({
+          nodes: [],
+          edges: [],
+        });
       },
     }),
     {

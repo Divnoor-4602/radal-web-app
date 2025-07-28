@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { footerMenuItems } from "@/constants";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -165,39 +164,6 @@ const ProjectSidebar = () => {
       </SidebarContent>
       {/* Sidebar footer */}
       <SidebarFooter>
-        <SidebarMenu className="flex flex-col gap-4">
-          {footerMenuItems.map((item, index) => (
-            <SidebarMenuItem key={item.title + index}>
-              <SidebarMenuButton
-                asChild
-                isActive={item.isActive}
-                className={
-                  item.isActive
-                    ? " border-black border px-4 py-4.5 data-[active=true]:bg-bg-300 custom-active-menu-drop-shadow custom-active-menu-inner-shadow rounded-xl"
-                    : ""
-                }
-              >
-                <Link
-                  href={item.url}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <item.icon
-                    className={`size-5 ${
-                      item.isActive ? "text-text-primary" : "text-text-inactive"
-                    }`}
-                  />
-                  <span
-                    className={`text-base font-medium tracking-[-0.04em] ${
-                      item.isActive ? "text-text-primary" : "text-text-inactive"
-                    }`}
-                  >
-                    {item.title}
-                  </span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
         {/* settings and avatar */}
         <div className="flex gap-3 items-center mt-9">
           <UserButton

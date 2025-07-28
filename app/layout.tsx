@@ -35,7 +35,7 @@ export default function RootLayout({
           disableTransitionOnChange
           forcedTheme="dark"
         >
-          <Toaster richColors />
+          <Toaster richColors theme="dark" />
           <ClerkProvider
             appearance={{
               baseTheme: dark,

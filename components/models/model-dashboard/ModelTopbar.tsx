@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import React, { useCallback, memo, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import TrainButton from "@/components/models/canvas-dashboard/topbar-actions/Trainbutton";
 import AssistantButton from "@/components/models/canvas-dashboard/topbar-actions/AssistantButton";
 import useAssistantStore from "@/lib/stores/assistantStore";
@@ -21,11 +21,11 @@ type ModelTopbarProps = {
 const ModelTopbar = memo(({ additionalMenuItems }: ModelTopbarProps) => {
   const router = useRouter();
   const { toggleAssistant } = useAssistantStore();
-
+  const { projectId } = useParams();
   // Memoize the back navigation handler
   const handleBackClick = useCallback(() => {
-    router.back();
-  }, [router]);
+    router.push(`/projects/${projectId} `);
+  }, [router, projectId]);
 
   // Memoize the assistant toggle handler
   const handleAssistantToggle = useCallback(() => {
@@ -67,7 +67,7 @@ const ModelTopbar = memo(({ additionalMenuItems }: ModelTopbarProps) => {
             className="bg-bg-400"
             arrowClassName="bg-bg-400 fill-bg-400"
           >
-            Go back to previous page
+            Go back to project dashboard
           </TooltipContent>
         </Tooltip>
 
