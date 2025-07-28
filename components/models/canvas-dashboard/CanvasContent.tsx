@@ -75,9 +75,10 @@ const CanvasContent = ({}) => {
 
   // Generate flow key based on project and model IDs
   const flowKey = useMemo(() => {
-    if (modelId) {
+    // Defensive check for production SSR issues
+    if (modelId && modelId !== "undefined") {
       return `model-flow-${modelId}`;
-    } else if (projectId) {
+    } else if (projectId && projectId !== "undefined") {
       // Check if we're on the new canvas page
       const isNewCanvasPage = pathname?.includes("/models/new/canvas");
       if (isNewCanvasPage) {
@@ -97,10 +98,21 @@ const CanvasContent = ({}) => {
   useEffect(() => {
     // Skip reset on first mount (page load), but reset on subsequent changes
     if (isFirstMount.current) {
-      isFirstMount.current = false;
-      // Reset auto-restore tracking when switching contexts
-      hasAutoRestored.current = null;
-      setIsResetting(false);
+      // Only mark as "not first mount" if we have valid projectId
+      // This prevents issues with stale/undefined params in production SSR
+      if (projectId && projectId !== "undefined") {
+        console.log("✅ First mount with valid projectId:", projectId);
+        isFirstMount.current = false;
+        // Reset auto-restore tracking when switching contexts
+        hasAutoRestored.current = null;
+        setIsResetting(false);
+      } else {
+        console.log(
+          "⏳ First mount waiting for valid projectId, current:",
+          projectId,
+        );
+        // Keep isFirstMount.current = true until we get valid params
+      }
     } else {
       console.log("🔄 Resetting flow for project/model change");
       setIsResetting(true);
@@ -117,9 +129,13 @@ const CanvasContent = ({}) => {
 
   // Auto-restore when React Flow instance is ready
   useEffect(() => {
+    // Add validation for production SSR issues - ensure we have valid params
+    const hasValidParams = projectId && projectId !== "undefined" && pathname;
+
     if (
       rfInstance &&
       flowKey &&
+      hasValidParams &&
       hasAutoRestored.current !== flowKey &&
       !isResetting
     ) {
@@ -151,8 +167,21 @@ const CanvasContent = ({}) => {
       } catch (error) {
         console.error("❌ Failed to auto-restore flow:", error);
       }
+    } else if (rfInstance && flowKey && !hasValidParams) {
+      console.log("⏳ Auto-restore blocked - waiting for valid params:", {
+        projectId,
+        pathname,
+      });
     }
-  }, [rfInstance, flowKey, restoreFlow, setViewport, isResetting]);
+  }, [
+    rfInstance,
+    flowKey,
+    restoreFlow,
+    setViewport,
+    isResetting,
+    projectId,
+    pathname,
+  ]);
 
   // Enhanced save function that includes viewport information
   const onSave = useCallback(() => {
