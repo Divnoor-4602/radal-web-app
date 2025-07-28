@@ -37,6 +37,7 @@ export default function RootLayout({
         >
           <Toaster richColors theme="dark" />
           <ClerkProvider
+            afterSignOutUrl="/sign-in"
             appearance={{
               baseTheme: dark,
             }}
