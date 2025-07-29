@@ -13,11 +13,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Radal Web",
-  description: "A modern web application built with Next.js and Convex",
+  title: "Radal",
+  description:
+    "Fine-tune open-source small language models using a drag-and-drop canvas and AI-assisted fine-tuning.",
   icons: {
-    icon: "/convex.svg",
+    icon: "/radal-logo.png",
   },
+  applicationName: "Radal",
+  // TODO: Add social link metadata here with keywords
 };
 
 export default function RootLayout({

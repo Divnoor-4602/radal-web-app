@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useQuery, useConvexAuth } from "convex/react";
@@ -23,6 +23,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Gauge, Brain, Plus } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { Button } from "../ui/button";
+import Image from "next/image";
 
 const ProjectSidebar = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -44,16 +45,19 @@ const ProjectSidebar = () => {
   return (
     <Sidebar className="bg-bg-100 border-r border-[#262626] py-4 min-h-screen px-5">
       <SidebarHeader className="mb-4.5">
-        <div className="flex items-center gap-2">
-          <Avatar className="size-8">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              className="rounded-full"
+        <Link href="/dashboard" className="cursor-pointer">
+          <div className="flex items-center gap-2">
+            <Image
+              src="/radal-logo.png"
+              alt="Radal Logo"
+              width={28}
+              height={28}
+              className="logo-shadow"
+              priority
             />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          <p className="text-text-primary text-2xl font-bold">Radal</p>
-        </div>
+            <p className="text-text-primary text-2xl font-bold">Radal</p>
+          </div>
+        </Link>
         {/* divider */}
         <div className="bg-black w-full h-[1px] mt-4.5 custom-divider-drop-shadow" />
       </SidebarHeader>
@@ -189,10 +193,10 @@ const ProjectSidebar = () => {
               ) : (
                 // Show actual user info
                 <>
-                  <p className="text-text-primary text-base font-medium tracking-tight">
-                    {currentUser?.name}
+                  <p className="text-text-primary text-sm font-medium tracking-tight">
+                    {currentUser?.name.split(" ")[0]}
                   </p>
-                  <p className="text-text-inactive text-sm tracking-tight">
+                  <p className="text-text-inactive text-xs tracking-tight">
                     {currentUser?.email}
                   </p>
                 </>

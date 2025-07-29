@@ -25,6 +25,7 @@ import {
 } from "@/components/models/canvas-dashboard/flow-nodes";
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
+import "@xyflow/react/dist/style.css";
 // import { Preloaded, usePreloadedQuery } from "convex/react";
 // import { api } from "@/convex/_generated/api";
 // import { Preloaded } from "convex/react";
@@ -281,6 +282,7 @@ const CanvasContent = ({}) => {
         edgeTypes={edgeTypes}
         connectionLineComponent={ConnectionLine}
         fitView
+        proOptions={{ hideAttribution: true }}
         style={canvasStyle}
       >
         <Background
@@ -289,7 +291,7 @@ const CanvasContent = ({}) => {
           gap={15}
           size={1}
         />
-        <Controls />
+        <Controls className="!bg-black" />
 
         {/* Save/Restore Controls Panel */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">

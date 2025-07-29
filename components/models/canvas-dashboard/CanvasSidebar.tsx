@@ -7,7 +7,6 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import {
   ComponentIcon,
   Database,
@@ -31,6 +30,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserButton } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
+import Image from "next/image";
+import Link from "next/link";
 
 const nodeItems: {
   title: string;
@@ -73,20 +74,23 @@ const CanvasSidebar = memo(() => {
       collapsible="icon"
     >
       <SidebarHeader className="mb-4.5">
-        <div
-          className={`flex items-center ${isCollapsed ? "justify-center" : "gap-2"}`}
-        >
-          <Avatar className="size-8">
-            <AvatarImage
-              src="https://github.com/shadcn.png"
-              className="rounded-full"
+        <Link href="/dashboard" className="cursor-pointer">
+          <div
+            className={`flex items-center ${isCollapsed ? "justify-center" : "gap-2"}`}
+          >
+            <Image
+              src="/radal-logo.png"
+              alt="Radal Logo"
+              width={28}
+              height={28}
+              priority
+              className="drop-shadow"
             />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          {!isCollapsed && (
-            <p className="text-text-primary text-2xl font-bold">Radal</p>
-          )}
-        </div>
+            {!isCollapsed && (
+              <p className="text-text-primary text-2xl font-bold">Radal</p>
+            )}
+          </div>
+        </Link>
         {/* divider */}
         <div className="bg-black w-full h-[1px] mt-4.5 custom-divider-drop-shadow" />
         {/* Components title bar */}
@@ -172,10 +176,10 @@ const CanvasSidebar = memo(() => {
               ) : (
                 // Show actual user info
                 <>
-                  <p className="text-text-primary text-base font-medium tracking-tight">
-                    {currentUser?.name}
+                  <p className="text-text-primary text-sm font-medium tracking-tight">
+                    {currentUser?.name.split(" ")[0]}
                   </p>
-                  <p className="text-text-inactive text-sm tracking-tight">
+                  <p className="text-text-inactive text-xs tracking-tight">
                     {currentUser?.email}
                   </p>
                 </>

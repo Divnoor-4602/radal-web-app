@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import {
   ComponentIcon,
   Database,
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { UserButton } from "@clerk/nextjs";
 
 const nodeItems: {
   title: string;
@@ -103,13 +103,13 @@ const ModelSidebar = memo(() => {
 
       {/* Footer */}
       <div className="flex items-center justify-center mt-9">
-        <Avatar className="size-10">
-          <AvatarImage
-            src="https://github.com/shadcn.png"
-            className="rounded-full"
-          />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
+        <UserButton
+          appearance={{
+            elements: {
+              userButtonAvatarBox: "size-10",
+            },
+          }}
+        />
       </div>
     </div>
   );

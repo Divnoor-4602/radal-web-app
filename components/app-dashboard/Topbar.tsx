@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import React from "react";
 import { useConvexAuth } from "convex/react";
 import { useUser, UserButton } from "@clerk/nextjs";
@@ -9,6 +8,8 @@ import {
   getTimeBasedGreeting,
   getCurrentFormattedDate,
 } from "@/lib/utils";
+import Image from "next/image";
+import Link from "next/link";
 
 const Topbar = () => {
   const { isAuthenticated } = useConvexAuth();
@@ -25,16 +26,16 @@ const Topbar = () => {
   return (
     <div className="flex justify-between items-center">
       <div className="flex items-center gap-4">
-        <Avatar className="size-10">
-          <AvatarImage
-            src={user?.imageUrl || "https://github.com/shadcn.png"}
-            className="rounded-full"
+        <Link href="/dashboard" className="cursor-pointer">
+          <Image
+            src="/radal-logo.png"
+            alt="Radal Logo"
+            width={40}
+            height={40}
+            priority
+            className="rounded-[4px]"
           />
-          <AvatarFallback>
-            {user?.firstName?.[0] || "U"}
-            {user?.lastName?.[0] || "N"}
-          </AvatarFallback>
-        </Avatar>
+        </Link>
         <div className="flex flex-col">
           <p className="text-2xl font-semibold text-text-primary tracking-[-0.04em]">
             {greeting}, {displayName} 👋
