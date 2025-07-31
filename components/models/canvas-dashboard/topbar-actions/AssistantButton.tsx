@@ -30,8 +30,7 @@ const AssistantButton = memo(
       if (collapseSidebarOnOpen) {
         setSidebarOpen(false);
       }
-      // toggle the assistant window
-      console.log("toggleAssistant");
+
       toggleAssistant();
     }, [setSidebarOpen, toggleAssistant, collapseSidebarOnOpen]);
 

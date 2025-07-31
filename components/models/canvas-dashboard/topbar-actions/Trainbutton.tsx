@@ -10,40 +10,55 @@ import {
   getConnectedTrainingNodes,
   transformFlowToTrainingSchema,
 } from "@/lib/utils/train.utils";
+import { generateFlowKey } from "@/lib/utils/canvas.utils";
 import { startTraining } from "@/lib/actions/train.actions";
 import { type TrainingSchemaDataServer } from "@/lib/validations/train.server.schema";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useConvexAuth, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 // Train button component - memoized to prevent unnecessary re-renders
 const TrainButton = memo(() => {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
-  const [isTraining, setIsTraining] = useState(false);
+  const [isTraining, setIsTraining] = useState<boolean>(false);
+  const { isAuthenticated } = useConvexAuth();
 
-  // Generate flow key (same logic as CanvasContent)
+  // Check if current user is whitelisted
+  const currentUser = useQuery(
+    api.users.current,
+    isAuthenticated ? {} : "skip",
+  );
+
+  // Generate flow key using utility function
   const { projectId, modelId } = params as {
     projectId: string;
     modelId?: string;
   };
   const flowKey = useMemo(() => {
-    if (modelId) {
-      return `model-flow-${modelId}`;
-    } else if (projectId) {
-      const isNewCanvasPage = pathname?.includes("/models/new/canvas");
-      if (isNewCanvasPage) {
-        return `project-canvas-${projectId}`;
-      }
-      return `project-flow-${projectId}`;
-    }
-    return "default-flow";
+    return generateFlowKey(projectId, modelId, pathname);
   }, [projectId, modelId, pathname]);
+
+  // Check if user is whitelisted
+  const isWhitelisted = currentUser?.isWhitelisted ?? false;
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
     // Prevent multiple simultaneous training requests
     if (isTraining) return;
+
+    // Check whitelist status before proceeding
+    if (!isWhitelisted) {
+      toast.info("Available soon", {
+        description: "Redirecting to the waitlist...",
+        icon: <Loader2 className="size-4 animate-spin" />,
+      });
+
+      router.push("https://radal.ai/waitlist");
+      return;
+    }
 
     setIsTraining(true);
 
@@ -116,6 +131,18 @@ const TrainButton = memo(() => {
         useFlowStore.getState().clearPersistedState(flowKey);
 
         router.push(`/projects/${projectId}`);
+      } else if (result.error === "NOT_WHITELISTED") {
+        // Handle whitelist error specifically
+        toast.info("Available soon", {
+          description: "Redirecting to the waitlist...",
+          icon: <Loader2 className="size-4 animate-spin" />,
+        });
+        router.push("https://radal.ai/waitlist");
+      } else {
+        // Handle other errors
+        toast.error(
+          result.message || "Training failed to start. Please try again.",
+        );
       }
     } catch (error) {
       console.error("Training failed:", error);
@@ -124,11 +151,11 @@ const TrainButton = memo(() => {
     } finally {
       setIsTraining(false);
     }
-  }, [params.projectId, router, isTraining]); // Include params.projectId as dependency
+  }, [params.projectId, router, isTraining, flowKey, isWhitelisted]); // Include flowKey and isWhitelisted as dependencies
 
   return (
     <CustomButton
-      text={isTraining ? "Training..." : "Train"}
+      text={isTraining ? "Training" : "Train"}
       icon={
         isTraining ? (
           <Loader2 className="size-4 animate-spin" strokeWidth={1.6} />

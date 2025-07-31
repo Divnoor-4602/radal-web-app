@@ -2,14 +2,21 @@ import CustomPills from "@/components/shared/CustomPills";
 import { Progress } from "@/components/ui/progress";
 import { Folder } from "lucide-react";
 import React from "react";
+import { ProjectActions } from "./ProjectActions";
 
 type ProjectCardProps = {
+  projectId: string;
   cardTitle: string;
   date: string;
   pillText: string;
 };
 
-const ProjectCard = ({ cardTitle, date, pillText }: ProjectCardProps) => {
+const ProjectCard = ({
+  projectId,
+  cardTitle,
+  date,
+  pillText,
+}: ProjectCardProps) => {
   const getPillType = (status: string) => {
     switch (status) {
       case "valid":
@@ -74,16 +81,18 @@ const ProjectCard = ({ cardTitle, date, pillText }: ProjectCardProps) => {
               </p>
             </div>
           </div>
-          <CustomPills variant={getPillType(pillText)}>
-            {getPillText(pillText)}
-          </CustomPills>
+          {/* actions dropdown */}
+          <ProjectActions projectId={projectId} />
         </div>
         {/* project content */}
-        <div className="flex items-center px-4 mt-5">
+        <div className="flex items-center gap-8 px-4 mt-5">
           <Progress
             value={getProgressValue(pillText)}
             className="w-full h-1 bg-[#333333]"
           />
+          <CustomPills variant={getPillType(pillText)}>
+            {getPillText(pillText)}
+          </CustomPills>
         </div>
       </div>
     </div>

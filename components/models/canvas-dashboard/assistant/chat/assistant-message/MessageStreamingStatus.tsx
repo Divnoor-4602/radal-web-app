@@ -10,8 +10,6 @@ type MessageStreamingStatusProps = {
 // Message streaming status
 const MessageStreamingStatus = memo(
   ({ message }: MessageStreamingStatusProps) => {
-    console.log(message.status);
-
     const getStatusText = () => {
       switch (message.status) {
         case "submitted":

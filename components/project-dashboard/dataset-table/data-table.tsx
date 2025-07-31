@@ -27,13 +27,13 @@ import { Button } from "@/components/ui/button";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  modelFilter?: string;
+  datasetFilter?: string;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  modelFilter,
+  datasetFilter,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -44,12 +44,12 @@ export function DataTable<TData, TValue>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
 
-  // Update column filters when modelFilter prop changes
+  // Update column filters when datasetFilter prop changes
   React.useEffect(() => {
-    if (modelFilter !== undefined) {
-      setColumnFilters([{ id: "model", value: modelFilter }]);
+    if (datasetFilter !== undefined) {
+      setColumnFilters([{ id: "dataset", value: datasetFilter }]);
     }
-  }, [modelFilter]);
+  }, [datasetFilter]);
 
   // Calculate optimal page size based on container height
   React.useEffect(() => {

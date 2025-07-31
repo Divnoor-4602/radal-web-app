@@ -345,6 +345,7 @@ export const getRecentModelForProject = query({
   args: { projectId: v.id("projects") },
   returns: v.union(
     v.object({
+      modelId: v.id("models"),
       modelName: v.string(),
       status: v.union(
         v.literal("pending"),
@@ -354,6 +355,7 @@ export const getRecentModelForProject = query({
         v.literal("failed"),
       ),
       title: v.string(),
+      modelDownloadUrl: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -371,9 +373,11 @@ export const getRecentModelForProject = query({
     const recentModel = models[0];
 
     return {
+      modelId: recentModel._id,
       modelName: recentModel.baseModelDetails.displayName,
       status: recentModel.status,
       title: recentModel.title,
+      modelDownloadUrl: recentModel.modelDownloadUrl,
     };
   },
 });

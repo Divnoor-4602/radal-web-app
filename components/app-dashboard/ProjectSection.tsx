@@ -40,6 +40,7 @@ const ProjectSection = ({ projects }: ProjectSectionProps) => {
             className="cursor-pointer"
           >
             <ProjectCard
+              projectId={project._id}
               cardTitle={project.name}
               date={formatRelativeTime(project.createdAt)}
               pillText={project.status}

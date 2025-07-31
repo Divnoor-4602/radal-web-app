@@ -67,3 +67,33 @@ export const transformDatasetsToTableRows = (
 ): DatasetTableRow[] => {
   return datasets.map(transformDatasetToTableRow);
 };
+
+// Schema for sample dataset constants
+export const SampleDatasetSchema = z.object({
+  id: z.string().min(1, "ID is required"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  azureUrl: z.string().url("Invalid Azure URL"),
+  file: z.string().min(1, "File name is required"),
+  status: z.literal("success"),
+  rowCount: z.number().positive("Row count must be positive"),
+  columnCount: z.number().positive("Column count must be positive"),
+  headers: z.array(z.string().min(1)).min(1, "At least one header is required"),
+});
+
+export type SampleDataset = z.infer<typeof SampleDatasetSchema>;
+
+// Utility function to validate sample datasets array
+export const validateSampleDatasets = (
+  datasets: unknown[],
+): SampleDataset[] => {
+  return datasets.map((dataset, index) => {
+    const result = SampleDatasetSchema.safeParse(dataset);
+    if (!result.success) {
+      throw new Error(
+        `Invalid sample dataset at index ${index}: ${result.error.message}`,
+      );
+    }
+    return result.data;
+  });
+};

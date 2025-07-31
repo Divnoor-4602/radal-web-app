@@ -1,17 +1,18 @@
 "use client";
 
 import React, { memo } from "react";
-import { Loader, Check } from "lucide-react";
+import { Loader, Check, X } from "lucide-react";
 import type { ToolInvocation, ToolCallStatus } from "./types";
 
 type ToolInvocationStatusProps = {
   toolInvocation: ToolInvocation;
   toolCallStatus: ToolCallStatus;
+  error?: string;
 };
 
 // Tool invocation status component for AI SDK v4
 const ToolInvocationStatus = memo(
-  ({ toolInvocation, toolCallStatus }: ToolInvocationStatusProps) => {
+  ({ toolInvocation, toolCallStatus, error }: ToolInvocationStatusProps) => {
     const getStatusIcon = () => {
       switch (toolCallStatus) {
         case "partial-call":
@@ -20,12 +21,12 @@ const ToolInvocationStatus = memo(
           return <Check className="size-3 text-green-500" />;
         case "result":
           return <Check className="size-3 text-green-500" />;
+        case "error":
+          return <X className="size-3 text-red-500" />;
         default:
           return <Loader className="size-3 animate-spin" />;
       }
     };
-
-    console.log(toolInvocation);
 
     const getToolName = () => {
       switch (toolInvocation.toolName) {
@@ -45,21 +46,35 @@ const ToolInvocationStatus = memo(
     };
 
     return (
-      <div className="flex items-center gap-2 p-2 rounded-md border border-text-inactive/20 my-4 group hover:border-text-inactive shadow-md">
+      <div
+        className={`flex flex-col gap-2 p-2 rounded-md border my-4 group shadow-md ${
+          toolCallStatus === "error"
+            ? "border-red-200 bg-red-50/50 hover:border-red-300"
+            : "border-text-inactive/20 hover:border-text-inactive"
+        }`}
+      >
         <div className="flex items-center gap-2">
           <div
-            className={`text-text-inactive text-xs font-semibold group-hover:text-text-primary ${
-              toolCallStatus === "result"
-                ? ""
-                : toolCallStatus === "call" || toolCallStatus === "partial-call"
-                  ? "animate-pulse"
-                  : ""
+            className={`text-xs font-semibold ${
+              toolCallStatus === "error"
+                ? "text-red-600"
+                : toolCallStatus === "result"
+                  ? "text-text-inactive group-hover:text-text-primary"
+                  : toolCallStatus === "call" ||
+                      toolCallStatus === "partial-call"
+                    ? "text-text-inactive group-hover:text-text-primary animate-pulse"
+                    : "text-text-inactive group-hover:text-text-primary"
             }`}
           >
             {getToolName()}
           </div>
           {getStatusIcon()}
         </div>
+        {toolCallStatus === "error" && error && (
+          <div className="text-xs text-red-600 bg-red-100/50 rounded p-1 border border-red-200">
+            <strong>Error:</strong> {error}
+          </div>
+        )}
       </div>
     );
   },

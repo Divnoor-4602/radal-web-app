@@ -15,6 +15,7 @@ import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Loader } from "lucide-react";
+import { toast } from "sonner";
 
 type CreateProjectFormProps = {
   onSuccess?: () => void;
@@ -42,6 +43,7 @@ const CreateProjectForm = ({ onSuccess, onCancel }: CreateProjectFormProps) => {
       });
 
       // Reset form and call success callback
+      toast.success("Project created successfully");
       reset();
       onSuccess?.();
     } catch (error) {
@@ -53,6 +55,7 @@ const CreateProjectForm = ({ onSuccess, onCancel }: CreateProjectFormProps) => {
             ? error.message
             : "Failed to create project. Please try again.",
       });
+      toast.error("Failed to create project. Please try again.");
     }
   };
 

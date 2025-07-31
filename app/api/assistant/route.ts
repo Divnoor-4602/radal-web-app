@@ -5,6 +5,7 @@ import {
   type ToolInvocation,
   type GraphState,
   type GraphNode,
+  type GraphEdge,
   validateCopilotRequest,
 } from "@/lib/validations/assistant.schema";
 import { createAzureProvider } from "@/lib/assistant/azure";
@@ -28,6 +29,21 @@ const assistantRateLimiter = new RateLimiterMemory({
   points: 60, // 60 copilot requests
   duration: 60 * 60, // per hour
 });
+
+// Helper function to infer node type from handle name
+function inferNodeTypeFromHandle(
+  handle: string,
+  role: "source" | "target",
+): string {
+  if (handle === "upload-dataset-output") return "dataset";
+  if (handle === "select-model-input") return "model";
+  if (handle === "select-model-output") return "model";
+  if (handle === "training-config-input") return "training";
+
+  // Fallback - shouldn't happen with valid handles
+  console.warn(`Unknown handle: ${handle} for ${role}`);
+  return "unknown";
+}
 
 // Helper function to validate node type compatibility
 function validateNodeTypeCompatibility(
@@ -56,6 +72,81 @@ function validateNodeTypeCompatibility(
   return false;
 }
 
+// Helper function to simulate graph state changes for validation
+function updateSimulatedGraphState(
+  toolInvocation: ToolInvocation,
+  graphState: { nodes: GraphNode[]; edges: GraphEdge[] },
+): void {
+  switch (toolInvocation.toolName) {
+    case "addNode": {
+      const args = toolInvocation.args as {
+        nodeType: string;
+        position: { x: number; y: number };
+      };
+      // Simulate adding a new node (generate a temporary ID)
+      const newNodeId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      graphState.nodes.push({
+        id: newNodeId,
+        type: args.nodeType as "dataset" | "model" | "training",
+        position: args.position,
+        data: {}, // Minimal data for validation
+      } as GraphNode);
+      break;
+    }
+    case "deleteNode": {
+      const args = toolInvocation.args as { nodeId: string };
+      // Remove node and its edges
+      graphState.nodes = graphState.nodes.filter(
+        (node) => node.id !== args.nodeId,
+      );
+      graphState.edges = graphState.edges.filter(
+        (edge) => edge.source !== args.nodeId && edge.target !== args.nodeId,
+      );
+      break;
+    }
+    case "addConnection": {
+      const args = toolInvocation.args as {
+        sourceNodeId: string;
+        targetNodeId: string;
+        sourceHandle: string;
+        targetHandle: string;
+      };
+      // Simulate adding a new edge
+      const newEdgeId = `temp-edge-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      graphState.edges.push({
+        id: newEdgeId,
+        source: args.sourceNodeId,
+        target: args.targetNodeId,
+      });
+      break;
+    }
+    case "deleteConnection": {
+      const args = toolInvocation.args as {
+        connectionId?: string;
+        sourceNodeId?: string;
+        targetNodeId?: string;
+      };
+      if (args.connectionId) {
+        graphState.edges = graphState.edges.filter(
+          (edge) => edge.id !== args.connectionId,
+        );
+      } else if (args.sourceNodeId && args.targetNodeId) {
+        graphState.edges = graphState.edges.filter(
+          (edge) =>
+            !(
+              edge.source === args.sourceNodeId &&
+              edge.target === args.targetNodeId
+            ),
+        );
+      }
+      break;
+    }
+    // updateNodeProperties doesn't affect validation state
+    default:
+      break;
+  }
+}
+
 // Validate if a tool call can be executed by the user
 function validateToolCallPermissions(
   toolCall: ToolInvocation,
@@ -67,6 +158,10 @@ function validateToolCallPermissions(
       case "deleteNode":
         // Ensure the node exists in the user's graph
         const nodeId = (toolCall.args as { nodeId: string }).nodeId;
+        // Allow NEW_NODE_ID references - they'll be resolved during execution
+        if (nodeId === "NEW_NODE_ID" || nodeId === "LATEST_NODE") {
+          return true;
+        }
         return graphState.nodes.some((node: GraphNode) => node.id === nodeId);
 
       case "addNode":
@@ -89,12 +184,32 @@ function validateToolCallPermissions(
           (node) => node.id === addConnArgs.targetNodeId,
         );
 
-        if (!sourceNode || !targetNode) return false;
+        // Allow NEW_NODE_ID and similar references - they'll be resolved during execution
+        const sourceValid =
+          sourceNode ||
+          addConnArgs.sourceNodeId === "NEW_NODE_ID" ||
+          addConnArgs.sourceNodeId === "LATEST_NODE" ||
+          addConnArgs.sourceNodeId === "LATEST_DATASET";
+        const targetValid =
+          targetNode ||
+          addConnArgs.targetNodeId === "NEW_NODE_ID" ||
+          addConnArgs.targetNodeId === "LATEST_NODE" ||
+          addConnArgs.targetNodeId === "LATEST_DATASET";
+
+        if (!sourceValid || !targetValid) return false;
 
         // Validate node type compatibility based on handles
+        // For NEW_NODE_ID references, infer node types from handles
+        const sourceNodeType =
+          sourceNode?.type ||
+          inferNodeTypeFromHandle(addConnArgs.sourceHandle, "source");
+        const targetNodeType =
+          targetNode?.type ||
+          inferNodeTypeFromHandle(addConnArgs.targetHandle, "target");
+
         const isValidNodeTypeCombo = validateNodeTypeCompatibility(
-          sourceNode.type,
-          targetNode.type,
+          sourceNodeType,
+          targetNodeType,
           addConnArgs.sourceHandle,
           addConnArgs.targetHandle,
         );
@@ -340,7 +455,14 @@ export async function POST(req: Request) {
         console.log("🎯 Streaming finished, validating tool calls");
 
         if (event.toolCalls && event.toolCalls.length > 0) {
-          // Validate each tool call
+          // Create a mutable copy of graph state for sequential validation
+          // eslint-disable-next-line prefer-const
+          let currentGraphState = {
+            nodes: [...graphState.nodes],
+            edges: [...graphState.edges],
+          };
+
+          // Validate each tool call with updated state context
           const validatedToolCalls = event.toolCalls.filter((toolCall) => {
             const toolInvocation: ToolInvocation = {
               toolName: toolCall.toolName as ToolInvocation["toolName"],
@@ -349,16 +471,20 @@ export async function POST(req: Request) {
 
             const isValid = validateToolCallPermissions(
               toolInvocation,
-              graphState,
+              currentGraphState,
             );
 
             if (!isValid) {
               console.warn(
                 `🚫 Tool call ${toolCall.toolName} rejected due to validation failure`,
               );
+              return false;
             }
 
-            return isValid;
+            // Update the simulated state for next validation
+            updateSimulatedGraphState(toolInvocation, currentGraphState);
+
+            return true;
           });
 
           console.log(

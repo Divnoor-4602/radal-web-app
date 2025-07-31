@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { File, Folder, ArrowUpDown } from "lucide-react";
+import { File, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatasetTableRow } from "@/lib/validations/dataset.schema";
 import { DatasetActions } from "./actions";
@@ -57,32 +57,6 @@ export const columns: ColumnDef<DatasetTableRow>[] = [
       return (
         <div className="rounded-full flex items-center border px-3 py-1 text-[12px] font-medium bg-info border-info-border text-info-foreground w-fit">
           {size}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "model",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="h-auto p-0 hover:bg-transparent"
-        >
-          <div className="text-sm font-medium tracking-tight text-text-inactive">
-            Models
-          </div>
-          <ArrowUpDown className="size-4 text-text-inactive" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const model = row.getValue("model") as string;
-      return (
-        <div className="flex items-center gap-2">
-          <Folder className="size-5 text-text-muted" />
-          <span className="text-text-muted text-base">{model}</span>
         </div>
       );
     },

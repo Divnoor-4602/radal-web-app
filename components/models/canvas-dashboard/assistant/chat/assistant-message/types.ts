@@ -11,7 +11,8 @@ export type MessageStatus =
 export type ToolCallStatus =
   | "partial-call" // tool call is in progress
   | "call" // tool call is completed
-  | "result"; // tool call result is available
+  | "result" // tool call result is available
+  | "error"; // tool call error
 
 // Tool invocation type for AI SDK v4
 export type ToolInvocation = {

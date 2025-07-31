@@ -12,6 +12,7 @@ export const current = query({
       clerkId: v.string(),
       email: v.string(),
       createdAt: v.number(),
+      isWhitelisted: v.boolean(),
     }),
     v.null(),
   ),
@@ -30,11 +31,26 @@ export const getByClerkId = query({
       clerkId: v.string(),
       email: v.string(),
       createdAt: v.number(),
+      isWhitelisted: v.boolean(),
     }),
     v.null(),
   ),
   handler: async (ctx, { clerkId }) => {
     return await userByClerkId(ctx, clerkId);
+  },
+});
+
+// New function to check if a user is whitelisted by their Clerk ID
+export const isUserWhitelisted = query({
+  args: { clerkId: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, { clerkId }) => {
+    const user = await userByClerkId(ctx, clerkId);
+    // If user doesn't exist, they are not whitelisted
+    if (!user) {
+      return false;
+    }
+    return user.isWhitelisted;
   },
 });
 
@@ -47,6 +63,7 @@ export const upsertFromClerk = internalMutation({
       clerkId: data.id,
       email: data.email_addresses[0].email_address,
       createdAt: Date.now(),
+      isWhitelisted: false,
     };
 
     const user = await userByClerkId(ctx, data.id);

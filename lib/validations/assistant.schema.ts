@@ -179,6 +179,14 @@ export const UpdateNodePropertiesSchema = z.object({
           errorMap: () => ({ message: "Invalid dataset status" }),
         })
         .optional(),
+      activeTab: z
+        .enum(["upload", "existing", "sample"], {
+          errorMap: () => ({
+            message:
+              "Invalid dataset tab - must be upload, existing, or sample",
+          }),
+        })
+        .optional(),
     })
     .refine((props) => Object.keys(props).length > 0, {
       message: "At least one property must be provided for update",

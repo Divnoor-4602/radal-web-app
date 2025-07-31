@@ -1,5 +1,7 @@
 // Canvas Utility Functions
 
+import { NodeChange, EdgeChange } from "@xyflow/react";
+
 // Valid connection patterns
 // One dataset can be connected to multiple models
 export const validConnectionPatterns = {
@@ -14,6 +16,43 @@ export const validConnectionPatterns = {
     sourceHandle: "select-model-output",
     targetHandle: "training-config-input",
   },
+};
+
+// Generate flow key based on project and model context
+export function generateFlowKey(
+  projectId: string | string[] | undefined,
+  modelId: string | string[] | undefined,
+  pathname: string | null,
+): string {
+  // Defensive check for production SSR issues
+  if (modelId && modelId !== "undefined") {
+    return `model-flow-${modelId}`;
+  } else if (projectId && projectId !== "undefined") {
+    // Check if we're on the new canvas page
+    const isNewCanvasPage = pathname?.includes("/models/new/canvas");
+    if (isNewCanvasPage) {
+      return `project-canvas-${projectId}`;
+    }
+    return `project-flow-${projectId}`;
+  }
+  return "default-flow";
+}
+
+// Helper functions for smart change detection
+export const isMeaningfulNodeChange = (changes: NodeChange[]): boolean => {
+  const meaningfulTypes = changes.filter(
+    (change) => change.type === "remove" || change.type === "add",
+  );
+
+  return meaningfulTypes.length > 0;
+};
+
+export const isMeaningfulEdgeChange = (changes: EdgeChange[]): boolean => {
+  const meaningfulTypes = changes.filter(
+    (change) => change.type === "remove" || change.type === "add",
+  );
+
+  return meaningfulTypes.length > 0;
 };
 
 // Check if a connection already exists between the same source and target nodes

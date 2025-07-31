@@ -56,10 +56,12 @@ const CustomButton = React.forwardRef<
         case "primary":
         default:
           return {
-            button:
-              "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow",
-            shadow:
-              "bg-violet-300 border border-primary custom-button-inner-shadow",
+            button: props.disabled
+              ? "bg-primary/60 hover:bg-primary/60 border border-transparent text-text-primary cursor-not-allowed"
+              : "bg-primary hover:bg-primary border border-transparent text-white custom-button-drop-shadow custom-button-inner-shadow",
+            shadow: props.disabled
+              ? "bg-gray-400 border border-gray-500"
+              : "bg-violet-300 border border-primary custom-button-inner-shadow",
           };
       }
     };
@@ -84,8 +86,10 @@ const CustomButton = React.forwardRef<
           )}
           onClick={onClick}
           initial={{ y: 0 }}
-          whileHover={!disableShadow && !isActive ? { y: -3 } : {}}
-          whileTap={{ y: 0 }}
+          whileHover={
+            !disableShadow && !isActive && !props.disabled ? { y: -3 } : {}
+          }
+          whileTap={!props.disabled ? { y: 0 } : {}}
           transition={{ duration: 0.1, ease: "easeOut" }}
           {...props}
         >

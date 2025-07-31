@@ -2,6 +2,7 @@ import { Brain, Gauge, HelpCircle, Bolt } from "lucide-react";
 import { Dataset } from "@/components/project-dashboard/dataset-table/columns";
 import { TModelDetail } from "@/lib/validations/model.schema";
 import { TQuantizationSchema } from "@/lib/validations/training.schema";
+import { SampleDataset } from "@/lib/validations/dataset.schema";
 
 // Import provider icons
 import MicrosoftIcon from "@/public/icons/microsoft-icon.svg";
@@ -176,3 +177,31 @@ export const availableModels: Record<string, TModelDetail> = {
 
 // The available quantisations
 export const availableQuantisations: TQuantizationSchema[] = ["int4", "int8"];
+
+// The available sample datasets
+export const sampleDatasets: SampleDataset[] = [
+  {
+    id: "sample-1",
+    title: "Chatbot Conversation",
+    description: "Casual chatbot question-answer everyday conversation pairs.",
+    azureUrl:
+      "https://radalwebstorage148.blob.core.windows.net/datasets/users/j97adnmvvf0pmharm9tdfjnb317mnbbd/projects/jd771czezenn54q3n0pbwk0hhd7mmwhe/datasets/025a3fd5-0390-4f27-a2b7-cf83ff3c8a5e/d2-everyday-conversations-with-chatbot_2025-07-31_04-53-04.csv",
+    file: "chat-conversations.csv",
+    status: "success",
+    rowCount: 3725,
+    columnCount: 2,
+    headers: ["prompt", "response"],
+  },
+  {
+    id: "sample-2",
+    title: "Prompt Engineering Instruction",
+    description: "Diverse prompt-response instruction tuning sample set.",
+    azureUrl:
+      "https://radalwebstorage148.blob.core.windows.net/datasets/users/j97adnmvvf0pmharm9tdfjnb317mnbbd/projects/jd771czezenn54q3n0pbwk0hhd7mmwhe/datasets/cbfc73d8-4aaf-41c6-86b9-2c20ded10d4b/d3-prompt-engineering_2025-07-31_04-51-39.csv",
+    file: "prompt-engineering.csv",
+    status: "success",
+    rowCount: 5010,
+    columnCount: 2,
+    headers: ["prompt", "response"],
+  },
+];

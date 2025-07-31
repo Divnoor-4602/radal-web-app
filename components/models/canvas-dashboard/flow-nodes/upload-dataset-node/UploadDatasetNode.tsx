@@ -1,19 +1,13 @@
 "use client";
 
-import React, { FC, memo } from "react";
-import { Database, Info, File } from "lucide-react";
+import React, { FC, memo, useMemo } from "react";
+import { Database, File } from "lucide-react";
 import { Position } from "@xyflow/react";
 import CustomPills from "@/components/shared/CustomPills";
-import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { DropzoneArea } from "./DropzoneArea";
 import { type DatasetNodeData } from "@/lib/validations/node.schema";
 import useFlowStore from "@/lib/stores/flowStore";
 import CustomHandle from "@/components/models/canvas-dashboard/handles/CustomHandle";
+import DatasetTabs from "./DatasetTabs";
 
 type TUploadDatasetNodeProps = Readonly<{
   id: string;
@@ -24,10 +18,32 @@ type TUploadDatasetNodeProps = Readonly<{
 
 export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
   ({ id, data, selected, dragging }) => {
-    // Use specific selector to avoid re-renders on other node changes
+    // Use separate selectors to avoid object recreation issues (same pattern as SelectModelNode)
     const currentData = useFlowStore(
       (state) =>
         state.nodes.find((node) => node.id === id)?.data as DatasetNodeData,
+    );
+
+    // Extract just the projectId to avoid re-renders on unrelated data changes
+    const projectId = useMemo(() => {
+      const result = currentData?.projectId || data.projectId || "";
+
+      return result;
+    }, [currentData?.projectId, data.projectId]);
+
+    // Memoize CustomHandle data to prevent object recreation during drag operations
+    const handleData = useMemo(
+      () => ({
+        nodeId: id,
+        dataType: "dataset" as const,
+        payload: {
+          format: "csv" as const,
+          status: currentData?.file
+            ? ("ready" as const)
+            : ("processing" as const),
+        },
+      }),
+      [id, currentData?.file],
     );
 
     return (
@@ -39,14 +55,7 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
           id="upload-dataset-output"
           colorTheme="purple"
           size="md"
-          data={{
-            nodeId: id,
-            dataType: "dataset",
-            payload: {
-              format: "csv",
-              status: currentData?.file ? "ready" : "processing",
-            },
-          }}
+          data={handleData}
         />
 
         {/* Main card */}
@@ -72,41 +81,12 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
           {/* Seperator */}
           <div className="bg-border-default w-full h-[1px] my-5" />
           {/* Card content */}
-          <div className="flex flex-col mt-5 mb-6.5 px-5">
-            {/* dataset selector  */}
-            {/* Todo: Implement existing dataset node */}
-            {/* <SelectExisitingDatasetNode /> */}
-            <div className="flex flex-col gap-2.5">
-              {/* label and tooltip */}
-              <div className="flex items-center gap-2">
-                <Label className="text-text-primary text-sm ml-1">File</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="size-3 text-gray-500" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    className="bg-bg-100"
-                    arrowClassName="bg-bg-100 fill-bg-100"
-                  >
-                    <p>Select a file to be used for tuning your model.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-
-              {/* file input - react dropzone implementation */}
-              <DropzoneArea
-                nodeId={id}
-                projectId={currentData?.projectId || data.projectId || ""}
-                title={currentData?.title || data.title}
-                description={currentData?.description || data.description}
-              />
-              {/* Extra cues regarding the format */}
-              <div className="text-text-inactive text-[10px] tracking-tight font-medium">
-                Supported formats: CSV
-              </div>
-            </div>
-          </div>
+          <DatasetTabs
+            nodeId={id}
+            projectId={projectId}
+            currentData={currentData}
+            fallbackData={data}
+          />
           {/* Seperator */}
           <div className="bg-border-default w-full h-[1px]" />
           {/* custom pill div or state showing div */}

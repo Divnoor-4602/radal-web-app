@@ -14,6 +14,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import TrainButton from "@/components/models/canvas-dashboard/topbar-actions/Trainbutton";
 import AssistantButton from "@/components/models/canvas-dashboard/topbar-actions/AssistantButton";
 import useAssistantStore from "@/lib/stores/assistantStore";
+import SaveCanvasButton from "./topbar-actions/SaveCanvasButton";
 
 // Canvas specific topbar/breadcrumb - memoized to prevent unnecessary re-renders
 const CanvasTopbarWithActions = memo(() => {
@@ -87,6 +88,14 @@ const CanvasTopbarWithActions = memo(() => {
             Go back to previous page
           </TooltipContent>
         </Tooltip>
+
+        <Separator
+          orientation="vertical"
+          className="data-[orientation=vertical]:h-4 bg-border-default"
+        />
+
+        {/* save state button */}
+        <SaveCanvasButton />
       </div>
 
       {/* Train and Assistant actions */}

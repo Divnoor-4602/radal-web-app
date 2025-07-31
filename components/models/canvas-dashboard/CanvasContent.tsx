@@ -9,13 +9,7 @@ import {
   BackgroundVariant,
   ReactFlowInstance,
 } from "@xyflow/react";
-import React, {
-  useCallback,
-  useMemo,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useEffect, useState } from "react";
 import { useParams, usePathname } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
 import {
@@ -25,10 +19,8 @@ import {
 } from "@/components/models/canvas-dashboard/flow-nodes";
 import ConnectionLine from "@/components/models/canvas-dashboard/ConnectionLine";
 import CustomEdge from "@/components/models/canvas-dashboard/CustomEdge";
+import { generateFlowKey } from "@/lib/utils/canvas.utils";
 import "@xyflow/react/dist/style.css";
-// import { Preloaded, usePreloadedQuery } from "convex/react";
-// import { api } from "@/convex/_generated/api";
-// import { Preloaded } from "convex/react";
 
 // Node types mapping - memoized outside component for stable reference
 const nodeTypes: NodeTypes = {
@@ -41,11 +33,6 @@ const nodeTypes: NodeTypes = {
 const edgeTypes = {
   custom: CustomEdge,
 };
-
-// type CanvasContentProps = {
-//   modelData?: Preloaded<typeof api.models.getModelById>;
-//   datasets?: Preloaded<typeof api.datasets.getDatasetsByProject>;
-// };
 
 const CanvasContent = ({}) => {
   const { projectId, modelId } = useParams();
@@ -64,175 +51,61 @@ const CanvasContent = ({}) => {
     isValidConnection,
     resetFlow,
     restoreFlow,
+    setAutoSaveContext,
   } = useFlowStore();
   const { screenToFlowPosition, setViewport } = useReactFlow();
 
-  // Track if this is the first mount
-  const isFirstMount = useRef(true);
-  // Track if we've already auto-restored for this flow key
-  const hasAutoRestored = useRef<string | null>(null);
-  // Track if we're currently resetting to prevent premature auto-restore
-  const [isResetting, setIsResetting] = useState(false);
-
   // Generate flow key based on project and model IDs
-  const flowKey = useMemo(() => {
-    // Defensive check for production SSR issues
-    if (modelId && modelId !== "undefined") {
-      return `model-flow-${modelId}`;
-    } else if (projectId && projectId !== "undefined") {
-      // Check if we're on the new canvas page
-      const isNewCanvasPage = pathname?.includes("/models/new/canvas");
-      if (isNewCanvasPage) {
-        return `project-canvas-${projectId}`;
-      }
-      return `project-flow-${projectId}`;
+  const flowKey = useMemo(
+    () => generateFlowKey(projectId, modelId, pathname),
+    [projectId, modelId, pathname],
+  );
+
+  // Set up auto-save context when React Flow instance is ready
+  useEffect(() => {
+    if (rfInstance && flowKey && projectId && projectId !== "undefined") {
+      setAutoSaveContext(flowKey, rfInstance);
     }
-    return "default-flow";
-  }, [projectId, modelId, pathname]);
+  }, [rfInstance, flowKey, projectId, setAutoSaveContext]);
 
-  console.log("flowKey", flowKey);
-  console.log("pathname", pathname);
-  console.log("modelId", modelId);
-  console.log("projectId", projectId);
-
-  // Reset flow when project or model IDs change (including first mount)
+  // Reset flow when project or model IDs change
   useEffect(() => {
     // Only proceed with valid projectId to prevent SSR issues
     if (projectId && projectId !== "undefined") {
-      console.log("🔄 Resetting flow for project/model:", {
-        projectId,
-        modelId,
-        isFirstMount: isFirstMount.current,
-      });
-
-      setIsResetting(true);
       resetFlow();
-      // Reset auto-restore tracking when switching contexts
-      hasAutoRestored.current = null;
-
-      // Mark first mount as complete if this is the first time
-      if (isFirstMount.current) {
-        isFirstMount.current = false;
-      }
-
-      // Mark reset as complete after a short delay
-      setTimeout(() => {
-        setIsResetting(false);
-      }, 10);
     } else {
       console.log("⏳ Reset waiting for valid projectId, current:", projectId);
     }
-  }, [projectId, modelId, resetFlow]);
+  }, [projectId, modelId, resetFlow, flowKey]);
 
-  // Auto-restore when React Flow instance is ready
+  // Simple auto-restore when React Flow instance is ready
   useEffect(() => {
     // Add validation for production SSR issues - ensure we have valid params
     const hasValidParams = projectId && projectId !== "undefined" && pathname;
 
-    if (
-      rfInstance &&
-      flowKey &&
-      hasValidParams &&
-      hasAutoRestored.current !== flowKey &&
-      !isResetting
-    ) {
+    if (rfInstance && flowKey && hasValidParams) {
       try {
         const savedFlow = localStorage.getItem(flowKey);
-        if (savedFlow) {
-          const flow = JSON.parse(savedFlow);
-          if (flow && (flow.nodes?.length > 0 || flow.edges?.length > 0)) {
-            // Restore nodes and edges via store
-            const restored = restoreFlow(flowKey);
+        if (!savedFlow) return;
 
-            // Restore viewport if restoration was successful
-            if (restored && flow.viewport && setViewport) {
-              const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-              // Small delay to ensure React Flow is ready
-              setTimeout(() => {
-                setViewport({ x, y, zoom });
-              }, 50);
-            }
+        const flow = JSON.parse(savedFlow);
+        if (!flow || (!flow.nodes?.length && !flow.edges?.length)) return;
 
-            if (restored) {
-              console.log(
-                `🔄 Auto-restored flow and viewport for key: ${flowKey}`,
-              );
-              hasAutoRestored.current = flowKey;
-            }
-          }
-        }
-      } catch (error) {
-        console.error("❌ Failed to auto-restore flow:", error);
-      }
-    } else if (rfInstance && flowKey && !hasValidParams) {
-      console.log("⏳ Auto-restore blocked - waiting for valid params:", {
-        projectId,
-        pathname,
-      });
-    }
-  }, [
-    rfInstance,
-    flowKey,
-    restoreFlow,
-    setViewport,
-    isResetting,
-    projectId,
-    pathname,
-  ]);
-
-  // Enhanced save function that includes viewport information
-  const onSave = useCallback(() => {
-    if (rfInstance && flowKey) {
-      const flow = rfInstance.toObject();
-      try {
-        localStorage.setItem(flowKey, JSON.stringify(flow));
-        console.log(`✅ Flow saved to localStorage with key: ${flowKey}`);
-      } catch (error) {
-        console.error("❌ Failed to save flow to localStorage:", error);
-      }
-    }
-  }, [rfInstance, flowKey]);
-
-  // Enhanced restore function that includes viewport restoration
-  const onRestore = useCallback(() => {
-    if (!flowKey) return;
-
-    try {
-      const savedFlow = localStorage.getItem(flowKey);
-      if (!savedFlow) {
-        console.log(`📭 No saved flow found for key: ${flowKey}`);
-        return;
-      }
-
-      const flow = JSON.parse(savedFlow);
-      if (flow) {
-        const { x = 0, y = 0, zoom = 1 } = flow.viewport || {};
-
-        // Use the store's restoreFlow function for nodes and edges
+        // Restore nodes and edges via store
         const restored = restoreFlow(flowKey);
 
-        // Set viewport if restoration was successful
-        if (restored && setViewport) {
-          setViewport({ x, y, zoom });
+        // Restore viewport if restoration was successful
+        if (restored && flow.viewport && setViewport) {
+          const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+          setTimeout(() => {
+            setViewport({ x, y, zoom });
+          }, 50);
         }
-
-        console.log(`✅ Flow and viewport restored for key: ${flowKey}`);
+      } catch (error) {
+        console.error("Failed to auto-restore flow:", error);
       }
-    } catch (error) {
-      console.error("❌ Failed to restore flow:", error);
     }
-  }, [flowKey, restoreFlow, setViewport]);
-
-  // Use preloaded data
-  // const modelData = usePreloadedQuery(preloadedModelData);
-  // const datasets = usePreloadedQuery(preloadedDatasets);
-
-  // Load the canvas with model data when component mounts
-  // useEffect(() => {
-  //   if (modelData && datasets) {
-  //     loadModelCanvas(modelData);
-  //   }
-  // }, [modelData, datasets, loadModelCanvas]);
+  }, [rfInstance, flowKey, restoreFlow, setViewport, projectId, pathname]);
 
   // Memoize style object to prevent unnecessary re-renders
   const canvasStyle = useMemo(() => ({ backgroundColor: "#090707" }), []);
@@ -292,23 +165,6 @@ const CanvasContent = ({}) => {
           size={1}
         />
         <Controls className="!bg-black" />
-
-        {/* Save/Restore Controls Panel */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <button
-            onClick={onSave}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition-colors"
-            disabled={!rfInstance}
-          >
-            Save
-          </button>
-          <button
-            onClick={onRestore}
-            className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition-colors"
-          >
-            Restore
-          </button>
-        </div>
       </ReactFlow>
     </div>
   );

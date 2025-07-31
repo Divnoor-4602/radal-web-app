@@ -261,3 +261,62 @@ export const updateProjectStatus = mutation({
     return null;
   },
 });
+
+// Delete a project
+export const deleteProject = mutation({
+  args: { projectId: v.id("projects") },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Get the authenticated user
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Find the user in our database
+    const user = await ctx.db
+      .query("users")
+      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the project
+    const project = await ctx.db.get(args.projectId);
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    // Verify the project belongs to the user
+    if (project.userId !== user._id) {
+      throw new Error("Project access denied");
+    }
+
+    // Delete all models in the project first
+    const modelsInProject = await ctx.db
+      .query("models")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    for (const model of modelsInProject) {
+      await ctx.db.delete(model._id);
+    }
+
+    // Delete all datasets in the project
+    const datasetsInProject = await ctx.db
+      .query("datasets")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    for (const dataset of datasetsInProject) {
+      await ctx.db.delete(dataset._id);
+    }
+
+    // Finally, delete the project record
+    await ctx.db.delete(args.projectId);
+
+    return null;
+  },
+});

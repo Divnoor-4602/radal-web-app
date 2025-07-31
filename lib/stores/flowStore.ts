@@ -8,6 +8,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
   Connection,
+  ReactFlowInstance,
 } from "@xyflow/react";
 import { createWithEqualityFn } from "zustand/traditional";
 import { shallow } from "zustand/shallow";
@@ -22,34 +23,10 @@ import {
 import {
   isConnectionCompatible,
   isDuplicateConnection,
+  isMeaningfulNodeChange,
+  isMeaningfulEdgeChange,
 } from "@/lib/utils/canvas.utils";
-
-// Helper function to validate node type compatibility
-function validateNodeTypeCompatibility(
-  sourceNodeType: string,
-  targetNodeType: string,
-  sourceHandle: string,
-  targetHandle: string,
-): boolean {
-  // Dataset → Model connections
-  if (sourceNodeType === "dataset" && targetNodeType === "model") {
-    return (
-      sourceHandle === "upload-dataset-output" &&
-      targetHandle === "select-model-input"
-    );
-  }
-
-  // Model → Training connections
-  if (sourceNodeType === "model" && targetNodeType === "training") {
-    return (
-      sourceHandle === "select-model-output" &&
-      targetHandle === "training-config-input"
-    );
-  }
-
-  // All other combinations are invalid
-  return false;
-}
+import { toast } from "sonner";
 
 export interface ProjectGraphNode {
   id: string;
@@ -78,6 +55,16 @@ export interface FlowState {
   isReconnecting: boolean;
   lastBackendSync: number; // Track when we last synced to backend
   isBackendSyncing: boolean; // Track sync status
+  // Auto-save infrastructure
+  autoSaveEnabled: boolean;
+  currentFlowKey: string | null;
+  rfInstance: ReactFlowInstance | null;
+  lastAutoSave: number;
+  triggerAutoSave: () => void;
+  setAutoSaveContext: (
+    flowKey: string,
+    rfInstance: ReactFlowInstance | null,
+  ) => void;
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: (connection: Connection) => void;
@@ -88,7 +75,7 @@ export interface FlowState {
     type: string,
     position: { x: number; y: number },
     projectId?: string,
-  ) => void;
+  ) => string | undefined;
   deleteNode: (nodeId: string) => void;
   updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => void;
   resetFlow: () => void;
@@ -140,15 +127,77 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     isReconnecting: false,
     lastBackendSync: 0,
     isBackendSyncing: false,
+    // Auto-save properties
+    autoSaveEnabled: true,
+    currentFlowKey: null,
+    rfInstance: null,
+    lastAutoSave: 0,
+
+    triggerAutoSave: () => {
+      const { currentFlowKey, rfInstance, autoSaveEnabled, nodes, edges } =
+        get();
+
+      if (!autoSaveEnabled || !currentFlowKey) {
+        return;
+      }
+
+      try {
+        // Use store state directly for immediate saves, fallback to rfInstance for viewport
+        let flow;
+        if (rfInstance) {
+          const rfFlow = rfInstance.toObject();
+          flow = {
+            nodes,
+            edges,
+            viewport: rfFlow.viewport || { x: 0, y: 0, zoom: 1 },
+          };
+        } else {
+          // Fallback when rfInstance is not available
+          flow = {
+            nodes,
+            edges,
+            viewport: { x: 0, y: 0, zoom: 1 },
+          };
+        }
+
+        localStorage.setItem(currentFlowKey, JSON.stringify(flow));
+        const timestamp = Date.now();
+        set({ lastAutoSave: timestamp });
+      } catch (error) {
+        toast.error("Failed to save canvas");
+        console.error("Auto-save failed:", error);
+      }
+    },
+
+    setAutoSaveContext: (
+      flowKey: string,
+      rfInstance: ReactFlowInstance | null,
+    ) => {
+      set({
+        currentFlowKey: flowKey,
+        rfInstance,
+        autoSaveEnabled: true,
+      });
+    },
 
     onNodesChange: (changes: NodeChange[]) => {
       const newNodes = applyNodeChanges(changes, get().nodes);
       set({ nodes: newNodes });
+
+      // Trigger auto-save only on meaningful changes
+      if (isMeaningfulNodeChange(changes)) {
+        get().triggerAutoSave();
+      }
     },
 
     onEdgesChange: (changes: EdgeChange[]) => {
       const newEdges = applyEdgeChanges(changes, get().edges);
       set({ edges: newEdges });
+
+      // Trigger auto-save only on meaningful changes
+      if (isMeaningfulEdgeChange(changes)) {
+        get().triggerAutoSave();
+      }
     },
 
     onConnect: (connection: Connection) => {
@@ -167,6 +216,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       set({
         edges: [...get().edges, newEdge],
       });
+
+      // Trigger auto-save for new connections
+      get().triggerAutoSave();
     },
 
     onReconnectStart: () => {
@@ -222,7 +274,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       type: string,
       position: { x: number; y: number },
       projectId?: string,
-    ) => {
+    ): string | undefined => {
       const id = nanoid();
       const currentNodes = get().nodes;
       const currentEdges = get().edges;
@@ -236,8 +288,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           (node) => node.type === "training",
         );
         if (existingTrainingNode) {
+          toast.error("Only one training node is allowed");
           // Don't add another training node - only one is allowed
-          return;
+          return undefined;
         }
       }
 
@@ -250,6 +303,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           storageId: undefined,
           projectId: projectId || "",
           status: "idle",
+          activeTab: "upload",
         } as DatasetNodeData;
       } else if (type === "model") {
         data = {
@@ -263,13 +317,13 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         data = {
           title: "Training Configuration",
           description: "Configure training parameters",
-          epochs: 5,
+          epochs: 1,
           batchSize: "4",
           quantization: "int8",
           downloadQuant: "int8",
         } as TrainingNodeData;
       } else {
-        return;
+        return undefined;
       }
 
       const newNode: Node = {
@@ -332,6 +386,11 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         nodes: newNodes,
         edges: newEdges,
       });
+
+      // Trigger auto-save for new node addition
+      get().triggerAutoSave();
+
+      return id; // Return the generated node ID
     },
 
     deleteNode: (nodeId: string) => {
@@ -345,14 +404,13 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         (edge) => edge.source !== nodeId && edge.target !== nodeId,
       );
 
-      console.log(
-        `🗑️ Deleting node ${nodeId} and ${edges.length - filteredEdges.length} connected edges`,
-      );
-
       set({
         nodes: filteredNodes,
         edges: filteredEdges,
       });
+
+      // Trigger auto-save for node deletion
+      get().triggerAutoSave();
     },
 
     updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => {
@@ -363,12 +421,16 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
             : node,
         ),
       });
+
+      // Trigger auto-save for node data updates
+      get().triggerAutoSave();
     },
 
     resetFlow: () => {
       set({
         nodes: [],
         edges: [],
+        lastAutoSave: 0, // Reset auto-save timestamp for new projects
       });
     },
 
@@ -379,15 +441,16 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         edges: [],
         edgeReconnectSuccessful: false,
         isReconnecting: false,
+        lastAutoSave: 0, // Reset auto-save timestamp
       });
 
       // Clear localStorage
       if (flowKey) {
         try {
           localStorage.removeItem(flowKey);
-          console.log(`✅ Cleared persisted state for key: ${flowKey}`);
         } catch (error) {
-          console.error("❌ Failed to clear persisted state:", error);
+          toast.error("Failed to clear saved data");
+          console.error("Failed to clear persisted state:", error);
         }
       }
     },
@@ -404,9 +467,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
 
       try {
         localStorage.setItem(flowKey, JSON.stringify(flow));
-        console.log(`✅ Flow saved to localStorage with key: ${flowKey}`);
       } catch (error) {
-        console.error("❌ Failed to save flow to localStorage:", error);
+        toast.error("Failed to save canvas");
+        console.error("Failed to save flow to localStorage:", error);
       }
     },
 
@@ -414,7 +477,6 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       try {
         const savedFlow = localStorage.getItem(flowKey);
         if (!savedFlow) {
-          console.log(`📭 No saved flow found for key: ${flowKey}`);
           return false;
         }
 
@@ -424,14 +486,12 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
             nodes: flow.nodes || [],
             edges: flow.edges || [],
           });
-          console.log(
-            `✅ Flow restored from localStorage with key: ${flowKey}`,
-          );
           return true;
         }
         return false;
       } catch (error) {
-        console.error("❌ Failed to restore flow from localStorage:", error);
+        toast.error("Failed to restore canvas");
+        console.error("Failed to restore flow from localStorage:", error);
         return false;
       }
     },
@@ -455,6 +515,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
               storageId: undefined,
               projectId: undefined,
               status: "success",
+              activeTab: "upload",
               // Mark as trained/readonly
               isTrained: true,
             } as DatasetNodeData,
@@ -491,7 +552,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           target: graphEdge.to,
           type: "custom",
           animated: true,
-          style: { stroke: "#8142D7", strokeWidth: 2 },
+          style: { stroke: "#8142D7", strokeWidth: 2, strokeLinecap: "round" },
         };
         loadedEdges.push(edge);
       });
@@ -537,37 +598,24 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       const targetNode = nodes.find((node) => node.id === targetNodeId);
 
       if (!sourceNode || !targetNode) {
-        console.error("❌ Source or target node not found", {
-          sourceNodeId,
-          targetNodeId,
-        });
+        toast.error("Invalid connection: nodes not found");
         return false;
       }
 
       // Ensure node types are defined
       if (!sourceNode.type || !targetNode.type) {
-        console.error("❌ Node types are undefined", {
-          sourceNodeType: sourceNode.type,
-          targetNodeType: targetNode.type,
-        });
+        toast.error("Invalid connection: node types undefined");
         return false;
       }
 
       // Validate node types match handle expectations
       if (
-        !validateNodeTypeCompatibility(
-          sourceNode.type,
-          targetNode.type,
+        !isConnectionCompatible({
           sourceHandle,
           targetHandle,
-        )
+        })
       ) {
-        console.error("❌ Node types don't match handle combination", {
-          sourceType: sourceNode.type,
-          targetType: targetNode.type,
-          sourceHandle,
-          targetHandle,
-        });
+        toast.error("Invalid connection type");
         return false;
       }
 
@@ -581,15 +629,12 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
 
       // Use existing canvas validation utilities
       if (!isConnectionCompatible(connection)) {
-        console.error(
-          "❌ Connection not compatible with business rules",
-          connection,
-        );
+        toast.error("Connection not allowed");
         return false;
       }
 
       if (isDuplicateConnection(connection, edges)) {
-        console.error("❌ Connection already exists", connection);
+        toast.error("Connection already exists");
         return false;
       }
 
@@ -609,9 +654,6 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         edges: [...edges, newEdge],
       });
 
-      console.log(
-        `✅ Added connection: ${sourceNode.type}(${sourceHandle}) → ${targetNode.type}(${targetHandle})`,
-      );
       return true;
     },
 
@@ -630,9 +672,7 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
           (edge) => edge.id === args.connectionId,
         );
         if (!connectionToDelete) {
-          console.error("❌ Connection not found", {
-            connectionId: args.connectionId,
-          });
+          toast.error("Connection not found");
           return false;
         }
       } else if (args.sourceNodeId && args.targetNodeId) {
@@ -643,16 +683,11 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
             edge.target === args.targetNodeId,
         );
         if (!connectionToDelete) {
-          console.error("❌ Connection not found between nodes", {
-            sourceNodeId: args.sourceNodeId,
-            targetNodeId: args.targetNodeId,
-          });
+          toast.error("Connection not found");
           return false;
         }
       } else {
-        console.error(
-          "❌ Must provide either connectionId or both sourceNodeId and targetNodeId",
-        );
+        toast.error("Invalid delete parameters");
         return false;
       }
 
@@ -661,9 +696,6 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         edges: edges.filter((edge) => edge.id !== connectionToDelete.id),
       });
 
-      console.log(
-        `✅ Deleted connection: ${connectionToDelete.source} → ${connectionToDelete.target} (ID: ${connectionToDelete.id})`,
-      );
       return true;
     },
 
@@ -716,13 +748,14 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
 
         return true;
       } catch (error) {
-        console.error("❌ Backend sync failed:", error);
+        toast.error("Failed to sync with server");
+        console.error("Backend sync failed:", error);
         set({ isBackendSyncing: false });
         return false;
       }
     },
-
-    loadModelCanvas: (modelData: {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    loadModelCanvas: (_modelData: {
       _id: string;
       trainingGraph?: {
         schema_version?: number;
@@ -743,22 +776,11 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
         download_quant: string;
       };
     }) => {
-      console.log("🎨 Loading model canvas with data:", modelData);
-
-      // Log what we have in the training graph
-      if (modelData.trainingGraph) {
-        console.log("📊 Training graph exists:", modelData.trainingGraph);
-        console.log("📊 Training graph nodes:", modelData.trainingGraph.nodes);
-        console.log("📊 Training graph edges:", modelData.trainingGraph.edges);
-      } else {
-        console.log("❌ No training graph found in model data");
-      }
-
       // For now, reset to empty canvas - we'll build a better approach
-      console.log("🔄 Resetting to empty canvas for investigation");
       set({
         nodes: [],
         edges: [],
+        lastAutoSave: 0, // Reset auto-save timestamp for new model
       });
     },
   }),

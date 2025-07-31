@@ -12,6 +12,7 @@ export default defineSchema({
     clerkId: v.string(),
     email: v.string(),
     createdAt: v.number(),
+    isWhitelisted: v.boolean(),
   }).index("byClerkId", ["clerkId"]),
 
   // projects schema linked to users

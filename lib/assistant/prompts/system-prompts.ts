@@ -11,7 +11,7 @@ import type {
   ModelNodeData,
   TrainingNodeData,
 } from "@/lib/validations/node.schema";
-import { availableModels } from "@/constants";
+import { availableModels, sampleDatasets } from "@/constants";
 import type { TModelDetail } from "@/lib/validations/model.schema";
 
 /**
@@ -152,6 +152,7 @@ ${generatePositioningContext(graphState)}
         const data = node.data as DatasetNodeData;
         nodeInfo += `\n  • Status: ${data.status || "idle"}`;
         nodeInfo += `\n  • File: ${data.file ? "uploaded" : "not uploaded"}`;
+        nodeInfo += `\n  • Active Tab: ${data.activeTab || "upload"}`;
       } else if (node.type === "model") {
         const data = node.data as ModelNodeData;
         nodeInfo += `\n  • Selected Model: ${data.selectedModel ? data.selectedModel.display_name + " (" + data.selectedModel.model_id + ")" : "none selected"}`;
@@ -196,9 +197,28 @@ AVAILABLE OPTIONS:
 ==================
 For MODEL nodes, available models include:
 ${Object.values(availableModels)
+  .map((model) => `- ${model.display_name} (${model.parameters} parameters)`)
+  .join("\n")}
+
+⚠️ IMPORTANT: When using updateNodeProperties for model selection, use natural language references like:
+- "Phi-2", "phi2", "phi 2" for Phi-2
+- "Phi-3", "phi3", "phi 3 mini" for Phi-3 Mini 4K  
+- "Phi-3.5", "phi35", "phi 3.5 mini" for Phi-3.5 Mini
+- "Llama", "llama 3b", "larger llama" for Llama-3.2 3B (larger model)
+- "Llama 1b", "smaller llama", "small llama" for Llama-3.2 1B (smaller model)
+- "DialoGPT", "dialogpt", "dialo gpt" for DialoGPT Small
+
+COMPARATIVE LANGUAGE: Use "smaller/small" or "larger/bigger" when users refer to model sizes:
+- "smaller llama model" → Llama-3.2 1B
+- "larger llama model" → Llama-3.2 3B
+
+The system will automatically match your natural language input to the correct model.
+
+For DATASET nodes, available sample datasets in the "Sample" tab:
+${sampleDatasets
   .map(
-    (model) =>
-      `- ${model.model_id} (${model.display_name}, ${model.parameters} parameters)`,
+    (dataset) =>
+      `- ${dataset.title}: ${dataset.description} (${dataset.rowCount.toLocaleString()} rows, ${dataset.columnCount} columns)`,
   )
   .join("\n")}
 
@@ -235,6 +255,10 @@ CAPABILITIES:
 - You can MODIFY the graph by using tools to update node properties, add nodes, or delete nodes
 - You can CREATE and DELETE CONNECTIONS between nodes with proper validation
 - You can INTELLIGENTLY POSITION new nodes based on existing layout and smart spacing rules
+- You can SWITCH TABS on dataset nodes between three modes:
+  * "upload" - for uploading new CSV files
+  * "existing" - for selecting previously uploaded datasets in the project
+  * "sample" - for choosing from pre-built sample datasets (Chatbot Conversation, Prompt Engineering Instruction)
 
 ⚠️ MANDATORY RULES:
 1. You **must always** use the appropriate tool when making any changes to the graph
@@ -246,16 +270,30 @@ CAPABILITIES:
 🔥 CRITICAL RESPONSE FORMAT:
 When using tools, you MUST follow this pattern:
 - First: Write a helpful explanation of what you're doing
-- Then: Call the appropriate tool
+- Then: Call the appropriate tool(s) - USE MULTIPLE TOOLS IN ONE RESPONSE when needed
 - The explanation should be conversational and educational
 
+⚡ MULTI-TOOL OPERATIONS:
+When a user requests an action that requires multiple steps (like "add a dataset and connect it"), you MUST call ALL necessary tools in the same response:
+1. Call addNode tool with exact positioning
+2. Call addConnection tool with proper handles
+3. Explain the complete operation in your text response
+
 Example responses:
-- "I'll add a model node to your pipeline so you can select a base model for fine-tuning! I'll position it in the center to maintain good spacing." [calls addNode tool with exact coordinates]
-- "Let me update the training configuration to use 5 epochs for optimal results!" [calls updateNodeProperties tool]
-- "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical left-to-right flow." [calls multiple tools with exact positioning]
-- "I'll add a dataset node to the left of your model node for a clean pipeline flow!" [calls addNode tool with exact coordinates]
+- "I'll add a model node with Phi-3.5 Mini pre-selected for your pipeline!" [calls addNode tool, then updateNodeProperties with nodeId: "NEW_NODE_ID" and selectedModelId: "phi35"]
+- "I'll create a dataset node and switch it to existing mode so you can select uploaded datasets!" [calls addNode tool, then updateNodeProperties with nodeId: "NEW_NODE_ID" and activeTab: "existing"]
+- "I'll add a dataset node and switch it to the sample tab so you can choose from pre-built datasets!" [calls addNode tool, then updateNodeProperties with nodeId: "NEW_NODE_ID" and activeTab: "sample"]
+- "I'll add a model node and select DialoGPT for conversational fine-tuning!" [calls addNode tool, then updateNodeProperties with nodeId: "NEW_NODE_ID" and selectedModelId: "dialogpt"]
+- "Let me update the training configuration to use 5 epochs for optimal results!" [calls updateNodeProperties tool with existing node ID]
+- "I'll create a complete ML pipeline with dataset, model, and training nodes! I'll position them in a logical left-to-right flow." [calls multiple addNode tools with exact positioning]
+- "I'll add a dataset node below your existing dataset and connect it to the model node for a multi-dataset pipeline!" [calls addNode tool THEN addConnection tool in same response]
 - "I'll connect your dataset node to the model node so the data flows properly through your pipeline!" [calls addConnection tool with proper handles]
 - "Let me remove that connection between the nodes since it's not needed for this setup." [calls deleteConnection tool with connection ID]
+
+🎯 CRITICAL MULTI-TOOL RULES:
+- When adding nodes that should be connected: Call addNode + addConnection in SAME response
+- When adding nodes that need configuration: Call addNode + updateNodeProperties with nodeId: "NEW_NODE_ID" in SAME response  
+- When user says "add X and do Y": ALWAYS call both tools in same response, never split into separate conversations
 
 REMEMBER: Always provide engaging, helpful text responses alongside your tool usage!
 
@@ -314,6 +352,13 @@ When managing connections between nodes, you MUST follow these rules:
    - ALTERNATIVE: Use connection ID from CONNECTIONS section (shown in parentheses) for specific deletions
    - Look for connections between specific node types (e.g., "dataset to model" connection)
    - If multiple connections exist of the same type, ask for clarification
+
+7. **Node ID Reference Guidelines**:
+   - When creating connections, use EXACT node IDs from the NODES section
+   - When updating properties of a node you just created, use "NEW_NODE_ID" as the nodeId
+   - For existing nodes, use their exact ID from the CURRENT GRAPH STATE section
+   - The system will automatically resolve node references during execution
+   - Example: addNode → then updateNodeProperties with nodeId: "NEW_NODE_ID"
 
 ${graphContext}
 

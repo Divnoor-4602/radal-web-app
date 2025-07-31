@@ -38,7 +38,7 @@ const DatasetUploadMetricCard = ({
   const datasetsData = datasets ?? [];
 
   // Filter state
-  const [modelFilter, setModelFilter] = React.useState("");
+  const [datasetFilter, setDatasetFilter] = React.useState("");
 
   // Transform the data for the table (convert from Id<"datasets"> to string)
   const tableData = transformDatasetsToTableRows(
@@ -64,9 +64,9 @@ const DatasetUploadMetricCard = ({
             </div>
             <div className="flex items-center gap-2">
               <Input
-                placeholder="Filter models..."
-                value={modelFilter}
-                onChange={(event) => setModelFilter(event.target.value)}
+                placeholder="Filter datasets..."
+                value={datasetFilter}
+                onChange={(event) => setDatasetFilter(event.target.value)}
                 className={cn(
                   "w-56 bg-[#1C1717] focus:ring-0 focus:ring-offset-0 focus:outline-none placeholder:text-sm placeholder:tracking-tight placeholder:text-[#666666] text-text-primary border-border-default focus:border-[#999999]",
                 )}
@@ -80,7 +80,7 @@ const DatasetUploadMetricCard = ({
               <DataTable
                 columns={columns}
                 data={tableData}
-                modelFilter={modelFilter}
+                datasetFilter={datasetFilter}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center">

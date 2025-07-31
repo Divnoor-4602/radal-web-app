@@ -12,6 +12,8 @@ import {
   shouldShowAnimation,
   getTrainingCardTitle,
 } from "@/lib/utils";
+import { useRouter, useParams } from "next/navigation";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Types for the actual query results
 type ModelStatsData = {
@@ -31,9 +33,11 @@ type DatasetStatsData = {
 };
 
 type RecentModelData = {
+  modelId: Id<"models">;
   modelName: string;
   status: "pending" | "training" | "converting" | "ready" | "failed";
   title: string;
+  modelDownloadUrl?: string;
 } | null;
 
 interface MetricCardSectionProps {
@@ -49,6 +53,9 @@ const MetricCardSection = ({
   recentModel,
   isLoading = false,
 }: MetricCardSectionProps) => {
+  const router = useRouter();
+  const { projectId } = useParams<{ projectId: string }>();
+
   // Check if data is available
   if (isLoading || !modelStats || !datasetStats) {
     return <MetricCardSectionLoading />;
@@ -57,6 +64,13 @@ const MetricCardSection = ({
   const modelStatsData = modelStats;
   const datasetStatsData = datasetStats;
   const recentModelData = recentModel;
+
+  // Click handler for training analytics card
+  const handleTrainingCardClick = () => {
+    if (recentModelData?.modelId) {
+      router.push(`/projects/${projectId}/models/${recentModelData.modelId}`);
+    }
+  };
 
   return (
     <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
@@ -102,7 +116,7 @@ const MetricCardSection = ({
             ? "animate-pulse"
             : ""
         }`}
-        contentDescription={recentModelData?.status || ""}
+        contentDescription={""}
         pillText={
           recentModelData?.status
             ? formatStatusText(recentModelData.status)
@@ -114,6 +128,11 @@ const MetricCardSection = ({
             : "error"
         }
         className="lg:col-span-2 2xl:col-span-1"
+        onClick={recentModelData?.modelId ? handleTrainingCardClick : undefined}
+        showDownload={!!recentModelData}
+        downloadUrl={recentModelData?.modelDownloadUrl}
+        downloadTitle={recentModelData?.title}
+        downloadStatus={recentModelData?.status}
       />
     </div>
   );

@@ -16,6 +16,10 @@ export const DatasetNodeDataSchema = z.object({
   storageId: z.string().min(1, "Storage ID is required").optional(),
   projectId: z.string().min(1, "Project ID is required").optional(),
   status: z.enum(["idle", "error", "success"]).optional(),
+  activeTab: z
+    .enum(["upload", "existing", "sample"])
+    .default("upload")
+    .optional(),
 });
 
 // Model Node Schema - for model selection nodes

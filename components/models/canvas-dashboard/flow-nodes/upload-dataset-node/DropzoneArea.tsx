@@ -508,7 +508,10 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              transition={{
+                duration: 0.3,
+                ease: "easeOut",
+              }}
               className="flex flex-col gap-1 items-center mt-12"
             >
               {/* file details content */}
@@ -532,7 +535,10 @@ export const DropzoneArea: FC<TDropzoneAreaProps> = memo(
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              transition={{
+                duration: 0.3,
+                ease: "easeOut",
+              }}
               className="flex flex-col gap-1 items-center mt-12 relative z-10"
             >
               <p className="text-error-border text-xs tracking-tight font-medium">

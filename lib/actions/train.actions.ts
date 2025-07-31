@@ -66,7 +66,17 @@ export const startTraining = async (input: StartTrainingInput) => {
       };
     }
 
-    // 4. Validate the input data structure
+    // 4. Whitelist Check - Verify user is whitelisted for training
+    if (!convexUser.isWhitelisted) {
+      return {
+        success: false,
+        message:
+          "Access denied - You are not whitelisted for training. Please join our waitlist.",
+        error: "NOT_WHITELISTED",
+      };
+    }
+
+    // 5. Validate the input data structure
     const inputValidation = validateStartTrainingInput(input);
     if (!inputValidation.isValid) {
       return {
@@ -82,7 +92,7 @@ export const startTraining = async (input: StartTrainingInput) => {
 
     console.log("✓ Rate limiting passed");
 
-    // 5. Authorization - Verify project ownership and permissions
+    // 6. Authorization - Verify project ownership and permissions
     const project = await convex.query(api.projects.getProjectByIdWithClerkId, {
       projectId: projectId as Id<"projects">,
       clerkId: clerkUserId,
@@ -98,7 +108,7 @@ export const startTraining = async (input: StartTrainingInput) => {
 
     console.log("✓ Authorization successful");
 
-    // 6. Extract and validate model creation data
+    // 7. Extract and validate model creation data
     const modelCreationResult = extractModelCreationData(trainingData);
     if (!modelCreationResult.success) {
       return {
@@ -124,7 +134,7 @@ export const startTraining = async (input: StartTrainingInput) => {
     }
     console.log("✓ Model data validated");
 
-    // 7. Find dataset IDs by Azure URLs
+    // 8. Find dataset IDs by Azure URLs
     const datasetIds: Id<"datasets">[] = [];
     const azureUrls = trainingData.datasetNodes.map((d) => d.azureUrl!);
 
@@ -159,7 +169,7 @@ export const startTraining = async (input: StartTrainingInput) => {
     }
     console.log(`✓ Found ${datasetIds.length} datasets`);
 
-    // 8. Create model record
+    // 9. Create model record
     let modelId: Id<"models">;
     try {
       modelId = await convex.mutation(api.models.createModel, {
@@ -181,8 +191,8 @@ export const startTraining = async (input: StartTrainingInput) => {
     }
     console.log(`✓ Model record created: ${modelId}`);
 
-    // 9. Transform to final schema using the model record ID as training_id
-    // 9. Transform to final schema using the model record ID as training_id
+    // 10. Transform to final schema using the model record ID as training_id
+    // 10. Transform to final schema using the model record ID as training_id
     const finalSchemaResult = buildFinalTrainingSchema(trainingData, {
       trainingId: modelId, // Use the newly created model ID as training_id
       projectName: project.name,
@@ -214,7 +224,7 @@ export const startTraining = async (input: StartTrainingInput) => {
     }
     console.log("✓ Final schema validated");
 
-    // 10. Send to FastAPI endpoint
+    // 11. Send to FastAPI endpoint
     const fastApiEndpoint = process.env.FASTAPI_ENDPOINT;
     if (!fastApiEndpoint) {
       // Update model status to failed due to missing endpoint

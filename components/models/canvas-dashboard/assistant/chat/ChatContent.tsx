@@ -1,8 +1,9 @@
 "use client";
 
-import React, { memo, useEffect, useCallback, useState } from "react";
+import React, { memo, useEffect, useCallback, useState, useRef } from "react";
 import { useChat } from "@ai-sdk/react";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
 import useFlowStore from "@/lib/stores/flowStore";
 import { useChatStore } from "@/lib/stores/chatStore";
 import ActiveChat from "./ActiveChat";
@@ -13,7 +14,7 @@ import {
   MessageSchema,
   type ToolInvocation,
 } from "@/lib/validations/assistant.schema";
-import { processToolInvocations } from "@/lib/utils/assistant.utils";
+import { processToolInvocationsWithContext } from "@/lib/utils/assistant.utils";
 import type { UIMessage } from "ai";
 
 // Simple message types for AI SDK integration
@@ -31,25 +32,16 @@ const ChatContent = memo(() => {
   const { projectId } = useParams();
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Get graph state and actions for tool execution
-  const graphState = useFlowStore(
-    useCallback((state) => ({ nodes: state.nodes, edges: state.edges }), []),
-  );
+  // Track newly created nodes across tool calls in same conversation (synchronous)
+  const conversationNodeIdsRef = useRef<string[]>([]);
 
-  // Get graph actions for tool execution
-  const graphActions = useFlowStore(
-    useCallback(
-      (state) => ({
-        updateNodeData: state.updateNodeData,
-        addNode: state.addNode,
-        deleteNode: state.deleteNode,
-        onNodesChange: state.onNodesChange,
-        addConnection: state.addConnection,
-        deleteConnection: state.deleteConnection,
-      }),
-      [],
-    ),
-  );
+  // Get graph state and actions for tool execution - no memoization for real-time updates
+  const graphState = useFlowStore((state) => ({
+    nodes: state.nodes,
+    edges: state.edges,
+  }));
+
+  // Graph actions are now fetched fresh in onToolCall handler
 
   // Chat store state - only for input persistence
   const { setCurrentInput, initializeSession } = useChatStore();
@@ -96,8 +88,10 @@ const ChatContent = memo(() => {
       // 4. Validate graph state if available
       const graphValidation = validateGraphState(graphState);
       if (!graphValidation.isValid) {
-        console.warn("Graph state validation warning:", graphValidation.errors);
-        // Don't block the message for graph issues, just log
+        toast.error(
+          "Graph state validation warning. Please check your canvas.",
+        );
+        // Don't block the message for graph issues, just notify user
       }
 
       return { isValid: true };
@@ -135,44 +129,67 @@ const ChatContent = memo(() => {
         projectId: projectId as string,
       },
 
-      onFinish: (message) => {
-        console.log("🎯 Message finished:", message);
-      },
-
-      onError: (error) => {
-        console.error("❌ Chat error:", error);
+      onError: () => {
+        toast.error("Failed to send message. Please try again.");
         setValidationError("Failed to send message. Please try again.");
       },
 
-      // Handle tool calls during streaming
+      // Handle tool calls during streaming - each tool gets fresh graph state
       onToolCall: async ({ toolCall }) => {
-        console.log("🔧 Tool call received:", toolCall.toolName);
-
-        // Execute the tool call on the actual graph
         try {
+          // Get absolutely fresh graph state for THIS specific tool call
+          const currentGraphState = useFlowStore.getState();
+          const freshGraphState = {
+            nodes: currentGraphState.nodes,
+            edges: currentGraphState.edges,
+          };
+
+          const freshGraphActions = {
+            updateNodeData: currentGraphState.updateNodeData,
+            addNode: currentGraphState.addNode,
+            deleteNode: currentGraphState.deleteNode,
+            onNodesChange: currentGraphState.onNodesChange,
+            addConnection: currentGraphState.addConnection,
+            deleteConnection: currentGraphState.deleteConnection,
+          };
+
           // Type assertion for tool invocation
           const toolInvocation = {
             toolName: toolCall.toolName,
             args: toolCall.args,
           } as ToolInvocation;
 
-          const executionResult = processToolInvocations(
+          const executionResult = processToolInvocationsWithContext(
             [toolInvocation],
-            graphState,
-            graphActions,
-            projectId as string, // Pass projectId for dataset nodes
+            freshGraphState, // Always fresh for each tool
+            freshGraphActions,
+            projectId as string,
+            conversationNodeIdsRef.current, // Pass current conversation-level node tracking
           );
 
           if (executionResult.success) {
-            console.log("✅ Tool executed successfully:", toolCall.toolName);
+            // Update conversation-level node tracking (synchronous)
+            conversationNodeIdsRef.current = executionResult.newNodeIds;
+
             return `Successfully executed ${toolCall.toolName}`;
           } else {
-            console.error("❌ Tool execution failed:", executionResult.errors);
-            return `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
+            // Tool execution failed - notify user and return error details for AI SDK to handle
+            const errorMessage = `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
+            toast.error(`Tool execution failed: ${toolCall.toolName}`);
+
+            // Throw error so AI SDK marks this tool call as failed
+            throw new Error(errorMessage);
           }
         } catch (error) {
-          console.error("❌ Tool execution error:", error);
-          return `Error executing ${toolCall.toolName}: ${error instanceof Error ? error.message : "Unknown error"}`;
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+
+          toast.error(`Unexpected error executing ${toolCall.toolName}`);
+
+          // Re-throw so AI SDK properly marks this as a failed tool call
+          throw new Error(
+            `Tool execution failed: ${toolCall.toolName} - ${errorMessage}`,
+          );
         }
       },
 
@@ -188,24 +205,21 @@ const ChatContent = memo(() => {
   // Send message function with validation
   const handleSendMessage = useCallback(
     (content: string) => {
-      console.log("📤 Attempting to send message:", content);
-
       // 1. Validate message content
       const messageValidation = validateMessage(content);
       if (!messageValidation.isValid) {
-        console.error("❌ Message validation failed:", messageValidation.error);
         return;
       }
 
       // 2. Validate complete request
       const requestValidation = validateRequest(content);
       if (!requestValidation.isValid) {
-        console.error("❌ Request validation failed:", requestValidation.error);
         return;
       }
 
-      // 3. Clear any previous errors
+      // 3. Clear any previous errors and reset conversation context
       setValidationError(null);
+      conversationNodeIdsRef.current = []; // Clear node tracking for new conversation
 
       // 4. Send the validated message
       try {
@@ -216,9 +230,8 @@ const ChatContent = memo(() => {
 
         // Clear the input after successful send
         setInput("");
-        console.log("✅ Message sent successfully");
-      } catch (error) {
-        console.error("❌ Failed to send message:", error);
+      } catch {
+        toast.error("Failed to send message. Please try again.");
         setValidationError("Failed to send message. Please try again.");
       }
     },
