@@ -17,6 +17,7 @@ import {
 } from "@/lib/utils/train.utils";
 import { validateModelCreationData } from "@/lib/validations/train.server.schema";
 import { RateLimiterMemory } from "rate-limiter-flexible";
+import { sampleDatasets } from "@/constants";
 
 // Create Convex client
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -134,8 +135,9 @@ export const startTraining = async (input: StartTrainingInput) => {
     }
     console.log("✓ Model data validated");
 
-    // 8. Find dataset IDs by Azure URLs
+    // 8. Find or create dataset IDs by Azure URLs (handle both regular and sample datasets)
     const datasetIds: Id<"datasets">[] = [];
+    const tempSampleDatasetIds: Id<"datasets">[] = []; // Track sample datasets for cleanup
     const azureUrls = trainingData.datasetNodes.map((d) => d.azureUrl!);
 
     try {
@@ -147,27 +149,76 @@ export const startTraining = async (input: StartTrainingInput) => {
       );
 
       for (const azureUrl of azureUrls) {
+        // First check if it's an existing dataset in the project
         const matchingDataset = projectDatasets.find(
           (d) => d.azureUrl === azureUrl,
         );
+
         if (matchingDataset) {
           datasetIds.push(matchingDataset._id);
         } else {
-          return {
-            success: false,
-            message: `Dataset not found for Azure URL: ${azureUrl}`,
-            error: "DATASET_NOT_FOUND",
-          };
+          // Check if it's a sample dataset
+          const sampleDataset = sampleDatasets.find(
+            (sample) => sample.azureUrl === azureUrl,
+          );
+
+          if (sampleDataset) {
+            // Create a temporary dataset record for the sample dataset
+            console.log(
+              `Creating temporary dataset record for sample: ${sampleDataset.title}`,
+            );
+
+            const tempDatasetId = await convex.mutation(
+              api.datasets.saveDataset,
+              {
+                projectId: project._id,
+                userId: convexUser._id,
+                storageId: sampleDataset.id, // Use sample ID as storage ID
+                azureUrl: sampleDataset.azureUrl,
+                title: sampleDataset.title,
+                description: sampleDataset.description,
+                originalFilename: sampleDataset.file,
+                fileSize: 0, // Sample datasets don't have file size info
+                mimeType: "text/csv",
+              },
+            );
+
+            // Update the dataset with sample statistics if available
+            if (
+              sampleDataset.rowCount ||
+              sampleDataset.columnCount ||
+              sampleDataset.headers
+            ) {
+              await convex.mutation(api.datasets.updateDatasetStats, {
+                datasetId: tempDatasetId,
+                rows: sampleDataset.rowCount || 0,
+                columns: sampleDataset.columnCount || 0,
+                headers: sampleDataset.headers || [],
+                userId: convexUser._id,
+              });
+            }
+
+            datasetIds.push(tempDatasetId);
+            tempSampleDatasetIds.push(tempDatasetId); // Track for cleanup
+            console.log(`✓ Created temporary dataset: ${tempDatasetId}`);
+          } else {
+            return {
+              success: false,
+              message: `Dataset not found for Azure URL: ${azureUrl}`,
+              error: "DATASET_NOT_FOUND",
+            };
+          }
         }
       }
-    } catch {
+    } catch (error) {
+      console.error("Dataset lookup/creation error:", error);
       return {
         success: false,
-        message: "Failed to find datasets in database",
+        message: "Failed to find or create datasets in database",
         error: "DATASET_LOOKUP_ERROR",
       };
     }
-    console.log(`✓ Found ${datasetIds.length} datasets`);
+    console.log(`✓ Found/created ${datasetIds.length} datasets`);
 
     // 9. Create model record
     let modelId: Id<"models">;
@@ -226,6 +277,8 @@ export const startTraining = async (input: StartTrainingInput) => {
 
     // 11. Send to FastAPI endpoint
     const fastApiEndpoint = process.env.FASTAPI_ENDPOINT;
+    const apiAuthKey = process.env.API_AUTH_KEY;
+
     if (!fastApiEndpoint) {
       // Update model status to failed due to missing endpoint
       await convex.mutation(api.models.updateModelStatus, {
@@ -240,6 +293,22 @@ export const startTraining = async (input: StartTrainingInput) => {
         error: "FASTAPI_ENDPOINT_MISSING",
       };
     }
+
+    if (!apiAuthKey) {
+      // Update model status to failed due to missing API key
+      await convex.mutation(api.models.updateModelStatus, {
+        modelId,
+        status: "failed",
+        errorMessage: "API authentication key not configured",
+      });
+
+      return {
+        success: false,
+        message: "API authentication key not configured",
+        error: "API_AUTH_KEY_MISSING",
+      };
+    }
+
     console.log(`✓ Sending to FastAPI: ${fastApiEndpoint}`);
 
     try {
@@ -248,6 +317,7 @@ export const startTraining = async (input: StartTrainingInput) => {
         headers: {
           "Content-Type": "application/json",
           "User-Agent": "NextJS-Server",
+          "X-API-Key": apiAuthKey,
         },
         body: JSON.stringify(finalSchema),
       });
@@ -277,6 +347,27 @@ export const startTraining = async (input: StartTrainingInput) => {
         status: "training",
       });
       console.log("✓ Training started successfully");
+
+      // Clean up temporary sample dataset records since training started successfully
+      if (tempSampleDatasetIds.length > 0) {
+        try {
+          for (const sampleDatasetId of tempSampleDatasetIds) {
+            await convex.mutation(api.datasets.deleteDataset, {
+              datasetId: sampleDatasetId,
+              userId: convexUser._id, // Pass userId for server-side authentication
+            });
+          }
+          console.log(
+            `✓ Cleaned up ${tempSampleDatasetIds.length} temporary sample datasets`,
+          );
+        } catch (cleanupError) {
+          // Log but don't fail the training process if cleanup fails
+          console.warn(
+            "Warning: Failed to clean up sample datasets:",
+            cleanupError,
+          );
+        }
+      }
 
       return {
         success: true,

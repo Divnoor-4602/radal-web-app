@@ -352,23 +352,41 @@ export const getDatasetById = query({
 
 // Delete a dataset
 export const deleteDataset = mutation({
-  args: { datasetId: v.id("datasets") },
+  args: { 
+    datasetId: v.id("datasets"),
+    userId: v.optional(v.id("users")), // Optional for API route calls
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
-    // Get the authenticated user
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
+    let userId: Id<"users">;
 
-    // Find the user in our database
-    const user = await ctx.db
-      .query("users")
-      .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
-      .unique();
+    if (args.userId) {
+      // Called from API route with userId provided
+      userId = args.userId;
 
-    if (!user) {
-      throw new Error("User not found");
+      // Verify the user exists
+      const user = await ctx.db.get(args.userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+    } else {
+      // Called from client - use authentication context
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        throw new Error("Not authenticated");
+      }
+
+      // Find the user in our database
+      const user = await ctx.db
+        .query("users")
+        .withIndex("byClerkId", (q) => q.eq("clerkId", identity.subject))
+        .unique();
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      userId = user._id;
     }
 
     // Get the dataset
@@ -378,7 +396,7 @@ export const deleteDataset = mutation({
     }
 
     // Verify the dataset belongs to the user
-    if (dataset.userId !== user._id) {
+    if (dataset.userId !== userId) {
       throw new Error("Dataset access denied");
     }
 
