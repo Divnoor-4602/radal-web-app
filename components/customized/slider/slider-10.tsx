@@ -15,6 +15,7 @@ export default function SliderWithStickyLabel({
   onValueCommit,
 }: SliderWithStickyLabelProps) {
   const [localValue, setLocalValue] = useState([value]);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Update local value when prop changes
   useEffect(() => {
@@ -44,9 +45,19 @@ export default function SliderWithStickyLabel({
           <SliderPrimitive.Range className="absolute h-full bg-text-primary/70" />
         </SliderPrimitive.Track>
 
-        <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-border-default bg-bg-100 shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-          {/* Sticky label */}
-          <Badge className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 -top-4 bg-bg-100 text-text-primary border-border-default text-xs">
+        <SliderPrimitive.Thumb
+          className="block h-4 w-4 rounded-full border border-border-default bg-bg-100 shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* Animated hover label */}
+          <Badge
+            className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 -top-4 bg-bg-100 text-text-primary border-border-default text-xs transition-all duration-200 ease-in-out ${
+              isHovered
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-95 pointer-events-none"
+            }`}
+          >
             {localValue[0]}
           </Badge>
         </SliderPrimitive.Thumb>
