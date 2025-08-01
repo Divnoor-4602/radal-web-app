@@ -66,6 +66,7 @@ export const TrainingSchemaDataServerSchema = z.object({
 export const StartTrainingInputSchema = z.object({
   trainingData: TrainingSchemaDataServerSchema,
   projectId: z.string().min(1, "Project ID is required"),
+  canvasData: z.optional(z.any()), // Canvas data from localStorage
 });
 
 // Schema for the final JSON output that matches finalSchema.json structure

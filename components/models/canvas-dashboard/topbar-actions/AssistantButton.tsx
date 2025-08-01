@@ -13,11 +13,15 @@ import {
 
 type AssistantButtonProps = {
   collapseSidebarOnOpen?: boolean;
+  isReadOnly?: boolean;
 };
 
 // Assistant button component - memoized to prevent unnecessary re-renders
 const AssistantButton = memo(
-  ({ collapseSidebarOnOpen = true }: AssistantButtonProps) => {
+  ({
+    collapseSidebarOnOpen = true,
+    isReadOnly = false,
+  }: AssistantButtonProps) => {
     // use sidebar hook
     const { setOpen: setSidebarOpen } = useSidebar();
 
@@ -26,13 +30,18 @@ const AssistantButton = memo(
 
     // Toggle the assistant window
     const handleAssistantClick = useCallback(() => {
+      // Prevent assistant in read-only mode
+      if (isReadOnly) {
+        return;
+      }
+
       // collapse the sidebar to make space for the assistant (only if enabled)
       if (collapseSidebarOnOpen) {
         setSidebarOpen(false);
       }
 
       toggleAssistant();
-    }, [setSidebarOpen, toggleAssistant, collapseSidebarOnOpen]);
+    }, [setSidebarOpen, toggleAssistant, collapseSidebarOnOpen, isReadOnly]);
 
     return (
       <Tooltip>
@@ -44,6 +53,7 @@ const AssistantButton = memo(
             variant="tertiary"
             onClick={handleAssistantClick}
             isActive={isAssistantOpen}
+            disabled={isReadOnly}
           />
         </TooltipTrigger>
         <TooltipContent
@@ -51,11 +61,17 @@ const AssistantButton = memo(
           arrowClassName="bg-bg-400 fill-bg-400"
         >
           <div className="text-xs flex items-center gap-2">
-            <span>Open assistant</span>
-            <div className="flex items-center gap-1">
-              <CommandIcon className="size-3" />
-              <span>i</span>
-            </div>
+            <span>
+              {isReadOnly
+                ? "Assistant disabled in read-only mode"
+                : "Open assistant"}
+            </span>
+            {!isReadOnly && (
+              <div className="flex items-center gap-1">
+                <CommandIcon className="size-3" />
+                <span>i</span>
+              </div>
+            )}
           </div>
         </TooltipContent>
       </Tooltip>

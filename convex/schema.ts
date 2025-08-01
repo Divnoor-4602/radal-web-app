@@ -117,4 +117,55 @@ export default defineSchema({
     .index("byDataset", ["datasetIds"])
     .index("byModelId", ["baseModelDetails.modelId"])
     .index("byStatus", ["status"]),
+
+  // read only model graph for storing the structure
+  // modelGraphs schema for storing complete canvas state
+  modelGraphs: defineTable({
+    modelId: v.id("models"),
+    projectId: v.id("projects"),
+    userId: v.id("users"),
+
+    // Complete canvas state matching localStorage structure
+    nodes: v.array(
+      v.object({
+        id: v.string(),
+        type: v.string(),
+        position: v.object({
+          x: v.number(),
+          y: v.number(),
+        }),
+        data: v.any(),
+        measured: v.optional(
+          v.object({
+            width: v.number(),
+            height: v.number(),
+          }),
+        ),
+        selected: v.optional(v.boolean()),
+        dragging: v.optional(v.boolean()),
+      }),
+    ),
+    edges: v.array(
+      v.object({
+        id: v.string(),
+        source: v.string(),
+        target: v.string(),
+        sourceHandle: v.optional(v.string()),
+        targetHandle: v.optional(v.string()),
+        type: v.optional(v.string()),
+        animated: v.optional(v.boolean()),
+      }),
+    ),
+    viewport: v.object({
+      x: v.number(),
+      y: v.number(),
+      zoom: v.number(),
+    }),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("byModel", ["modelId"])
+    .index("byProject", ["projectId"])
+    .index("byUser", ["userId"]),
 });

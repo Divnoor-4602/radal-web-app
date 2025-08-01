@@ -28,7 +28,7 @@ const DashboardLoading = () => {
 
         {/* Minimal project grid skeleton - fewer items to reduce visual impact */}
         <div className="grid grid-cols-[repeat(auto-fill,380px)] gap-x-7 gap-y-10 mt-16 justify-start">
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 6 }).map((_, index) => (
             <Skeleton
               key={index}
               className="w-[380px] h-[120px] rounded-2xl bg-bg-100"

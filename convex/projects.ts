@@ -304,6 +304,16 @@ export const deleteProject = mutation({
       await ctx.db.delete(model._id);
     }
 
+    // Delete all model graphs in the project
+    const modelGraphsInProject = await ctx.db
+      .query("modelGraphs")
+      .withIndex("byProject", (q) => q.eq("projectId", args.projectId))
+      .collect();
+
+    for (const modelGraph of modelGraphsInProject) {
+      await ctx.db.delete(modelGraph._id);
+    }
+
     // Delete all datasets in the project
     const datasetsInProject = await ctx.db
       .query("datasets")

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, memo, useState, useMemo } from "react";
-import { BrainCircuit, Loader2 } from "lucide-react";
+import { BrainCircuit, Loader2, Lock } from "lucide-react";
 import CustomButton from "@/components/shared/CustomButton";
 import { useParams, usePathname } from "next/navigation";
 import useFlowStore from "@/lib/stores/flowStore";
@@ -19,7 +19,7 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 // Train button component - memoized to prevent unnecessary re-renders
-const TrainButton = memo(() => {
+const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -46,6 +46,15 @@ const TrainButton = memo(() => {
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
+    // Prevent training in read-only mode
+    if (isReadOnly) {
+      toast.info("Read-only mode", {
+        description:
+          "This model has already been trained and cannot be modified.",
+      });
+      return;
+    }
+
     // Prevent multiple simultaneous training requests
     if (isTraining) return;
 
@@ -109,14 +118,18 @@ const TrainButton = memo(() => {
         return;
       }
 
+      // Get canvas data from localStorage before clearing it
+      const canvasData = localStorage.getItem(flowKey);
+      const parsedCanvasData = canvasData ? JSON.parse(canvasData) : null;
+
       // Show loading toast
       toast.loading("Starting model training...");
 
       // Call the server action
-
       const result = await startTraining({
         trainingData: transformResult.data! as TrainingSchemaDataServer, // Type cast
         projectId,
+        canvasData: parsedCanvasData,
       });
 
       // Dismiss loading toast and show success
@@ -151,13 +164,22 @@ const TrainButton = memo(() => {
     } finally {
       setIsTraining(false);
     }
-  }, [params.projectId, router, isTraining, flowKey, isWhitelisted]); // Include flowKey and isWhitelisted as dependencies
+  }, [
+    params.projectId,
+    router,
+    isTraining,
+    flowKey,
+    isWhitelisted,
+    isReadOnly,
+  ]); // Include isReadOnly as dependency
 
   return (
     <CustomButton
-      text={isTraining ? "Training" : "Train"}
+      text={isReadOnly ? "Trained" : isTraining ? "Training" : "Train"}
       icon={
-        isTraining ? (
+        isReadOnly ? (
+          <Lock className="size-4" strokeWidth={1.6} />
+        ) : isTraining ? (
           <Loader2 className="size-4 animate-spin" strokeWidth={1.6} />
         ) : (
           <BrainCircuit className="size-4" strokeWidth={1.6} />
@@ -165,7 +187,8 @@ const TrainButton = memo(() => {
       }
       className="gap-1.5"
       onClick={handleTrainClick}
-      disabled={isTraining}
+      disabled={isTraining || isReadOnly}
+      title={isReadOnly ? "Model has been trained and is read-only" : undefined}
     />
   );
 });

@@ -12,6 +12,9 @@ import { useParams, useRouter } from "next/navigation";
 import TrainButton from "@/components/models/canvas-dashboard/topbar-actions/Trainbutton";
 import AssistantButton from "@/components/models/canvas-dashboard/topbar-actions/AssistantButton";
 import useAssistantStore from "@/lib/stores/assistantStore";
+import { useQuery, useConvexAuth } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 type ModelTopbarProps = {
   additionalMenuItems?: React.ReactNode;
@@ -21,7 +24,17 @@ type ModelTopbarProps = {
 const ModelTopbar = memo(({ additionalMenuItems }: ModelTopbarProps) => {
   const router = useRouter();
   const { toggleAssistant } = useAssistantStore();
-  const { projectId } = useParams();
+  const { projectId, modelId } = useParams();
+  const { isAuthenticated } = useConvexAuth();
+
+  // Check if model has saved graph data (indicates it's trained and should be read-only)
+  const modelGraphData = useQuery(
+    api.modelGraphs.getModelGraphByModelId,
+    isAuthenticated && modelId ? { modelId: modelId as Id<"models"> } : "skip",
+  );
+
+  // Determine if this should be read-only (has saved model graph data)
+  const isReadOnly = !!modelGraphData;
   // Memoize the back navigation handler
   const handleBackClick = useCallback(() => {
     router.push(`/projects/${projectId} `);
@@ -86,10 +99,13 @@ const ModelTopbar = memo(({ additionalMenuItems }: ModelTopbarProps) => {
       {/* Train and Assistant actions */}
       <div className="flex items-center gap-3">
         {/* Open assistant tab */}
-        <AssistantButton collapseSidebarOnOpen={false} />
+        <AssistantButton
+          collapseSidebarOnOpen={false}
+          isReadOnly={isReadOnly}
+        />
 
         {/* Start training */}
-        <TrainButton />
+        <TrainButton isReadOnly={isReadOnly} />
       </div>
     </header>
   );
