@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import useAssistantStore from "@/lib/stores/assistantStore";
 
 // Train button component - memoized to prevent unnecessary re-renders
 const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
@@ -25,6 +26,7 @@ const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
   const router = useRouter();
   const [isTraining, setIsTraining] = useState<boolean>(false);
   const { isAuthenticated } = useConvexAuth();
+  const { closeAssistant } = useAssistantStore();
 
   // Check if current user is whitelisted
   const currentUser = useQuery(
@@ -143,6 +145,9 @@ const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
         // Clear the canvas state from both memory and localStorage since training has started
         useFlowStore.getState().clearPersistedState(flowKey);
 
+        // Close assistant panel before redirecting to read-only project page
+        closeAssistant();
+
         router.push(`/projects/${projectId}`);
       } else if (result.error === "NOT_WHITELISTED") {
         // Handle whitelist error specifically
@@ -171,7 +176,8 @@ const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
     flowKey,
     isWhitelisted,
     isReadOnly,
-  ]); // Include isReadOnly as dependency
+    closeAssistant,
+  ]); // Include isReadOnly and closeAssistant as dependencies
 
   return (
     <CustomButton

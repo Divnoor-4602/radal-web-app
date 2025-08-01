@@ -449,8 +449,12 @@ function processAddConnection(
   );
 
   if (!success) {
-    errors.push(
-      `Failed to add connection from ${sourceNodeId} to ${targetNodeId}`,
+    // Don't treat connection failures as hard errors since they could be due to:
+    // 1. Auto-connections that already exist (expected behavior)
+    // 2. Validation rules that prevent invalid connections
+    // Just log it instead of adding to errors array
+    console.log(
+      `Connection not added from ${sourceNodeId} to ${targetNodeId} (likely already exists or invalid)`,
     );
   }
 }
@@ -458,6 +462,7 @@ function processAddConnection(
 /**
  * Processes deleteConnection tool invocation
  */
+
 function processDeleteConnection(
   args: unknown,
   graphActions: {

@@ -173,6 +173,20 @@ const ChatContent = memo(() => {
 
             return `Successfully executed ${toolCall.toolName}`;
           } else {
+            // Check if this is a connection duplicate error (auto-connection scenario)
+            const isDuplicateConnectionError =
+              toolCall.toolName === "addConnection" &&
+              executionResult.errors.some(
+                (error) =>
+                  typeof error === "string" &&
+                  error.toLowerCase().includes("already exists"),
+              );
+
+            if (isDuplicateConnectionError) {
+              // Handle duplicate connection gracefully - this likely means auto-connection already created it
+              return `Connection already exists (likely created automatically)`;
+            }
+
             // Tool execution failed - notify user and return error details for AI SDK to handle
             const errorMessage = `Failed to execute ${toolCall.toolName}: ${executionResult.errors.join(", ")}`;
             toast.error(`Tool execution failed: ${toolCall.toolName}`);

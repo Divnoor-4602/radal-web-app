@@ -634,7 +634,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       }
 
       if (isDuplicateConnection(connection, edges)) {
-        toast.error("Connection already exists");
+        // Don't show error toast for duplicate connections since this can happen
+        // in auto-connection scenarios where the system already created the connection
+        console.log("Connection already exists, skipping duplicate");
         return false;
       }
 

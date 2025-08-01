@@ -7,8 +7,36 @@ export const createModelGraph = mutation({
     modelId: v.id("models"),
     projectId: v.id("projects"),
     userId: v.id("users"),
-    nodes: v.array(v.any()),
-    edges: v.array(v.any()),
+    nodes: v.array(
+      v.object({
+        id: v.string(),
+        type: v.string(),
+        position: v.object({
+          x: v.number(),
+          y: v.number(),
+        }),
+        data: v.any(),
+        measured: v.optional(
+          v.object({
+            width: v.number(),
+            height: v.number(),
+          }),
+        ),
+        selected: v.optional(v.boolean()),
+        dragging: v.optional(v.boolean()),
+      }),
+    ),
+    edges: v.array(
+      v.object({
+        id: v.string(),
+        source: v.string(),
+        target: v.string(),
+        sourceHandle: v.optional(v.string()),
+        targetHandle: v.optional(v.string()),
+        type: v.optional(v.string()),
+        animated: v.optional(v.boolean()),
+      }),
+    ),
     viewport: v.object({
       x: v.number(),
       y: v.number(),
