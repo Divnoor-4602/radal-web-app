@@ -20,7 +20,44 @@ export const metadata: Metadata = {
     icon: "/radal-logo.png",
   },
   applicationName: "Radal",
-  // TODO: Add social link metadata here with keywords
+  keywords: [
+    "AI",
+    "machine learning",
+    "fine-tuning",
+    "language models",
+    "open source",
+    "drag and drop",
+    "canvas",
+    "LLM",
+    "model training",
+    "artificial intelligence",
+  ],
+  openGraph: {
+    title: "Radal",
+    description:
+      "Fine-tune open-source small language models using a drag-and-drop canvas and AI-assisted fine-tuning.",
+    url: "https://app.radal.ai",
+    siteName: "Radal",
+    images: [
+      {
+        url: "https://app.radal.ai/images/social-preview-link.png",
+        width: 1200,
+        height: 630,
+        alt: "Radal - AI Model Fine-tuning Platform",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Radal",
+    description:
+      "Fine-tune open-source small language models using a drag-and-drop canvas and AI-assisted fine-tuning.",
+    images: ["https://app.radal.ai/images/social-preview-link.png"],
+    creator: "@divandcode",
+    site: "@divandcode",
+  },
 };
 
 export default function RootLayout({
