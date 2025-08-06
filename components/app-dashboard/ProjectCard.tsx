@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Folder } from "lucide-react";
 import React from "react";
 import { ProjectActions } from "./ProjectActions";
+import { motion } from "motion/react";
 
 type ProjectCardProps = {
   projectId: string;
@@ -63,11 +64,19 @@ const ProjectCard = ({
   };
 
   return (
-    <div className="relative">
+    <motion.div
+      className="relative"
+      whileTap={{
+        scale: 0.98,
+      }}
+      whileHover={{
+        scale: 1.01,
+      }}
+    >
       {/* Background div with highlight border */}
       <div className="absolute inset-0 rounded-2xl border border-border-highlight"></div>
       {/* Main card with precise positioning */}
-      <div className="relative py-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[380px] rounded-2xl border border-border-default custom-project-card-drop-shadow to-[120%] from-[-15%] mt-[1px]">
+      <div className="relative py-5 bg-gradient-to-t from-bg-100 to-bg-400 w-full min-w-[380px] rounded-2xl border border-border-default hover:border-border-highlight custom-project-card-drop-shadow to-[120%] from-[-15%] mt-[1px] transition-all duration-150">
         {/* project header */}
         <div className="flex items-center justify-between px-4">
           <div className="flex items-center gap-3">
@@ -95,7 +104,7 @@ const ProjectCard = ({
           </CustomPills>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
