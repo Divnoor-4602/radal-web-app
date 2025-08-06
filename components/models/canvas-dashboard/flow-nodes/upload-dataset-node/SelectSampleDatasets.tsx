@@ -1,7 +1,8 @@
 "use client";
 
+import { motion } from "motion/react";
 import React, { memo, useCallback } from "react";
-import { File, Info } from "lucide-react";
+import { File, Info, Download } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,50 @@ import { cn } from "@/lib/utils";
 import useFlowStore from "@/lib/stores/flowStore";
 import type { DatasetNodeData } from "@/lib/validations/node.schema";
 import { sampleDatasets } from "@/constants";
+
+// Animation configuration - memoized outside component
+const downloadButtonAnimations = {
+  whileHover: { scale: 1.02 },
+  whileTap: { scale: 0.95 },
+} as const;
+
+type DownloadButtonProps = {
+  selectedDatasetId: string;
+  onDownload: (e: React.MouseEvent) => void;
+};
+
+// Extracted download button component - memoized to prevent unnecessary re-renders
+const DownloadButton = memo(
+  ({ selectedDatasetId, onDownload }: DownloadButtonProps) => {
+    const selectedDataset = sampleDatasets.find(
+      (d) => d.id === selectedDatasetId,
+    );
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <motion.button
+            onClick={onDownload}
+            className="p-1 hover:bg-[#2A2A2A] rounded transition-colors ml-2 flex-shrink-0 group duration-200 cursor-pointer"
+            {...downloadButtonAnimations}
+            title="Download dataset"
+          >
+            <Download className="size-3 text-text-inactive group-hover:text-text-primary transition-colors duration-200" />
+          </motion.button>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          className="bg-bg-100"
+          arrowClassName="bg-bg-100 fill-bg-100"
+        >
+          <p>Download {selectedDataset?.file || "dataset"}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  },
+);
+
+DownloadButton.displayName = "DownloadButton";
 
 type SelectSampleDatasetsProps = {
   nodeId: string;
@@ -56,27 +101,57 @@ const SelectSampleDatasets: React.FC<SelectSampleDatasetsProps> = memo(
       [nodeId, updateNodeData],
     );
 
+    const handleDownload = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent triggering the select item
+
+        const selectedDataset = sampleDatasets.find(
+          (d) => d.id === selectedDatasetId,
+        );
+
+        if (!selectedDataset) return;
+
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement("a");
+        link.href = selectedDataset.azureUrl;
+        link.download = selectedDataset.file;
+        link.target = "_self";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
+      [selectedDatasetId],
+    );
+
     return (
       <div className="flex flex-col gap-2.5">
-        {/* label and tooltip */}
-        <div className="flex items-center gap-2">
-          <Label className="text-text-primary text-sm ml-1">
-            Sample Datasets
-          </Label>
-          <Tooltip>
-            <TooltipTrigger>
-              <Info className="size-3 text-gray-500" />
-            </TooltipTrigger>
-            <TooltipContent
-              side="right"
-              className="bg-bg-100"
-              arrowClassName="bg-bg-100 fill-bg-100"
-            >
-              <p>
-                Choose from pre-built sample datasets to get started quickly.
-              </p>
-            </TooltipContent>
-          </Tooltip>
+        {/* label / download and tooltip */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label className="text-text-primary text-sm ml-1">
+              Sample Datasets
+            </Label>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="size-3 text-gray-500" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="bg-bg-100"
+                arrowClassName="bg-bg-100 fill-bg-100"
+              >
+                <p>
+                  Choose from pre-built sample datasets to get started quickly.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          {selectedDatasetId && (
+            <DownloadButton
+              selectedDatasetId={selectedDatasetId}
+              onDownload={handleDownload}
+            />
+          )}
         </div>
 
         <Select onValueChange={handleDatasetChange} value={selectedDatasetId}>
