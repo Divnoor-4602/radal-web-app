@@ -63,7 +63,7 @@ export const upsertFromClerk = internalMutation({
       clerkId: data.id,
       email: data.email_addresses[0].email_address,
       createdAt: Date.now(),
-      isWhitelisted: false,
+      isWhitelisted: true,
     };
 
     const user = await userByClerkId(ctx, data.id);

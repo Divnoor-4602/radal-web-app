@@ -44,7 +44,7 @@ const TrainButton = memo(({ isReadOnly = false }: { isReadOnly?: boolean }) => {
   }, [projectId, modelId, pathname]);
 
   // Check if user is whitelisted
-  const isWhitelisted = currentUser?.isWhitelisted ?? false;
+  const isWhitelisted = currentUser?.isWhitelisted ?? true;
 
   // Memoize the train click handler with stable reference - access store inside function
   const handleTrainClick = useCallback(async () => {
