@@ -57,7 +57,7 @@ const ChatContent = memo(() => {
       // Clear previous validation errors
       setValidationError(null);
 
-      // 1. Basic content validation
+      // Basic content validation
       const messageResult = MessageSchema.safeParse({
         role: "user",
         content: content.trim(),
@@ -70,14 +70,14 @@ const ChatContent = memo(() => {
         return { isValid: false, error };
       }
 
-      // 2. Content length validation
+      // Content length validation
       if (content.trim().length > 4000) {
         const error = "Message too long (maximum 4000 characters)";
         setValidationError(error);
         return { isValid: false, error };
       }
 
-      // 3. Basic input sanitization check
+      // Basic input sanitization check
       const sanitizedContent = content.trim().replace(/\s+/g, " ");
       if (sanitizedContent.length === 0) {
         const error = "Message cannot be empty";
@@ -85,7 +85,7 @@ const ChatContent = memo(() => {
         return { isValid: false, error };
       }
 
-      // 4. Validate graph state if available
+      // Validate graph state if available
       const graphValidation = validateGraphState(graphState);
       if (!graphValidation.isValid) {
         toast.error(
