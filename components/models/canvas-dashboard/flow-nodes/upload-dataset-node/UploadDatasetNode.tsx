@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, memo, useMemo } from "react";
+import React, { FC, memo, useMemo, useRef } from "react";
 import { Database, File } from "lucide-react";
 import { Position } from "@xyflow/react";
 import CustomPills from "@/components/shared/CustomPills";
@@ -45,6 +45,30 @@ export const UploadDatasetNode: FC<TUploadDatasetNodeProps> = memo(
       }),
       [id, currentData?.file],
     );
+
+    // Debug: count renders and log lightweight props/state in development
+    const renderCountRef = useRef(0);
+    if (process.env.NODE_ENV !== "production") {
+      renderCountRef.current += 1;
+      // Count how many times this component rendered
+      console.count(`UploadDatasetNode render [${id}]`);
+      // Log select props and a stable summary of file
+      // Note: avoids logging large file objects repeatedly
+      // Only logs filename/string if present
+      const fileSummary = currentData?.file
+        ? typeof currentData.file === "string"
+          ? currentData.file
+          : currentData.file.name
+        : null;
+      console.log("UploadDatasetNode props/state", {
+        id,
+        selected,
+        dragging,
+        projectId,
+        file: fileSummary,
+        renderCount: renderCountRef.current,
+      });
+    }
 
     return (
       <div className="relative">

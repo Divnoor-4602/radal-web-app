@@ -181,6 +181,12 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     onNodesChange: (changes: NodeChange[]) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onNodesChange calls");
+        console.log("flowStore:onNodesChange", {
+          changesCount: changes.length,
+        });
+      }
       const newNodes = applyNodeChanges(changes, get().nodes);
       set({ nodes: newNodes });
 
@@ -191,6 +197,12 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     onEdgesChange: (changes: EdgeChange[]) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onEdgesChange calls");
+        console.log("flowStore:onEdgesChange", {
+          changesCount: changes.length,
+        });
+      }
       const newEdges = applyEdgeChanges(changes, get().edges);
       set({ edges: newEdges });
 
@@ -201,6 +213,15 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     onConnect: (connection: Connection) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onConnect calls");
+        console.log("flowStore:onConnect", {
+          source: connection.source,
+          target: connection.target,
+          sourceHandle: connection.sourceHandle,
+          targetHandle: connection.targetHandle,
+        });
+      }
       // Create edge with handle information - let CustomEdge component handle all colors
       const newEdge: Edge = {
         id: nanoid(),
@@ -222,10 +243,23 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     onReconnectStart: () => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onReconnectStart calls");
+      }
       set({ edgeReconnectSuccessful: false, isReconnecting: true });
     },
 
     onReconnect: (oldEdge: Edge, newConnection: Connection) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onReconnect calls");
+        console.log("flowStore:onReconnect", {
+          oldEdgeId: oldEdge.id,
+          source: newConnection.source,
+          target: newConnection.target,
+          sourceHandle: newConnection.sourceHandle,
+          targetHandle: newConnection.targetHandle,
+        });
+      }
       // Validate the new connection
       const { nodes } = get();
       const sourceNode = nodes.find((node) => node.id === newConnection.source);
@@ -258,6 +292,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     onReconnectEnd: (event: MouseEvent | TouchEvent, edge: Edge) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:onReconnectEnd calls");
+        console.log("flowStore:onReconnectEnd", { edgeId: edge.id });
+      }
       const { edgeReconnectSuccessful } = get();
 
       if (!edgeReconnectSuccessful) {
@@ -275,6 +313,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       position: { x: number; y: number },
       projectId?: string,
     ): string | undefined => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:addNode calls");
+        console.log("flowStore:addNode", { type, position, projectId });
+      }
       const id = nanoid();
       const currentNodes = get().nodes;
       const currentEdges = get().edges;
@@ -394,6 +436,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     deleteNode: (nodeId: string) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:deleteNode calls");
+        console.log("flowStore:deleteNode", { nodeId });
+      }
       const { nodes, edges } = get();
 
       // Remove the node from nodes array
@@ -414,6 +460,14 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     updateNodeData: (nodeId: string, data: Partial<FlowNodeData>) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:updateNodeData calls");
+        // Only log keys to avoid large payloads
+        console.log("flowStore:updateNodeData", {
+          nodeId,
+          keys: Object.keys(data),
+        });
+      }
       set({
         nodes: get().nodes.map((node) =>
           node.id === nodeId
@@ -427,6 +481,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     resetFlow: () => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:resetFlow calls");
+      }
       set({
         nodes: [],
         edges: [],
@@ -435,6 +492,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     clearPersistedState: (flowKey?: string) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:clearPersistedState calls");
+        console.log("flowStore:clearPersistedState", { flowKey });
+      }
       // Clear in-memory state
       set({
         nodes: [],
@@ -456,6 +517,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     saveFlow: (flowKey: string) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:saveFlow calls");
+        console.log("flowStore:saveFlow", { flowKey });
+      }
       const { nodes, edges } = get();
 
       // Create a flow object similar to React Flow's toObject() method
@@ -474,6 +539,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     restoreFlow: (flowKey: string) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:restoreFlow calls");
+        console.log("flowStore:restoreFlow", { flowKey });
+      }
       try {
         const savedFlow = localStorage.getItem(flowKey);
         if (!savedFlow) {
@@ -497,6 +566,13 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     loadExistingFlow: (projectGraph: ProjectGraph) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:loadExistingFlow calls");
+        console.log("flowStore:loadExistingFlow", {
+          nodes: projectGraph.nodes.length,
+          edges: projectGraph.edges.length,
+        });
+      }
       const loadedNodes: Node[] = [];
       const loadedEdges: Edge[] = [];
 
@@ -564,6 +640,9 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     isValidConnection: (connection: Edge | Connection) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:isValidConnection calls");
+      }
       const { nodes, edges, isReconnecting } = get();
       const sourceNode = nodes.find((node) => node.id === connection.source);
       const targetNode = nodes.find((node) => node.id === connection.target);
@@ -591,6 +670,15 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       sourceHandle: string,
       targetHandle: string,
     ) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:addConnection calls");
+        console.log("flowStore:addConnection", {
+          sourceNodeId,
+          targetNodeId,
+          sourceHandle,
+          targetHandle,
+        });
+      }
       const { nodes, edges } = get();
 
       // Validate nodes exist
@@ -664,6 +752,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
       sourceNodeId?: string;
       targetNodeId?: string;
     }) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:deleteConnection calls");
+        console.log("flowStore:deleteConnection", args);
+      }
       const { edges } = get();
 
       let connectionToDelete;
@@ -702,6 +794,10 @@ const useFlowStore = createWithEqualityFn<FlowState>()(
     },
 
     syncToBackend: async (projectId?: string) => {
+      if (process.env.NODE_ENV !== "production") {
+        console.count("flowStore:syncToBackend calls");
+        console.log("flowStore:syncToBackend", { projectId });
+      }
       const { isBackendSyncing, nodes, edges } = get();
 
       if (isBackendSyncing) {
